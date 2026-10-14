@@ -1,0 +1,55 @@
+<view class="result-page">
+  <!-- 顶部对比视口 -->
+  <view class="studio-viewport" style="height: {{compareHeight}}px;">
+    <!-- 底层：原图 -->
+    <view class="layer base">
+      <image class="layer-img" src="{{original}}" mode="aspectFit" />
+      <view class="corner-tag left">
+        <text>原图</text>
+      </view>
+    </view>
+
+    <!-- 顶层：AI成片（宽度按滑块百分比裁切） -->
+    <view class="layer top" style="width: {{splitPercent}}%;">
+      <image
+        class="top-img"
+        src="{{output}}"
+        mode="aspectFit"
+        style="width: {{compareWidth}}px; height: {{compareHeight}}px;"
+      />
+      <view class="corner-tag right">
+        <text>AI 成片</text>
+      </view>
+    </view>
+
+    <!-- 拖动手柄（荧光滑块） -->
+    <view
+      class="slider-handle"
+      style="left: {{splitPercent}}%;"
+      catchtouchstart="onHandleStart"
+      catchtouchmove="onHandleMove"
+    >
+      <view class="handle-line" />
+      <view class="handle-orb">
+        <t-icon name="swap" size="30rpx" color="#111111" />
+      </view>
+    </view>
+
+    <!-- 底部操作提示 -->
+    <view class="hint-pill">
+      <text>左右滑动对比成片效果</text>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="actions-section page-pad">
+    <view class="xt-pill-btn save-btn" bindtap="onSave">
+      <t-icon name="download" size="36rpx" color="#D4F826" style="margin-right: 12rpx;" />
+      <text>保存到系统相册</text>
+    </view>
+    <view class="xt-pill-btn-outline back-btn" bindtap="onBack">
+      <t-icon name="edit" size="32rpx" color="#111111" style="margin-right: 12rpx;" />
+      <text>继续微调编辑</text>
+    </view>
+  </view>
+</view>

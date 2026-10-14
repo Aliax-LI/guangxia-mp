@@ -1,0 +1,17 @@
+<view wx:if="{{visible || localRequest}}" class="privacy-mask" catchtouchmove="noop">
+  <view class="privacy-card">
+    <text class="privacy-title">用户隐私保护提示</text>
+    <text class="privacy-desc">{{descText}}</text>
+    <text class="privacy-link" bindtap="onOpenContract">查看隐私保护指引</text>
+    <view class="privacy-actions">
+      <button
+        id="agree-privacy-btn"
+        class="privacy-agree-btn"
+        open-type="agreePrivacyAuthorization"
+        bindagreeprivacyauthorization="onAgree"
+      >
+        同意并继续
+      </button>
+    </view>
+  </view>
+</view>

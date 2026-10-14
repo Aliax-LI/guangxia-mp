@@ -1,0 +1,7 @@
+node_modules/
+manifest-output/
+miniprogram/dev-manifest/detail/
+database-export/
+cloud-storage-assets/
+project.private.config.json
+.DS_Store

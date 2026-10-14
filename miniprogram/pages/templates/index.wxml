@@ -1,0 +1,188 @@
+<view class="tpl-page">
+  <!-- 顶部吸顶搜索栏与分类 -->
+  <view class="sticky-header">
+    <!-- 胶囊搜索条 -->
+    <view class="search-bar">
+      <view class="search-left">
+        <t-icon name="search" size="36rpx" color="#76767B" class="search-icon" />
+        <input
+          class="search-input"
+          placeholder="{{searchPlaceholder}}"
+          placeholder-class="search-placeholder"
+          value="{{keyword}}"
+          bindinput="onKeywordChange"
+          bindconfirm="onSearch"
+        />
+        <t-icon
+          wx:if="{{keyword}}"
+          name="close-circle-filled"
+          size="32rpx"
+          color="#AEAFB8"
+          catchtap="onClearSearch"
+        />
+      </view>
+      <view class="search-btn" bindtap="onSearch">
+        <text>搜索</text>
+      </view>
+    </view>
+
+    <!-- 一级分类导航栏 -->
+    <scroll-view scroll-x class="primary-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="primary-track">
+        <view
+          wx:for="{{primaryCategories}}"
+          wx:key="id"
+          class="primary-item {{activePrimary === item.id ? 'active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectPrimary"
+        >
+          <text class="primary-text">{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 二级胶囊标签栏 -->
+    <scroll-view scroll-x class="sub-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="sub-track">
+        <view
+          wx:for="{{subTags}}"
+          wx:key="id"
+          class="sub-pill {{activeSubTag === item.id ? 'active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectSubTag"
+        >
+          <text class="sub-text">{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 页面主体加载态 -->
+  <view wx:if="{{loading}}" class="center-loading">
+    <t-loading theme="circular" size="56rpx" text="探索精彩灵感…" />
+  </view>
+
+  <view wx:elif="{{!leftColumn.length && !rightColumn.length}}" class="center-empty">
+    <t-empty description="暂无相关灵感模版" />
+  </view>
+
+  <!-- 真正的错落双列瀑布流 -->
+  <view wx:else class="waterfall-container">
+    <!-- 左列 -->
+    <view class="waterfall-col">
+      <view
+        wx:for="{{leftColumn}}"
+        wx:key="id"
+        class="wf-card"
+        data-id="{{item.id}}"
+        bindtap="onOpenTemplate"
+      >
+        <view class="wf-cover-box">
+          <image
+            class="wf-cover-img"
+            src="{{item.coverUrl}}"
+            mode="aspectFill"
+            style="height: {{700 / (item.aspectRatio || 1.3)}}rpx;"
+            lazy-load
+            data-id="{{item.id}}"
+            data-column="left"
+            binderror="onCoverError"
+          />
+          <view wx:if="{{item.requiresImage}}" class="wf-badge">
+            <text>需传图</text>
+          </view>
+        </view>
+        <view class="wf-body">
+          <text class="wf-title">{{item.title}}</text>
+          <view class="wf-meta-row">
+            <view class="wf-author">
+              <image class="author-avatar" src="{{item.author.avatar || 'https://tdesign.gtimg.com/mobile/demos/avatar1.png'}}" mode="aspectFill" />
+              <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
+            </view>
+            <view class="wf-like" data-id="{{item.id}}" catchtap="onToggleLike">
+              <t-icon
+                name="{{item.liked ? 'heart-filled' : 'heart'}}"
+                size="26rpx"
+                color="{{item.liked ? '#FF3B30' : '#8E8E93'}}"
+              />
+              <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 右列 -->
+    <view class="waterfall-col">
+      <view
+        wx:for="{{rightColumn}}"
+        wx:key="id"
+        class="wf-card"
+        data-id="{{item.id}}"
+        bindtap="onOpenTemplate"
+      >
+        <view class="wf-cover-box">
+          <image
+            class="wf-cover-img"
+            src="{{item.coverUrl}}"
+            mode="aspectFill"
+            style="height: {{700 / (item.aspectRatio || 1.3)}}rpx;"
+            lazy-load
+            data-id="{{item.id}}"
+            data-column="right"
+            binderror="onCoverError"
+          />
+          <view wx:if="{{item.requiresImage}}" class="wf-badge">
+            <text>需传图</text>
+          </view>
+        </view>
+        <view class="wf-body">
+          <text class="wf-title">{{item.title}}</text>
+          <view class="wf-meta-row">
+            <view class="wf-author">
+              <image class="author-avatar" src="{{item.author.avatar || 'https://tdesign.gtimg.com/mobile/demos/avatar2.png'}}" mode="aspectFill" />
+              <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
+            </view>
+            <view class="wf-like" data-id="{{item.id}}" catchtap="onToggleLike">
+              <t-icon
+                name="{{item.liked ? 'heart-filled' : 'heart'}}"
+                size="26rpx"
+                color="{{item.liked ? '#FF3B30' : '#8E8E93'}}"
+              />
+              <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部触底状态 -->
+  <view class="footer-state">
+    <t-loading wx:if="{{loadingMore}}" theme="dots" size="36rpx" text="加载更多模版" />
+    <text wx:elif="{{!hasMore && (leftColumn.length || rightColumn.length)}}" class="foot-tip">已经到底啦 · 更多精彩稍后更新</text>
+  </view>
+
+  <!-- 荧光绿悬浮加号 -->
+  <view class="fab-btn" bindtap="onFabClick">
+    <t-icon name="add" size="52rpx" color="#111111" />
+  </view>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="templates-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onPrivacyAgree"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

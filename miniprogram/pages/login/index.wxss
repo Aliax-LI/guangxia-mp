@@ -1,0 +1,205 @@
+.login-page {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: calc(32rpx + env(safe-area-inset-top)) 48rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 垂直居中容器（居中略微偏上符合人眼最佳视觉中心） */
+.login-center-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 60rpx;
+}
+
+/* 品牌光晕区域 */
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0 52rpx;
+}
+
+.orb-container {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb-halo {
+  position: absolute;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 248, 38, 0.75) 0%, rgba(212, 248, 38, 0.35) 45%, transparent 70%);
+  filter: blur(14px);
+}
+
+.orb-core {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 0 40rpx rgba(212, 248, 38, 0.6);
+}
+
+.brand-title {
+  font-size: 56rpx;
+  font-weight: 800;
+  color: #111111;
+  letter-spacing: -1.5rpx;
+  margin-top: 32rpx;
+}
+
+.brand-caption {
+  font-size: 26rpx;
+  color: #8e8e93;
+  margin-top: 10rpx;
+}
+
+/* 表单区域 */
+.form-section {
+  width: 100%;
+}
+
+/* 胶囊输入框 */
+.input-pill {
+  display: flex;
+  align-items: center;
+  height: 100rpx;
+  background: #f4f4f7;
+  border-radius: 9999rpx;
+  padding: 0 36rpx;
+  margin-bottom: 24rpx;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.input-pill:focus-within {
+  background: #ffffff;
+  box-shadow: 0 0 0 2rpx #111111;
+}
+
+.input-icon {
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.field-input {
+  flex: 1;
+  height: 100%;
+  font-size: 30rpx;
+  color: #111111;
+}
+
+.field-placeholder {
+  color: #aeafb8;
+  font-size: 28rpx;
+}
+
+/* 验证码组合行 */
+.verify-pill-wrap {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.verify-input-pill {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.send-code-btn {
+  height: 100rpx;
+  padding: 0 36rpx;
+  border-radius: 9999rpx;
+  background: #111111;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.send-code-btn.disabled {
+  background: #f4f4f7;
+  color: #aeafb8;
+  pointer-events: none;
+}
+
+/* 主按钮 */
+.main-submit-btn {
+  margin-top: 24rpx;
+  height: 100rpx;
+  font-size: 32rpx;
+  letter-spacing: 2rpx;
+}
+
+.sub-toggle-btn {
+  margin-top: 24rpx;
+  height: 100rpx;
+}
+
+/* 协议勾选行 */
+.agreement-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  margin-top: 40rpx;
+  padding: 12rpx 0;
+}
+
+.custom-checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid #c7c7cc;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-checkbox.checked {
+  background: #111111;
+  border-color: #111111;
+}
+
+.agreement-text {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.link {
+  color: #111111;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4rpx;
+}
+
+/* 底部服务说明 */
+.footer-hint {
+  padding-top: 24rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.hint-text {
+  font-size: 22rpx;
+  color: #aeafb8;
+  line-height: 1.5;
+}

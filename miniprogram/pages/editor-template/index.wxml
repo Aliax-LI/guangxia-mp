@@ -1,0 +1,146 @@
+<view class="tpl-editor page-pad">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <t-loading theme="circular" size="56rpx" text="加载模版详情…" />
+  </view>
+
+  <block wx:else>
+    <!-- 多图范例：主轮播 + 缩略图 -->
+    <view class="gallery-wrap xt-card">
+      <swiper
+        class="gallery-swiper"
+        style="height: {{galleryHeightPx}}px;"
+        current="{{galleryIndex}}"
+        circular="{{galleryImages.length > 1}}"
+        bindchange="onGalleryChange"
+      >
+        <swiper-item wx:for="{{galleryImages}}" wx:key="*this" class="gallery-item">
+          <image
+            class="gallery-img"
+            src="{{item}}"
+            mode="widthFix"
+            data-index="{{index}}"
+            bindload="onGalleryImageLoad"
+            bindtap="onPreviewGallery"
+          />
+        </swiper-item>
+      </swiper>
+      <view class="hero-badge">
+        <text>{{galleryImages.length > 1 ? '范例 ' + (galleryIndex + 1) + '/' + galleryImages.length : '模版示例'}}</text>
+      </view>
+      <scroll-view
+        wx:if="{{galleryImages.length > 1}}"
+        scroll-x
+        enable-flex
+        class="thumb-scroll"
+        show-scrollbar="{{false}}"
+      >
+        <view class="thumb-inner">
+          <image
+            wx:for="{{galleryImages}}"
+            wx:key="*this"
+            class="thumb {{galleryIndex === index ? 'active' : ''}}"
+            src="{{item}}"
+            mode="aspectFill"
+            data-index="{{index}}"
+            bindtap="onPickGallery"
+          />
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 基础信息 -->
+    <view class="meta-card xt-card section-gap">
+      <view wx:if="{{detail.author}}" class="author-row">
+        <image class="author-avatar" src="{{detail.author.avatar}}" mode="aspectFill" />
+        <view class="author-text">
+          <text class="author-name">{{detail.author.name}}</text>
+          <text wx:if="{{metaDate}}" class="author-meta">{{metaDate}} · YouMind</text>
+        </view>
+        <text wx:if="{{detail.likes}}" class="like-pill">{{detail.likes}} 赞</text>
+      </view>
+
+      <text class="title">{{detail.title}}</text>
+
+      <view wx:if="{{detail.tags && detail.tags.length}}" class="tag-row">
+        <text wx:for="{{detail.tags}}" wx:key="*this" class="tag-chip">{{item}}</text>
+      </view>
+
+      <text wx:if="{{detail.description}}" class="desc">{{detail.description}}</text>
+
+      <view class="rule-tip {{detail.requiresImage ? 'must' : ''}}">
+        <t-icon name="info-circle" size="28rpx" color="{{detail.requiresImage ? '#111111' : '#76767B'}}" />
+        <text>{{detail.requiresImage ? '需要上传你的照片配合模版主体生成' : '可仅凭模版描述生成，也可传图增强效果'}}</text>
+      </view>
+    </view>
+
+    <!-- 提示词（可滚动 + 复制） -->
+    <view class="prompt-card xt-card section-gap">
+      <view class="prompt-head">
+        <text class="block-title">生成参数</text>
+        <view class="copy-pill" bindtap="onCopyPrompt">
+          <t-icon name="file-copy" size="28rpx" color="#111111" />
+          <text>复制提示词</text>
+        </view>
+      </view>
+      <text class="prompt-label">提示词</text>
+      <scroll-view scroll-y class="prompt-scroll" enhanced show-scrollbar="{{true}}">
+        <text class="prompt-body" selectable>{{detail.prompt}}</text>
+      </scroll-view>
+    </view>
+
+    <!-- 用户上传 -->
+    <view class="upload-section section-gap">
+      <view class="section-title-wrap">
+        <text class="section-title">上传你的照片</text>
+        <text class="section-subtitle">{{detail.requiresImage ? '必填' : '可选'}}</text>
+      </view>
+
+      <view wx:if="{{!imagePath}}" class="upload-box xt-card" bindtap="onChooseImage">
+        <view class="upload-circle">
+          <t-icon name="image-add" size="48rpx" color="#111111" />
+        </view>
+        <text class="upload-main-text">{{detail.requiresImage ? '点击上传主体照片（必填）' : '点击添加参考照片（可选）'}}</text>
+        <text class="upload-sub-text">支持相册选择或相机即拍</text>
+      </view>
+
+      <view wx:else class="preview-box xt-card">
+        <image src="{{imagePath}}" mode="aspectFill" class="user-img" />
+        <view class="preview-overlay">
+          <view class="change-pill" catchtap="onChooseImage">
+            <t-icon name="swap" size="26rpx" color="#FFFFFF" />
+            <text>更换照片</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-action-bar">
+      <view
+        class="xt-pill-btn submit-btn {{generating || (detail.requiresImage && !imagePath) ? 'disabled' : ''}}"
+        bindtap="onGenerate"
+      >
+        <t-loading wx:if="{{generating}}" theme="dots" size="36rpx" style="margin-right: 12rpx;" />
+        <t-icon wx:else name="sparkles" size="36rpx" color="{{detail.requiresImage && !imagePath ? '#AEAFB8' : '#D4F826'}}" style="margin-right: 12rpx;" />
+        <text>{{generating ? 'AI 渲染中…' : '一键生成模版效果'}}</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="editor-tpl-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onPrivacyAgree"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,72 @@
+/** TDesign 主题覆盖 — 光匣 视觉规范 */
+page {
+  /* 品牌高亮：光匣荧光黄绿 */
+  --brand-neon: #d4f826;
+  --brand-neon-glow: rgba(212, 248, 38, 0.45);
+  --brand-neon-light: #f5fbe1;
+  --brand-neon-active: #b8dc17;
+
+  /* 基础主调 */
+  --td-brand-color: #111111;
+  --td-brand-color-light: #f5fbe1;
+  --td-brand-color-focus: #d4f826;
+  --td-brand-color-active: #333333;
+  --td-brand-color-disabled: #e5e5ea;
+
+  --td-primary-color-7: #111111;
+  --td-primary-color-1: #f5fbe1;
+
+  /* 背景底色：干净棚拍白与质感灰底 */
+  --td-bg-color-page: #f9f9fb;
+  --td-bg-color-container: #ffffff;
+  --td-bg-color-secondarycontainer: #f4f4f7;
+
+  /* 字色体系 */
+  --td-text-color-primary: #111111;
+  --td-text-color-secondary: #76767b;
+  --td-text-color-placeholder: #aeafb8;
+
+  /* 圆角：光匣大圆角 & 胶囊 */
+  --td-radius-small: 12rpx;
+  --td-radius-default: 24rpx;
+  --td-radius-large: 32rpx;
+  --td-radius-round: 9999rpx;
+
+  /* 底部 TabBar */
+  --td-tab-bar-active-color: #111111;
+  --td-tab-item-active-color: #111111;
+  --td-tab-track-color: #111111;
+  --td-tab-bar-color: #8e8e93;
+  --td-tab-bar-bg-color: #ffffff;
+
+  /* 输入组件样式覆盖 */
+  --td-input-bg-color: #f4f4f7;
+  --td-textarea-background-color: #f4f4f7;
+}
+
+/* 按钮通用定制 */
+.btn-ink {
+  --td-button-primary-bg-color: #111111 !important;
+  --td-button-primary-border-color: #111111 !important;
+  --td-button-primary-active-bg-color: #2b2b2b !important;
+  --td-button-primary-active-border-color: #2b2b2b !important;
+  --td-button-primary-color: #ffffff !important;
+  border-radius: 9999rpx !important;
+  font-weight: 600 !important;
+}
+
+.btn-accent-fill {
+  --td-button-primary-bg-color: #d4f826 !important;
+  --td-button-primary-border-color: #d4f826 !important;
+  --td-button-primary-color: #111111 !important;
+  --td-button-primary-active-bg-color: #b8dc17 !important;
+  border-radius: 9999rpx !important;
+  font-weight: 600 !important;
+}
+
+.btn-pill-outline {
+  border-radius: 9999rpx !important;
+  font-weight: 600 !important;
+  border-color: #111111 !important;
+  color: #111111 !important;
+}

@@ -1,0 +1,53 @@
+{
+  "pages": [
+    "pages/edit/index",
+    "pages/templates/index",
+    "pages/profile/index",
+    "pages/login/index",
+    "pages/editor-edit/index",
+    "pages/editor-template/index",
+    "pages/result/index",
+    "pages/logs/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "光匣",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#ffffff"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8e8e93",
+    "selectedColor": "#111111",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/edit/index",
+        "text": "修图",
+        "iconPath": "assets/icons/edit.png",
+        "selectedIconPath": "assets/icons/edit-active.png"
+      },
+      {
+        "pagePath": "pages/templates/index",
+        "text": "灵感",
+        "iconPath": "assets/icons/template.png",
+        "selectedIconPath": "assets/icons/template-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/icons/me.png",
+        "selectedIconPath": "assets/icons/me-active.png"
+      }
+    ]
+  },
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-loading": "tdesign-miniprogram/loading/loading"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "__usePrivacyCheck__": true
+}

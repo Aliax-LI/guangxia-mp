@@ -1,0 +1,212 @@
+<view class="profile-page">
+  <view class="profile-body">
+  <view class="user-header" id="profile-wechat-block">
+    <view class="user-header-left">
+    <view class="avatar-shell">
+      <image
+        class="user-avatar"
+        src="{{avatarUrl || defaultAvatarUrl}}"
+        mode="aspectFill"
+      />
+      <button
+        wx:if="{{loggedIn && privacyOk}}"
+        id="profile-avatar-btn"
+        class="avatar-hit"
+        hover-class="none"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseWechatAvatar"
+        aria-label="选择微信头像"
+      />
+      <view
+        wx:elif="{{loggedIn}}"
+        class="avatar-hit"
+        bindtap="onEditProfile"
+        aria-role="button"
+        aria-label="编辑资料设置头像"
+      />
+    </view>
+
+    <view class="user-meta">
+      <view class="name-row">
+        <input
+          wx:if="{{loggedIn && privacyOk && nicknameEditing}}"
+          type="nickname"
+          class="user-name-input"
+          value="{{nickname}}"
+          placeholder="点击使用微信昵称"
+          maxlength="32"
+          focus="{{nicknameFocus}}"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameBlur"
+          bindnicknamereview="onNicknameReview"
+        />
+        <text
+          wx:elif="{{loggedIn && privacyOk}}"
+          class="user-name"
+          bindtap="onStartNicknameEdit"
+        >{{nickname || '点击设置微信昵称'}}</text>
+        <text
+          wx:elif="{{loggedIn}}"
+          class="user-name"
+          bindtap="onEditProfile"
+        >{{nickname || '点击编辑资料'}}</text>
+        <text wx:else class="user-name" bindtap="onLogin">点击登录账号</text>
+      </view>
+      <view class="id-row" bindtap="onCopyAccount">
+        <text class="id-text">账户：{{accountText}}</text>
+        <t-icon name="copy" size="24rpx" color="#8E8E93" class="copy-icon" />
+      </view>
+    </view>
+    </view>
+
+    <view class="header-help-btn" bindtap="onOpenHelp" aria-role="button" aria-label="使用帮助">
+      <t-icon name="help-circle" size="44rpx" color="#111111" />
+    </view>
+  </view>
+
+  <!-- 账户概览 -->
+  <view class="account-card" aria-role="group" aria-label="账户使用概览">
+    <view class="stats-group">
+      <view class="stat-item">
+        <text class="stat-num">{{balanceDisplay}}</text>
+        <text class="stat-label">可用积分</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{usageCount}}</text>
+        <text class="stat-label">总使用量</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{totalCostDisplay}}</text>
+        <text class="stat-label">累计消耗</text>
+      </view>
+    </view>
+
+    <view class="profile-actions">
+      <view class="edit-btn" bindtap="onEditProfile" aria-role="button" aria-label="编辑资料">
+        <text>编辑资料</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 个人签名介绍 -->
+  <view class="bio-row" bindtap="onEditBio">
+    <text class="bio-text">{{bio || '你还没有填写个人简介，点击添加…'}}</text>
+  </view>
+
+  <view class="feature-dual-cards">
+    <view class="feature-card" bindtap="onRedeemCard">
+      <view class="feat-icon-box">
+        <t-icon name="wallet" size="44rpx" color="#111111" />
+      </view>
+      <view class="feat-text-box">
+        <text class="feat-title">卡密充值</text>
+        <text class="feat-sub">兑换积分到账户</text>
+      </view>
+    </view>
+
+    <view class="feature-card" bindtap="onUsageDetail">
+      <view class="feat-icon-box">
+        <t-icon name="bill" size="44rpx" color="#111111" />
+      </view>
+      <view class="feat-text-box">
+        <text class="feat-title">使用明细</text>
+        <text class="feat-sub">Sub2API 调用记录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 作品分类 Tab 栏 -->
+  <view class="works-tab-bar">
+    <view
+      class="works-tab-item {{activeTab === 'works' ? 'active' : ''}}"
+      data-tab="works"
+      bindtap="onSwitchTab"
+    >
+      <view class="tab-title-wrap">
+        <text class="tab-title">作品集</text>
+        <t-icon name="lock-on" size="22rpx" color="#8E8E93" class="lock-icon" />
+      </view>
+      <view wx:if="{{activeTab === 'works'}}" class="tab-line" />
+    </view>
+
+    <view
+      class="works-tab-item {{activeTab === 'dynamics' ? 'active' : ''}}"
+      data-tab="dynamics"
+      bindtap="onSwitchTab"
+    >
+      <text class="tab-title">动态</text>
+      <view wx:if="{{activeTab === 'dynamics'}}" class="tab-line" />
+    </view>
+
+    <view
+      class="works-tab-item {{activeTab === 'starred' ? 'active' : ''}}"
+      data-tab="starred"
+      bindtap="onSwitchTab"
+    >
+      <text class="tab-title">收藏</text>
+      <view wx:if="{{activeTab === 'starred'}}" class="tab-line" />
+    </view>
+
+    <view
+      class="works-tab-item {{activeTab === 'liked' ? 'active' : ''}}"
+      data-tab="liked"
+      bindtap="onSwitchTab"
+    >
+      <text class="tab-title">点赞</text>
+      <view wx:if="{{activeTab === 'liked'}}" class="tab-line" />
+    </view>
+  </view>
+
+  <!-- 九宫格作品集展示 -->
+  <view wx:if="{{activeTab === 'works'}}" class="works-grid">
+    <view
+      wx:for="{{worksList}}"
+      wx:key="id"
+      class="work-grid-item"
+      data-url="{{item.url}}"
+      bindtap="onPreviewWork"
+    >
+      <image class="work-thumb" src="{{item.url}}" mode="aspectFill" lazy-load />
+
+      <!-- 第一个草稿箱特殊标识 -->
+      <view wx:if="{{item.isDraft}}" class="draft-overlay" catchtap="onOpenDraft">
+        <t-icon name="folder" size="36rpx" color="#FFFFFF" />
+        <text class="draft-label">草稿</text>
+      </view>
+
+      <!-- 右下角预览小角标 -->
+      <view wx:else class="expand-icon-box">
+        <t-icon name="scan" size="20rpx" color="#FFFFFF" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 其他 Tab 暂无内容状态 -->
+  <view wx:else class="empty-tab-box">
+    <t-empty description="暂无更多动态" />
+  </view>
+
+  <!-- 荧光绿悬浮加号 -->
+  <view class="fab-btn" bindtap="onFabClick">
+    <t-icon name="add" size="52rpx" color="#111111" />
+  </view>
+  </view>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="profile-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onAgreePrivacy"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

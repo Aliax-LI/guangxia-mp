@@ -1,0 +1,381 @@
+.edit-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 24rpx 32rpx 200rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 顶部标题栏 */
+.header {
+  padding: 16rpx 0 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.brand-orb {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 0 16rpx 6rpx rgba(212, 248, 38, 0.65);
+}
+
+.brand-title {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #111111;
+  letter-spacing: -1rpx;
+}
+
+.brand-sub {
+  display: block;
+  font-size: 24rpx;
+  color: #8e8e93;
+  margin-top: 8rpx;
+}
+
+/* 导入照片卡片 */
+.hero-import {
+  background: #111111;
+  color: #ffffff;
+  padding: 44rpx 36rpx 36rpx;
+  border-radius: 32rpx;
+  box-shadow: 0 12rpx 36rpx rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease;
+}
+
+.hero-import:active {
+  transform: scale(0.985);
+}
+
+.hero-import-content {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+}
+
+.import-badge {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 28rpx rgba(212, 248, 38, 0.5);
+  flex-shrink: 0;
+}
+
+.import-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.import-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.import-desc {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 8rpx;
+  line-height: 1.4;
+}
+
+.import-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 36rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.12);
+}
+
+.action-pill {
+  flex: 1;
+  height: 72rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  backdrop-filter: blur(8px);
+}
+
+.pill-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+/* 照片预览卡片 */
+.preview-box {
+  position: relative;
+  height: 480rpx;
+  border-radius: 32rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+}
+
+.preview-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+}
+
+.preview-tag {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  padding: 8rpx 20rpx;
+  border-radius: 9999rpx;
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.live-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 0 8rpx var(--brand-neon, #d4f826);
+}
+
+.preview-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.preview-chip {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  padding: 10rpx 24rpx;
+  border-radius: 9999rpx;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.preview-close-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 通用分区 */
+.section {
+  margin-top: 40rpx;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111111;
+}
+
+.section-tip {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.clear-link {
+  font-size: 24rpx;
+  color: #8e8e93;
+  padding: 4rpx 12rpx;
+}
+
+/* 风格预设卡片 */
+.presets-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.presets-track {
+  display: inline-flex;
+  gap: 20rpx;
+  padding: 4rpx 4rpx 12rpx;
+}
+
+.preset-card {
+  width: 200rpx;
+  padding: 28rpx 20rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
+  border: 3rpx solid transparent;
+  transition: all 0.2s ease;
+}
+
+.preset-card.active {
+  border-color: #111111;
+  background: #ffffff;
+  box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.08);
+}
+
+.preset-icon-wrap {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 20rpx;
+  background: #f4f4f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.preset-card.active .preset-icon-wrap {
+  background: var(--brand-neon, #d4f826);
+}
+
+.preset-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 6rpx;
+}
+
+.preset-tag-text {
+  font-size: 20rpx;
+  color: #8e8e93;
+}
+
+.preset-check {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 描述词输入框 */
+.prompt-box {
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.prompt-textarea {
+  width: 100%;
+  height: 160rpx;
+  font-size: 28rpx;
+  color: #111111;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.prompt-placeholder {
+  color: #aeafb8;
+  font-size: 26rpx;
+}
+
+.prompt-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12rpx;
+}
+
+.word-counter {
+  font-size: 22rpx;
+  color: #aeafb8;
+}
+
+/* 快捷词胶囊 */
+.quick-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.quick-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 24rpx;
+  background: #ffffff;
+  border-radius: 9999rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  font-size: 24rpx;
+  color: #444444;
+  transition: all 0.15s ease;
+}
+
+.quick-pill:active {
+  background: #f4f4f7;
+  transform: scale(0.97);
+}
+
+.quick-pill-text {
+  font-weight: 500;
+}
+
+/* 底部操作条 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1rpx solid #eeeeef;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.submit-btn {
+  width: 100%;
+}

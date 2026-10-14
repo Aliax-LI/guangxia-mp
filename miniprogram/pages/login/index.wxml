@@ -1,0 +1,94 @@
+<view class="login-page">
+  <!-- 中间主体区域（垂直居中布局） -->
+  <view class="login-center-wrap">
+    <!-- 光匣品牌光晕 -->
+    <view class="brand-section">
+      <view class="orb-container">
+        <view class="orb-halo" />
+        <view class="orb-core" />
+      </view>
+      <text class="brand-title">光匣</text>
+      <text class="brand-caption">{{mode === 'login' ? '把光装进照片里' : '注册开启专属修图积分'}}</text>
+    </view>
+
+    <!-- 表单区域 -->
+    <view class="form-section">
+      <view class="input-pill">
+        <t-icon name="mail" size="38rpx" color="#76767B" class="input-icon" />
+        <input
+          class="field-input"
+          placeholder="输入邮箱地址"
+          placeholder-class="field-placeholder"
+          value="{{email}}"
+          bindinput="onEmailChange"
+        />
+      </view>
+
+      <view class="input-pill">
+        <t-icon name="lock-on" size="38rpx" color="#76767B" class="input-icon" />
+        <input
+          class="field-input"
+          type="password"
+          placeholder="设置密码（至少 6 位）"
+          placeholder-class="field-placeholder"
+          value="{{password}}"
+          bindinput="onPasswordChange"
+        />
+      </view>
+
+      <!-- 邮箱验证码（注册模式且开启时） -->
+      <view wx:if="{{mode === 'register' && emailVerifyEnabled}}" class="verify-pill-wrap">
+        <view class="input-pill verify-input-pill">
+          <t-icon name="secured" size="38rpx" color="#76767B" class="input-icon" />
+          <input
+            class="field-input"
+            placeholder="邮箱验证码"
+            placeholder-class="field-placeholder"
+            value="{{verifyCode}}"
+            bindinput="onVerifyChange"
+          />
+        </view>
+        <view
+          class="send-code-btn {{codeSending || codeCountdown > 0 ? 'disabled' : ''}}"
+          bindtap="onSendCode"
+        >
+          <text>{{codeCountdown > 0 ? codeCountdown + 's' : '获取验证码'}}</text>
+        </view>
+      </view>
+
+      <!-- 登录 / 注册 主按钮 -->
+      <view
+        class="xt-pill-btn main-submit-btn {{loading ? 'loading' : ''}}"
+        bindtap="onSubmit"
+      >
+        <text>{{mode === 'login' ? '登 录' : '注册新账号'}}</text>
+      </view>
+
+      <!-- 切换模式 次要按钮 -->
+      <view
+        class="xt-pill-btn-outline sub-toggle-btn"
+        bindtap="onToggleMode"
+      >
+        <text>{{mode === 'login' ? '注册新账号' : '已有账号，去登录'}}</text>
+      </view>
+
+      <!-- 协议勾选行 -->
+      <view class="agreement-row" bindtap="onToggleAgreement">
+        <view class="custom-checkbox {{agreed ? 'checked' : ''}}">
+          <t-icon wx:if="{{agreed}}" name="check" size="24rpx" color="#FFFFFF" />
+        </view>
+        <view class="agreement-text">
+          <text>已阅读并同意 </text>
+          <text class="link" catchtap="onShowProtocol">用户协议</text>
+          <text> 和 </text>
+          <text class="link" catchtap="onShowProtocol">隐私政策</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部服务说明 -->
+  <view class="footer-hint">
+    <text class="hint-text">账号与积分由 Sub2API 管理 · 支持多设备同时登录</text>
+  </view>
+</view>

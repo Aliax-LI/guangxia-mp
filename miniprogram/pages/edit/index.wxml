@@ -1,0 +1,146 @@
+<view class="edit-page">
+  <!-- 顶部品牌标题栏 -->
+  <view class="header">
+    <view class="header-left">
+      <view class="brand-badge">
+        <view class="brand-orb" />
+        <text class="brand-title">AI 修图</text>
+      </view>
+      <text class="brand-sub">胶片级质感 · AI 画质重塑</text>
+    </view>
+  </view>
+
+  <!-- 照片导入区域 / 预览区域 -->
+  <view wx:if="{{!imagePath}}" class="hero-import xt-card">
+    <view class="hero-import-content" bindtap="onPickImage" data-source="any">
+      <view class="import-badge">
+        <t-icon name="image-add" size="52rpx" color="#111111" />
+      </view>
+      <view class="import-info">
+        <text class="import-title">导入照片开启修图</text>
+        <text class="import-desc">支持相册选图或相机实拍，人像/风景/质感重绘</text>
+      </view>
+    </view>
+    <view class="import-actions">
+      <view class="action-pill" catchtap="onPickImage" data-source="album">
+        <t-icon name="photo" size="32rpx" color="#FFFFFF" />
+        <text class="pill-text">相册选择</text>
+      </view>
+      <view class="action-pill" catchtap="onPickImage" data-source="camera">
+        <t-icon name="camera" size="32rpx" color="#FFFFFF" />
+        <text class="pill-text">相机拍照</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="preview-box xt-card">
+    <image class="preview-img" src="{{imagePath}}" mode="aspectFill" />
+    <view class="preview-mask">
+      <view class="preview-tag">
+        <view class="live-dot" />
+        <text>原图已就绪</text>
+      </view>
+      <view class="preview-btn-group">
+        <view class="preview-chip" catchtap="onPickImage" data-source="any">
+          <t-icon name="swap" size="28rpx" color="#FFFFFF" />
+          <text>更换照片</text>
+        </view>
+        <view class="preview-close-btn" catchtap="onClearImage">
+          <t-icon name="close" size="28rpx" color="#FFFFFF" />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 风格预设卡片列表 -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">风格预设</text>
+      <text class="section-tip">选择心仪质感</text>
+    </view>
+    <scroll-view scroll-x class="presets-scroll" enable-flex>
+      <view class="presets-track">
+        <view
+          wx:for="{{presets}}"
+          wx:key="id"
+          class="preset-card {{selectedPresetId === item.id ? 'active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectPreset"
+        >
+          <view class="preset-icon-wrap">
+            <t-icon name="{{item.icon}}" size="40rpx" color="{{selectedPresetId === item.id ? '#111111' : '#76767B'}}" />
+          </view>
+          <text class="preset-name">{{item.label}}</text>
+          <text class="preset-tag-text">{{item.tag}}</text>
+          <view wx:if="{{selectedPresetId === item.id}}" class="preset-check">
+            <t-icon name="check" size="20rpx" color="#111111" />
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 补充描述词区域 -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">描述词调整 (Prompt)</text>
+      <text wx:if="{{promptExtra}}" class="clear-link" bindtap="onClearPrompt">清空</text>
+    </view>
+    <view class="prompt-box xt-card">
+      <textarea
+        class="prompt-textarea"
+        placeholder="例如：冷白通透皮肤、复古暖光、电影大片构图…"
+        placeholder-class="prompt-placeholder"
+        maxlength="800"
+        value="{{promptExtra}}"
+        bindinput="onPromptChange"
+      />
+      <view class="prompt-footer">
+        <text class="word-counter">{{promptExtra.length}} / 800</text>
+      </view>
+    </view>
+
+    <!-- 快捷关键词胶囊 -->
+    <view class="quick-tags-wrap">
+      <view
+        wx:for="{{quickTags}}"
+        wx:key="*this"
+        class="quick-pill"
+        data-tag="{{item}}"
+        bindtap="onAddTag"
+      >
+        <t-icon name="add" size="24rpx" color="#76767B" />
+        <text class="quick-pill-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部吸底主按钮 -->
+  <view class="bottom-bar">
+    <view
+      class="xt-pill-btn submit-btn {{!imagePath ? 'disabled' : ''}}"
+      bindtap="onGoEditor"
+    >
+      <t-icon name="sparkles" size="36rpx" color="{{!imagePath ? '#AEAFB8' : '#D4F826'}}" style="margin-right: 12rpx;" />
+      <text>{{imagePath ? '开始生成新图' : '请先导入照片'}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="edit-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onPrivacyAgree"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

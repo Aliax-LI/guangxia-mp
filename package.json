@@ -1,0 +1,21 @@
+{
+  "name": "miniprogram-ts-quickstart",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build:manifest": "node scripts/build-youmind-manifest.mjs",
+    "build:dev-manifest": "node scripts/build-dev-manifest-ts.mjs",
+    "export:cloud-db": "node scripts/export-cloud-db-json.mjs",
+    "download:images": "node scripts/download-templates-for-cloud-storage.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "miniprogram-api-typings": "^2.8.3-1",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "tdesign-miniprogram": "^1.17.0"
+  }
+}

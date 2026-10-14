@@ -1,0 +1,43 @@
+<view class="editor-page page-pad">
+  <!-- 影像画布区域 -->
+  <view class="studio-canvas xt-card">
+    <image src="{{imagePath}}" mode="widthFix" class="canvas-image" />
+    <view class="canvas-badge">
+      <view class="badge-dot" />
+      <text>底图已载入</text>
+    </view>
+  </view>
+
+  <!-- 提示词修图指令卡片 -->
+  <view class="prompt-card xt-card section-gap">
+    <view class="card-head">
+      <view class="head-title-wrap">
+        <t-icon name="edit" size="32rpx" color="#111111" />
+        <text class="head-title">修图风格指令</text>
+      </view>
+      <text class="head-tip">按需微调</text>
+    </view>
+    <textarea
+      class="editor-textarea"
+      placeholder="详细描述想要的效果、光影或局部调整…"
+      maxlength="1200"
+      value="{{prompt}}"
+      bindinput="onPromptChange"
+    />
+    <view class="textarea-footer">
+      <text class="counter">{{prompt.length}} / 1200</text>
+    </view>
+  </view>
+
+  <!-- 底部固定生成主操作栏 -->
+  <view class="bottom-action-bar">
+    <view
+      class="xt-pill-btn gen-btn {{generating ? 'disabled' : ''}}"
+      bindtap="onGenerate"
+    >
+      <t-loading wx:if="{{generating}}" theme="dots" size="36rpx" style="margin-right: 12rpx;" />
+      <t-icon wx:else name="sparkles" size="36rpx" color="#D4F826" style="margin-right: 12rpx;" />
+      <text>{{generating ? 'AI 正在渲染中…' : '立即开始生成'}}</text>
+    </view>
+  </view>
+</view>

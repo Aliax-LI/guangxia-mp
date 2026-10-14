@@ -1,0 +1,53 @@
+import { CheckboxIconType } from '../checkbox/index';
+import type { KeysType } from '../common/common';
+export interface TdCheckboxGroupProps<T = CheckboxGroupValue> {
+    borderless?: {
+        type: BooleanConstructor;
+        value?: boolean;
+    };
+    direction?: {
+        type: StringConstructor;
+        value?: 'vertical' | 'horizontal';
+    };
+    disabled?: {
+        type: BooleanConstructor;
+        value?: boolean;
+    };
+    keys?: {
+        type: ObjectConstructor;
+        value?: KeysType;
+    };
+    max?: {
+        type: NumberConstructor;
+        value?: number;
+    };
+    name?: {
+        type: StringConstructor;
+        value?: string;
+    };
+    options?: {
+        type: ArrayConstructor;
+        value?: Array<CheckboxOption>;
+    };
+    readonly?: {
+        type: BooleanConstructor;
+        value?: boolean;
+    };
+    value?: {
+        type: ArrayConstructor;
+        value?: T;
+    };
+    defaultValue?: {
+        type: ArrayConstructor;
+        value?: T;
+    };
+}
+export declare type CheckboxOption = string | number | CheckboxOptionObj;
+export interface CheckboxOptionObj {
+    label?: string;
+    value?: string | number;
+    disabled?: boolean;
+    icon?: CheckboxIconType;
+    checkAll?: true;
+}
+export declare type CheckboxGroupValue = Array<string | number | boolean>;

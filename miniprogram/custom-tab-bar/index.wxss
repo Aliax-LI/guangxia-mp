@@ -1,0 +1,7 @@
+:host {
+  --td-tab-bar-active-color: #111111;
+  --td-tab-item-active-color: #111111;
+  --td-tab-track-color: #d4f826;
+  --td-tab-bar-color: #8e8e93;
+  --td-tab-bar-bg-color: #ffffff;
+}

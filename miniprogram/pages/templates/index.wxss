@@ -1,0 +1,341 @@
+page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: #f9f9fb;
+}
+
+.tpl-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-bottom: 160rpx;
+  min-height: 100vh;
+  background: #f9f9fb;
+  box-sizing: border-box;
+}
+
+/* 顶部吸顶区域 */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #ffffff;
+  padding: calc(12rpx + env(safe-area-inset-top)) 24rpx 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+/* 胶囊搜索条 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-left {
+  flex: 1;
+  min-width: 0;
+  height: 74rpx;
+  background: #f4f4f7;
+  border-radius: 9999rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  margin-right: 14rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  height: 100%;
+  font-size: 26rpx;
+  color: #111111;
+}
+
+.search-placeholder {
+  color: #aeafb8;
+  font-size: 26rpx;
+}
+
+.search-btn {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111111;
+  padding: 10rpx 8rpx;
+  flex-shrink: 0;
+}
+
+/* 一级大分类横滑条 */
+.primary-scroll {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-bottom: 18rpx;
+}
+
+.primary-track {
+  display: inline-flex;
+  gap: 36rpx;
+  padding: 6rpx 4rpx;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.primary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.primary-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #76767b;
+  transition: all 0.15s ease;
+}
+
+.primary-item.active .primary-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #111111;
+}
+
+/* 二级胶囊药丸标签条 */
+.sub-scroll {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sub-track {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 4rpx 4rpx 6rpx;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.sub-pill {
+  padding: 12rpx 30rpx;
+  border-radius: 9999rpx;
+  background: #f4f4f7;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sub-pill:active {
+  transform: scale(0.97);
+}
+
+.sub-pill.active {
+  background: #111111;
+  box-shadow: 0 4rpx 16rpx rgba(17, 17, 17, 0.15);
+}
+
+.sub-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #666666;
+}
+
+.sub-pill.active .sub-text {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 加载与空状态 */
+.center-loading,
+.center-empty {
+  padding: 220rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 双列错落瀑布流容器 */
+.waterfall-container {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+  padding: 20rpx 24rpx 40rpx;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.waterfall-col {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  box-sizing: border-box;
+}
+
+/* 模版卡片 */
+.wf-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease;
+}
+
+.wf-card:active {
+  transform: scale(0.985);
+}
+
+.wf-cover-box {
+  position: relative;
+  width: 100%;
+  background: #f0f0f3;
+}
+
+.wf-cover-img {
+  width: 100%;
+  display: block;
+  background-color: #f0f0f3;
+}
+
+.wf-badge {
+  position: absolute;
+  top: 14rpx;
+  right: 14rpx;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 18rpx;
+  font-weight: 500;
+  padding: 4rpx 14rpx;
+  border-radius: 9999rpx;
+}
+
+.wf-body {
+  padding: 14rpx 16rpx 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wf-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #111111;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wf-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wf-author {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.author-avatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #e5e5ea;
+  flex-shrink: 0;
+}
+
+.author-name {
+  font-size: 22rpx;
+  color: #76767b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-like {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+  padding: 4rpx 0;
+}
+
+.like-num {
+  font-size: 22rpx;
+  color: #8e8e93;
+}
+
+.like-num.liked {
+  color: #ff3b30;
+  font-weight: 600;
+}
+
+/* 底部状态 */
+.footer-state {
+  padding: 40rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.foot-tip {
+  font-size: 22rpx;
+  color: #aeafb8;
+}
+
+/* 荧光绿悬浮加号 */
+.fab-btn {
+  position: fixed;
+  right: 36rpx;
+  bottom: calc(140rpx + env(safe-area-inset-bottom));
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 10rpx 32rpx rgba(212, 248, 38, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  transition: transform 0.15s ease;
+}
+
+.fab-btn:active {
+  transform: scale(0.92);
+}

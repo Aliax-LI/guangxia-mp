@@ -1,0 +1,40 @@
+<view class="logs-page page-pad">
+  <text class="page-tip">修图消耗的积分都会记在这里</text>
+
+  <view wx:if="{{loading && !items.length}}" class="center-state">
+    <t-loading theme="circular" size="56rpx" text="加载中…" />
+  </view>
+
+  <view wx:elif="{{!items.length && !loading}}" class="empty-wrap">
+    <view class="empty-icon">
+      <t-icon name="image-edit" size="64rpx" color="#111111" />
+    </view>
+    <text class="empty-title">还没有使用记录</text>
+    <text class="empty-sub">完成一次 AI 修图后会自动出现在这里</text>
+    <view class="empty-btn" bindtap="onGoEdit">去修图</view>
+  </view>
+
+  <view wx:else class="record-sheet xt-card">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="record-row {{index < items.length - 1 ? 'record-row--line' : ''}}"
+    >
+      <view class="record-icon">
+        <t-icon name="image" size="40rpx" color="#111111" />
+      </view>
+      <view class="record-main">
+        <text class="record-title">{{item.title}}</text>
+        <text class="record-meta">{{item.meta}}</text>
+      </view>
+      <view class="record-cost-col">
+        <text class="record-cost">{{item.costDisplay}}</text>
+        <text class="record-cost-label">积分</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading && items.length}}" class="foot-loading">
+    <t-loading theme="dots" size="40rpx" text="加载更多" />
+  </view>
+</view>

@@ -1,0 +1,146 @@
+.logs-page {
+  padding-top: 16rpx;
+  padding-bottom: 64rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--td-bg-color-page, #f4f4f7);
+}
+
+.page-tip {
+  display: block;
+  font-size: 26rpx;
+  color: #8e8e93;
+  line-height: 1.5;
+  margin-bottom: 28rpx;
+  padding: 0 4rpx;
+}
+
+.center-state {
+  padding: 200rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-wrap {
+  margin-top: 120rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 48rpx;
+}
+
+.empty-icon {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 36rpx;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
+}
+
+.empty-title {
+  margin-top: 32rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111111;
+}
+
+.empty-sub {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #8e8e93;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.empty-btn {
+  margin-top: 40rpx;
+  height: 88rpx;
+  padding: 0 56rpx;
+  border-radius: 9999rpx;
+  background: #111111;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-btn:active {
+  opacity: 0.85;
+}
+
+.record-sheet {
+  padding: 8rpx 0;
+}
+
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx 28rpx;
+}
+
+.record-row--line {
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+.record-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(145deg, #f8fde8 0%, #eef9c4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.record-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.record-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111111;
+}
+
+.record-meta {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.record-cost-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.record-cost {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111111;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-cost-label {
+  font-size: 20rpx;
+  color: #aeafb8;
+}
+
+.foot-loading {
+  padding: 36rpx 0;
+  display: flex;
+  justify-content: center;
+}

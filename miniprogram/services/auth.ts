@@ -4,6 +4,7 @@ import {
   getAccessToken,
   getApiKey,
   setAccessToken,
+  setAccessTokenExpiry,
   setApiKey,
   setApiKeyId,
   setRefreshToken,
@@ -40,6 +41,7 @@ type KeyList = {
 
 function saveAuthSession(res: AuthResponse, email: string) {
   setAccessToken(res.access_token)
+  setAccessTokenExpiry(res.expires_in, res.access_token)
   if (res.refresh_token) setRefreshToken(res.refresh_token)
   setUserEmail(email)
 }

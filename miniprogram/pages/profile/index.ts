@@ -129,7 +129,15 @@ Page({
         totalCostDisplay: formatPointsFromUsd(usage.totalCost),
       })
     } catch {
-      /* 保持当前展示，避免账户信息加载失败影响页面 */
+      if (!isLoggedIn()) {
+        this.setData({
+          loggedIn: false,
+          balanceDisplay: '--',
+          usageCount: 0,
+          totalCostDisplay: '0',
+          accountText: '未登录',
+        })
+      }
     }
   },
 

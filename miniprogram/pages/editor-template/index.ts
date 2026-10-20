@@ -161,28 +161,26 @@ Page({
   async onGenerate() {
     if (this.data.generating) return
     const { detail, imagePath } = this.data
+    
+    // 严格检查：requiresImage 为 true 时必须上传图片
     if (detail.requiresImage && !imagePath) {
       wx.showToast({ title: '请上传照片', icon: 'none' })
       return
     }
-    this.setData({ generating: true })
-    try {
-      await ensureApiKey()
-      const result = await runGenerate({
-        prompt: detail.prompt,
-        imagePath: imagePath || undefined,
-      })
-      const output = await persistGenerateResult(result)
-      setResultPaths(imagePath || detail.sourceCoverUrl || detail.coverUrl, output)
-      wx.navigateTo({ url: '/pages/result/index' })
-    } catch (e) {
-      wx.showToast({
-        title: e instanceof Error ? e.message : '生成失败',
-        icon: 'none',
-        duration: 3000,
-      })
-    } finally {
-      this.setData({ generating: false })
+    
+    // 跳转到醒图风格的生图页面
+    const image = imagePath || detail.sourceCoverUrl || detail.coverUrl || ''
+    const prompt = encodeURIComponent(detail.prompt || '')
+    const templateId = detail.id
+    
+    // 如果没有图片也没有 prompt，提示错误
+    if (!image && !prompt) {
+      wx.showToast({ title: '模板数据异常，请重试', icon: 'none' })
+      return
     }
+    
+    wx.navigateTo({ 
+      url: `/pages/generate/index?image=${image}&prompt=${prompt}&templateId=${templateId}` 
+    })
   },
 })

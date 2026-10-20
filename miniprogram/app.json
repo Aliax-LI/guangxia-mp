@@ -6,6 +6,7 @@
     "pages/login/index",
     "pages/editor-edit/index",
     "pages/editor-template/index",
+    "pages/generate/index",
     "pages/result/index",
     "pages/logs/index"
   ],

@@ -91,39 +91,71 @@ export function generateFromImage(input: GenerateInput): Promise<GenerateResult>
   if (!imagePath) return Promise.reject(new Error('请选择图片'))
 
   return new Promise((resolve, reject) => {
-    wx.uploadFile({
-      url: `${SUB2API_BASE_URL}/v1/images/edits`,
-      filePath: imagePath,
-      name: 'image',
-      formData: {
-        model: IMAGE_MODEL,
-        prompt: input.prompt,
-        n: '1',
-        size: input.size || 'auto',
-      },
-      header: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      success(res) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            const data = JSON.parse(res.data)
-            resolve(parseImageResponse(data))
-          } catch (e) {
-            reject(e instanceof Error ? e : new Error('解析响应失败'))
+    // 检查是否是网络图片
+    const isNetworkImage = imagePath.startsWith('http://') || imagePath.startsWith('https://')
+    
+    if (isNetworkImage) {
+      // 如果是网络图片，先下载到本地
+      wx.downloadFile({
+        url: imagePath,
+        success(downloadRes) {
+          if (downloadRes.statusCode === 200) {
+            // 下载成功，使用临时文件路径上传
+            uploadImageFile(downloadRes.tempFilePath, input, apiKey, resolve, reject)
+          } else {
+            reject(new Error(`下载图片失败: HTTP ${downloadRes.statusCode}`))
           }
-        } else {
-          try {
-            reject(new Error(parseGatewayError(JSON.parse(res.data))))
-          } catch {
-            reject(new Error(`HTTP ${res.statusCode}`))
-          }
+        },
+        fail(err) {
+          reject(new Error(err.errMsg || '下载图片失败'))
+        },
+      })
+    } else {
+      // 如果是本地路径，直接上传
+      uploadImageFile(imagePath, input, apiKey, resolve, reject)
+    }
+  })
+}
+
+function uploadImageFile(
+  filePath: string,
+  input: GenerateInput,
+  apiKey: string,
+  resolve: (value: GenerateResult) => void,
+  reject: (reason: Error) => void
+) {
+  wx.uploadFile({
+    url: `${SUB2API_BASE_URL}/v1/images/edits`,
+    filePath,
+    name: 'image',
+    formData: {
+      model: IMAGE_MODEL,
+      prompt: input.prompt,
+      n: '1',
+      size: input.size || 'auto',
+    },
+    header: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    success(res) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        try {
+          const data = JSON.parse(res.data)
+          resolve(parseImageResponse(data))
+        } catch (e) {
+          reject(e instanceof Error ? e : new Error('解析响应失败'))
         }
-      },
-      fail(err) {
-        reject(new Error(err.errMsg || '上传生图失败'))
-      },
-    })
+      } else {
+        try {
+          reject(new Error(parseGatewayError(JSON.parse(res.data))))
+        } catch {
+          reject(new Error(`HTTP ${res.statusCode}`))
+        }
+      }
+    },
+    fail(err) {
+      reject(new Error(err.errMsg || '上传生图失败'))
+    },
   })
 }
 

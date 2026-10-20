@@ -49,7 +49,7 @@ Page({
     nicknameEditing: false,
     nicknameFocus: false,
     activeTab: 'works' as 'works' | 'dynamics' | 'starred' | 'liked',
-    worksList: DEFAULT_WORKS,
+    worksList: [] as Array<{ id: string; url: string; isDraft?: boolean }>,  // 初始化为空数组
   },
 
   onShow() {
@@ -111,6 +111,13 @@ Page({
       accountText: email || '未登录',
     })
 
+    // 加载作品集数据
+    if (this.data.activeTab === 'works') {
+      this.loadWorks()
+    } else if (this.data.activeTab === 'liked') {
+      this.loadLikedWorks()
+    }
+
     if (!loggedIn) return
 
     try {
@@ -139,6 +146,69 @@ Page({
         })
       }
     }
+  },
+
+  async loadWorks() {
+    try {
+      const userId = wx.getStorageSync('user_openid') || 'demo_user'
+      const res = await wx.cloud.callFunction({
+        name: 'userworks',
+        data: {
+          action: 'getWorks',
+          userId,
+          page: 1,
+          pageSize: 20,
+        },
+      })
+
+      if (res.result && res.result.code === 0) {
+        // 云函数调用成功，显示返回的数据（可能为空）
+        const works = (res.result.data.items || []).map((item: any) => ({
+          id: item.id,
+          url: item.url,
+          isDraft: false,
+        }))
+        
+        this.setData({ worksList: works })
+        return
+      }
+    } catch (e) {
+      console.error('加载作品集失败', e)
+    }
+    
+    // 云函数调用失败时，显示空列表
+    this.setData({ worksList: [] })
+  },
+
+  async loadLikedWorks() {
+    try {
+      const userId = wx.getStorageSync('user_openid') || 'demo_user'
+      const res = await wx.cloud.callFunction({
+        name: 'userworks',
+        data: {
+          action: 'getLiked',
+          userId,
+          page: 1,
+          pageSize: 20,
+        },
+      })
+
+      if (res.result && res.result.code === 0) {
+        const works = res.result.data.items.map((item: any) => ({
+          id: item.workId,
+          url: item.url,
+          isDraft: false,
+        }))
+        
+        this.setData({ worksList: works })
+        return
+      }
+    } catch (e) {
+      console.error('加载点赞列表失败', e)
+    }
+    
+    // 点赞列表为空时，显示空状态
+    this.setData({ worksList: [] })
   },
 
   async onEditProfile() {
@@ -209,6 +279,16 @@ Page({
   onSwitchTab(e: any) {
     const tab = e.currentTarget.dataset.tab
     this.setData({ activeTab: tab })
+    
+    // 切换 Tab 时加载对应数据
+    if (tab === 'works') {
+      void this.loadWorks()
+    } else if (tab === 'liked') {
+      void this.loadLikedWorks()
+    } else {
+      // 动态和收藏暂时显示空状态
+      this.setData({ worksList: [] })
+    }
   },
 
   onCopyAccount() {
@@ -241,6 +321,91 @@ Page({
     const current = e.currentTarget.dataset.url as string
     const urls = this.data.worksList.map((w) => w.url)
     wx.previewImage({ current, urls })
+  },
+
+  onLongPressWork(e: any) {
+    const workId = e.currentTarget.dataset.id as string
+    const workUrl = e.currentTarget.dataset.url as string
+    
+    wx.showActionSheet({
+      itemList: ['删除作品', '保存到相册'],
+      itemColor: '#111111',
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 删除作品
+          this.deleteWork(workId)
+        } else if (res.tapIndex === 1) {
+          // 保存到相册
+          this.saveToAlbum(workUrl)
+        }
+      },
+    })
+  },
+
+  async deleteWork(workId: string) {
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除这张作品吗？',
+      confirmText: '删除',
+      confirmColor: '#FF0000',
+      success: async (res) => {
+        if (!res.confirm) return
+
+        wx.showLoading({ title: '删除中...' })
+        try {
+          const userId = wx.getStorageSync('user_openid') || 'demo_user'
+          await wx.cloud.callFunction({
+            name: 'userworks',
+            data: {
+              action: 'deleteWork',
+              userId,
+              workId,
+            },
+          })
+
+          wx.hideLoading()
+          wx.showToast({ title: '已删除', icon: 'success' })
+
+          // 刷新作品列表
+          void this.loadWorks()
+        } catch (e: any) {
+          wx.hideLoading()
+          console.error('删除作品失败:', e)
+          wx.showToast({
+            title: e.errMsg || '删除失败',
+            icon: 'none',
+          })
+        }
+      },
+    })
+  },
+
+  saveToAlbum(imageUrl: string) {
+    wx.showLoading({ title: '保存中...' })
+    wx.saveImageToPhotosAlbum({
+      filePath: imageUrl,
+      success: () => {
+        wx.hideLoading()
+        wx.showToast({ title: '已保存到相册', icon: 'success' })
+      },
+      fail: (err) => {
+        wx.hideLoading()
+        if (err.errMsg.includes('auth deny')) {
+          wx.showModal({
+            title: '需要相册权限',
+            content: '请在设置中开启相册权限',
+            confirmText: '去设置',
+            success: (res) => {
+              if (res.confirm) {
+                wx.openSetting()
+              }
+            },
+          })
+        } else {
+          wx.showToast({ title: '保存失败', icon: 'none' })
+        }
+      },
+    })
   },
 
   onOpenDraft() {

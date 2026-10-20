@@ -52,20 +52,20 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "manifest-output"
+        "value": "manifest-output",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "scripts"
+        "value": "scripts",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "database-export"
+        "value": "database-export",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "cloud-storage-assets"
+        "value": "cloud-storage-assets",
+        "type": "folder"
       }
     ],
     "include": []

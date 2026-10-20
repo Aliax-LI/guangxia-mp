@@ -164,9 +164,11 @@
       wx:key="id"
       class="work-grid-item"
       data-url="{{item.url}}"
+      data-id="{{item.id}}"
       bindtap="onPreviewWork"
+      bindlongpress="onLongPressWork"
     >
-      <image class="work-thumb" src="{{item.url}}" mode="aspectFill" lazy-load />
+      <image class="work-thumb" src="{{item.url}}" mode="aspectFill" lazy-load show-menu-by-longpress />
 
       <!-- 第一个草稿箱特殊标识 -->
       <view wx:if="{{item.isDraft}}" class="draft-overlay" catchtap="onOpenDraft">

@@ -6,13 +6,7 @@ import {
   type TemplateCategory,
   type TemplateListItem,
 } from '../../services/template'
-import { setEditorImage } from '../../utils/session'
-import { pickOneImage } from '../../utils/pick-image'
-import {
-  onPagePrivacyAgree,
-  openPrivacyContractPage,
-  refreshPagePrivacy,
-} from '../../utils/privacy-page'
+import { requestOpenComposer } from '../../utils/compose'
 
 Page({
   data: {
@@ -29,10 +23,6 @@ Page({
     allItems: [] as TemplateListItem[],
     page: 1,
     hasMore: true,
-    privacyOk: false,
-    showPrivacyPanel: false,
-    privacyContractName: '用户隐私保护指引',
-    privacyDesc: '',
   },
 
   onLoad() {
@@ -40,7 +30,6 @@ Page({
   },
 
   onShow() {
-    void refreshPagePrivacy((patch) => this.setData(patch), 'picker')
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ value: '/pages/templates/index' })
     }
@@ -237,26 +226,8 @@ Page({
     }
   },
 
-  /** 悬浮加号按钮快速触发相册创作 */
-  onOpenPrivacyContract() {
-    openPrivacyContractPage()
-  },
-
-  onPrivacyAgree() {
-    onPagePrivacyAgree(this, 'templates-agree-btn', () => this.onFabClick(true))
-  },
-
-  onFabClick(skipPrivacyCheck?: boolean | WechatMiniprogram.BaseEvent) {
-    const skip = skipPrivacyCheck === true
-    if (!skip && !this.data.privacyOk) {
-      this.setData({ showPrivacyPanel: true })
-      return
-    }
-    pickOneImage('any')
-      .then((path) => {
-        setEditorImage(path)
-        wx.switchTab({ url: '/pages/edit/index' })
-      })
-      .catch(() => {})
+  onFabClick() {
+    requestOpenComposer()
+    wx.switchTab({ url: '/pages/edit/index' })
   },
 })

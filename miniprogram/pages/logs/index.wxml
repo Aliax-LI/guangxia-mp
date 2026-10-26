@@ -1,5 +1,5 @@
 <view class="logs-page page-pad">
-  <text class="page-tip">修图消耗的积分都会记在这里</text>
+  <text class="page-tip">生成消耗的积分都会记在这里</text>
 
   <view wx:if="{{loading && !items.length}}" class="center-state">
     <t-loading theme="circular" size="56rpx" text="加载中…" />
@@ -10,8 +10,8 @@
       <t-icon name="image-edit" size="64rpx" color="#111111" />
     </view>
     <text class="empty-title">还没有使用记录</text>
-    <text class="empty-sub">完成一次 AI 修图后会自动出现在这里</text>
-    <view class="empty-btn" bindtap="onGoEdit">去修图</view>
+    <text class="empty-sub">完成一次生成后会自动出现在这里</text>
+    <view class="empty-btn" bindtap="onGoEdit">去创作</view>
   </view>
 
   <view wx:else class="record-sheet xt-card">

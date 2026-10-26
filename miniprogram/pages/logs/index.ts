@@ -64,7 +64,7 @@ function mapLogRow(it: UsageLogItem): Row {
 
 function friendlyTitle(it: UsageLogItem): string {
   const rt = String(it.request_type || '').toLowerCase()
-  if (rt.includes('template') || rt.includes('灵感')) return '灵感模版'
+  if (rt.includes('template') || rt.includes('灵感')) return '灵感'
   if (rt.includes('edit') || rt.includes('修图')) return '智能修图'
   return 'AI 修图'
 }

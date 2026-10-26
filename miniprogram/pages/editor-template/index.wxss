@@ -196,7 +196,7 @@
 }
 
 .prompt-scroll {
-  margin-top: 12rpx;
+  margin-top: 20rpx;
   max-height: 320rpx;
 }
 
@@ -337,8 +337,7 @@
   right: 0;
   bottom: 0;
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
+  background: #ffffff;
   border-top: 1rpx solid #eeeeef;
   z-index: 100;
   box-sizing: border-box;
@@ -346,4 +345,12 @@
 
 .submit-btn {
   width: 100%;
+}
+
+.lime-dot {
+  width: 16rpx;
+  height: 16rpx;
+  margin-right: 14rpx;
+  border-radius: 50%;
+  background: #d4f826;
 }

@@ -63,7 +63,7 @@
   </view>
 
   <view wx:elif="{{!leftColumn.length && !rightColumn.length}}" class="center-empty">
-    <t-empty description="暂无相关灵感模版" />
+    <t-empty description="暂无相关灵感" />
   </view>
 
   <!-- 真正的错落双列瀑布流 -->
@@ -88,9 +88,6 @@
             data-column="left"
             binderror="onCoverError"
           />
-          <view wx:if="{{item.requiresImage}}" class="wf-badge">
-            <text>需传图</text>
-          </view>
         </view>
         <view class="wf-body">
           <text class="wf-title">{{item.title}}</text>
@@ -132,9 +129,6 @@
             data-column="right"
             binderror="onCoverError"
           />
-          <view wx:if="{{item.requiresImage}}" class="wf-badge">
-            <text>需传图</text>
-          </view>
         </view>
         <view class="wf-body">
           <text class="wf-title">{{item.title}}</text>
@@ -159,30 +153,12 @@
 
   <!-- 底部触底状态 -->
   <view class="footer-state">
-    <t-loading wx:if="{{loadingMore}}" theme="dots" size="36rpx" text="加载更多模版" />
+    <t-loading wx:if="{{loadingMore}}" theme="dots" size="36rpx" text="加载更多灵感" />
     <text wx:elif="{{!hasMore && (leftColumn.length || rightColumn.length)}}" class="foot-tip">已经到底啦 · 更多精彩稍后更新</text>
   </view>
 
   <!-- 荧光绿悬浮加号 -->
   <view class="fab-btn" bindtap="onFabClick">
     <t-icon name="add" size="52rpx" color="#111111" />
-  </view>
-
-  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
-    <view class="privacy-card">
-      <text class="privacy-title">用户隐私保护提示</text>
-      <text class="privacy-desc">{{privacyDesc}}</text>
-      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
-      <view class="privacy-actions">
-        <button
-          id="templates-agree-btn"
-          class="privacy-agree-btn"
-          open-type="agreePrivacyAuthorization"
-          bindagreeprivacyauthorization="onPrivacyAgree"
-        >
-          同意并继续
-        </button>
-      </view>
-    </view>
   </view>
 </view>

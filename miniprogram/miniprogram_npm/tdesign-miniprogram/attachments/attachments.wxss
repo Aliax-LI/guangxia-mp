@@ -21,12 +21,12 @@
 .t-attachments--chatting.all_images{width:100%;}
 .t-attachments--chatting.all_images .file-image.t-attachments__file{background-color:transparent!important;}
 .t-attachments--chatting.all_images .file-image{width:auto;height:auto;}
-.t-attachments--chatting.all_images .file-image .image{max-width:400rpx;max-height:400rpx;border-radius:var(--td-radius-extraLarge,24rpx);}
+.t-attachments--chatting.all_images .file-image .image{width:420rpx;height:auto;max-width:100%;max-height:none;border-radius:var(--td-radius-extraLarge,24rpx);}
 .t-attachments--chatting.all_files{width:auto;}
 .t-attachments--chatting.all_files .t-attachments__files:not(:last-child){margin-bottom:16rpx;}
 .t-attachments--chatting.all_files .file-image.t-attachments__file{background-color:transparent!important;}
 .t-attachments--chatting.all_files .file-image{width:auto;height:auto;}
-.t-attachments--chatting.all_files .file-image .image{max-width:400rpx;max-height:400rpx;border-radius:var(--td-radius-extraLarge,24rpx);}
+.t-attachments--chatting.all_files .file-image .image{width:420rpx;height:auto;max-width:100%;max-height:none;border-radius:var(--td-radius-extraLarge,24rpx);}
 .t-attachments--chatting.all_files .t-attachments__files{margin-left:0;}
 .t-attachments--chatting.all_files .t-attachments__scrollable{display:contents;}
 .t-attachments--chatting.all_files .file.t-attachments__file{width:352rpx;}

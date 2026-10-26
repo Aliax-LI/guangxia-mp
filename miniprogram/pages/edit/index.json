@@ -1,5 +1,8 @@
 {
-  "navigationBarTitleText": "修图",
+  "navigationBarTitleText": "光匣",
   "renderer": "webview",
-  "usingComponents": {}
+  "usingComponents": {
+    "conversation": "/components/conversation/index",
+    "t-chat-sender": "tdesign-miniprogram/chat-sender/chat-sender"
+  }
 }

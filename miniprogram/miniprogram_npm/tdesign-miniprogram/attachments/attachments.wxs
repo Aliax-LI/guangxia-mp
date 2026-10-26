@@ -9,8 +9,9 @@ function imageStyle(imageProps) {
   }
   // 兜底逻辑：没有传入 width 和 height 时，使用默认最大宽高尺寸
   return utils._style({
-    width: '400rpx',
-    height: '400rpx',
+    width: '420rpx',
+    height: 'auto',
+    maxWidth: '100%',
   });
 }
 
@@ -18,8 +19,7 @@ function getImageMode(imageProps) {
   if (imageProps && imageProps.width && imageProps.height) {
     return imageProps.width > imageProps.height ? 'widthFix' : 'heightFix';
   }
-  // 兜底逻辑：没有传入 width 和 height 时，使用 aspectFit 保持图片比例
-  return imageProps && imageProps.mode ? imageProps.mode : 'scaleToFill';
+  return imageProps && imageProps.mode ? imageProps.mode : 'widthFix';
 }
 
 function getFileTypeClass(inChat, files) {

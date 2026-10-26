@@ -6,7 +6,6 @@
     "pages/login/index",
     "pages/editor-edit/index",
     "pages/editor-template/index",
-    "pages/generate/index",
     "pages/result/index",
     "pages/logs/index"
   ],
@@ -25,7 +24,7 @@
     "list": [
       {
         "pagePath": "pages/edit/index",
-        "text": "修图",
+        "text": "对话",
         "iconPath": "assets/icons/edit.png",
         "selectedIconPath": "assets/icons/edit-active.png"
       },
@@ -50,5 +49,10 @@
   },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
-  "__usePrivacyCheck__": true
+  "__usePrivacyCheck__": true,
+  "permission": {
+    "scope.writePhotosAlbum": {
+      "desc": "用于把生成的图片保存到相册"
+    }
+  }
 }

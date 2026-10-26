@@ -1,6 +1,3 @@
-import { ensureApiKey } from '../../services/auth'
-import { runGenerate } from '../../services/image-gen'
-import { persistGenerateResult } from '../../utils/image-result'
 import {
   buildTemplateGallery,
   fetchTemplateDetail,
@@ -8,13 +5,7 @@ import {
   inferRequiresImage,
   type TemplateDetail,
 } from '../../services/template'
-import { setResultPaths } from '../../utils/session'
-import { pickOneImage } from '../../utils/pick-image'
-import {
-  onPagePrivacyAgree,
-  openPrivacyContractPage,
-  refreshPagePrivacy,
-} from '../../utils/privacy-page'
+import { setComposerDraft } from '../../utils/compose'
 
 Page({
   data: {
@@ -25,16 +16,6 @@ Page({
     galleryHeightPx: 320,
     galleryHeightByIndex: {} as Record<number, number>,
     metaDate: '',
-    imagePath: '',
-    generating: false,
-    privacyOk: false,
-    showPrivacyPanel: false,
-    privacyContractName: '用户隐私保护指引',
-    privacyDesc: '',
-  },
-
-  onShow() {
-    void refreshPagePrivacy((patch) => this.setData(patch), 'picker')
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -69,7 +50,6 @@ Page({
     }
   },
 
-  /** 瀑布流 aspectRatio 即高/宽，用于首屏占位高度 */
   estimateGalleryHeight(aspectRatio?: number): number {
     const sys = wx.getSystemInfoSync()
     const padPx = (64 / 750) * sys.windowWidth
@@ -139,48 +119,13 @@ Page({
     })
   },
 
-  onOpenPrivacyContract() {
-    openPrivacyContractPage()
-  },
-
-  onPrivacyAgree() {
-    onPagePrivacyAgree(this, 'editor-tpl-agree-btn', () => this.onChooseImage(true))
-  },
-
-  onChooseImage(skipPrivacyCheck?: boolean | WechatMiniprogram.BaseEvent) {
-    const skip = skipPrivacyCheck === true
-    if (!skip && !this.data.privacyOk) {
-      this.setData({ showPrivacyPanel: true })
-      return
-    }
-    pickOneImage('any')
-      .then((path) => this.setData({ imagePath: path }))
-      .catch(() => {})
-  },
-
-  async onGenerate() {
-    if (this.data.generating) return
-    const { detail, imagePath } = this.data
-    
-    // 严格检查：requiresImage 为 true 时必须上传图片
-    if (detail.requiresImage && !imagePath) {
-      wx.showToast({ title: '请上传照片', icon: 'none' })
-      return
-    }
-    
-    // 跳转到醒图风格的生图页面
-    const image = imagePath || detail.sourceCoverUrl || detail.coverUrl || ''
-    const prompt = encodeURIComponent(detail.prompt || '')
-    const templateId = detail.id
-    
-    // 如果没有图片也没有 prompt，提示错误
-    if (!image && !prompt) {
-      wx.showToast({ title: '模板数据异常，请重试', icon: 'none' })
-      return
-    }
-    
-    wx.navigateTo({ 
-      url: `/pages/generate/index?image=${image}&prompt=${prompt}&templateId=${templateId}` 
+  onMakeSame() {
+    const inspiration = this.data.detail
+    setComposerDraft({
+      prompt: inspiration.prompt || '',
+      templateId: inspiration.id ? String(inspiration.id) : '',
+      templateTitle: inspiration.title || '',
     })
+    wx.switchTab({ url: '/pages/edit/index' })
   },
 })

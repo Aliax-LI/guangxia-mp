@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "t-chat-message": "tdesign-miniprogram/chat-message/chat-message",
+    "t-chat-markdown": "tdesign-miniprogram/chat-markdown/chat-markdown"
+  }
+}

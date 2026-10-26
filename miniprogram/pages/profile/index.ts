@@ -468,7 +468,7 @@ Page({
   onOpenHelp() {
     wx.showModal({
       title: '使用帮助',
-      content: '光匣是一款 AI 质感修图小程序，灵感模版与智能修图助你快速出片，账户积分由 Sub2API 统一管理。',
+      content: '光匣是一款 AI 生图小程序。从灵感做同款，或在对话里直接描述画面。账户积分由 Sub2API 统一管理。',
       showCancel: false,
       confirmColor: '#111111',
     })

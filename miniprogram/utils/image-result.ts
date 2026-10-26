@@ -1,18 +1,19 @@
-import type { GenerateResult } from '../services/image-gen'
+import type { GeneratedImage, GenerateResult } from '../services/image-gen'
 
-export function persistGenerateResult(result: GenerateResult): Promise<string> {
-  // 如果返回的是 URL，直接使用
-  if (result.imageUrl) {
-    console.log('使用 imageUrl:', result.imageUrl)
-    return Promise.resolve(result.imageUrl)
-  }
-  
-  // 如果返回的是 base64，保存到本地
+function imageExt(b64: string): string {
+  if (b64.startsWith('/9j/')) return 'jpg'
+  if (b64.startsWith('UklG')) return 'webp'
+  return 'png'
+}
+
+export function persistGenerateResult(result: GeneratedImage): Promise<string> {
+  if (result.imageUrl) return Promise.resolve(result.imageUrl)
+
   if (result.b64) {
     const fs = wx.getFileSystemManager()
     const timestamp = Date.now()
-    const random = Math.random().toString(36).substr(2, 9)
-    const path = `${wx.env.USER_DATA_PATH}/gen_${timestamp}_${random}.png`
+    const random = Math.random().toString(36).slice(2, 9)
+    const path = `${wx.env.USER_DATA_PATH}/gen_${timestamp}_${random}.${imageExt(result.b64)}`
     
     console.log('保存 base64 图片到:', path)
     
@@ -34,4 +35,15 @@ export function persistGenerateResult(result: GenerateResult): Promise<string> {
   }
   
   return Promise.reject(new Error('无图片结果'))
+}
+
+export async function persistGenerateOutputs(result: GenerateResult): Promise<string[]> {
+  const list = result.outputs?.length
+    ? result.outputs
+    : [{ imageUrl: result.imageUrl, b64: result.b64 }]
+  const paths: string[] = []
+  for (const item of list) {
+    paths.push(await persistGenerateResult(item))
+  }
+  return paths
 }

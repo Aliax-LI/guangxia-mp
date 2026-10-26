@@ -2,7 +2,7 @@
 .t-attachments+.t-chat-content:not(:empty),.t-chat-thinking+.t-chat-content:not(:empty){margin-top:24rpx;}
 .t-chat-message{display:flex;margin-bottom:var(--td-spacer-2,32rpx);}
 .t-chat-message .t-chat-message__avatar{flex:0 0 auto;padding-top:0rpx;}
-.t-chat-message .t-chat-message__content{flex:1 1 auto;width:1%;}
+.t-chat-message .t-chat-message__content{flex:1 1 auto;width:1%;min-width:0;max-width:100%;overflow:hidden;}
 .t-chat-message .t-chat-message__content--base{padding-top:var(--td-spacer-3,48rpx);}
 .t-chat-message .t-chat-message__detail{max-width:100%;box-sizing:border-box;display:contents;}
 .t-chat-message__header .t-chat-message__avatar{padding-top:calc(44rpx + var(--td-spacer,16rpx));}

@@ -1,129 +1,146 @@
-<view class="edit-page">
-  <!-- 顶部品牌标题栏 -->
-  <view class="header">
-    <view class="header-left">
-      <view class="brand-badge">
-        <view class="brand-orb" />
-        <text class="brand-title">AI 修图</text>
-      </view>
-      <text class="brand-sub">胶片级质感 · AI 画质重塑</text>
-    </view>
-  </view>
-
-  <!-- 照片导入区域 / 预览区域 -->
-  <view wx:if="{{!imagePath}}" class="hero-import xt-card">
-    <view class="hero-import-content" bindtap="onPickImage" data-source="any">
-      <view class="import-badge">
-        <t-icon name="image-add" size="52rpx" color="#111111" />
-      </view>
-      <view class="import-info">
-        <text class="import-title">导入照片开启修图</text>
-        <text class="import-desc">支持相册选图或相机实拍，人像/风景/质感重绘</text>
+<view class="home" style="{{keyboard ? 'padding-bottom:' + keyboard + 'px' : ''}}">
+  <view wx:if="{{!turns.length}}" class="stage">
+    <view class="hello-block">
+      <text class="hello">有什么我能帮你的吗？</text>
+      <view class="seg">
+        <view class="seg-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" bindtap="onPickTool">对话</view>
+        <view class="seg-item {{tool === 'image' ? 'on' : ''}}" data-tool="image" bindtap="onPickTool">画图</view>
       </view>
     </view>
-    <view class="import-actions">
-      <view class="action-pill" catchtap="onPickImage" data-source="album">
-        <t-icon name="photo" size="32rpx" color="#FFFFFF" />
-        <text class="pill-text">相册选择</text>
-      </view>
-      <view class="action-pill" catchtap="onPickImage" data-source="camera">
-        <t-icon name="camera" size="32rpx" color="#FFFFFF" />
-        <text class="pill-text">相机拍照</text>
-      </view>
-    </view>
-  </view>
-
-  <view wx:else class="preview-box xt-card">
-    <image class="preview-img" src="{{imagePath}}" mode="aspectFill" />
-    <view class="preview-mask">
-      <view class="preview-tag">
-        <view class="live-dot" />
-        <text>原图已就绪</text>
-      </view>
-      <view class="preview-btn-group">
-        <view class="preview-chip" catchtap="onPickImage" data-source="any">
-          <t-icon name="swap" size="28rpx" color="#FFFFFF" />
-          <text>更换照片</text>
-        </view>
-        <view class="preview-close-btn" catchtap="onClearImage">
-          <t-icon name="close" size="28rpx" color="#FFFFFF" />
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 风格预设卡片列表 -->
-  <view class="section">
-    <view class="section-head">
-      <text class="section-title">风格预设</text>
-      <text class="section-tip">选择心仪质感</text>
-    </view>
-    <scroll-view scroll-x class="presets-scroll" enable-flex>
-      <view class="presets-track">
-        <view
-          wx:for="{{presets}}"
-          wx:key="id"
-          class="preset-card {{selectedPresetId === item.id ? 'active' : ''}}"
-          data-id="{{item.id}}"
-          bindtap="onSelectPreset"
-        >
-          <view class="preset-icon-wrap">
-            <t-icon name="{{item.icon}}" size="40rpx" color="{{selectedPresetId === item.id ? '#111111' : '#76767B'}}" />
-          </view>
-          <text class="preset-name">{{item.label}}</text>
-          <text class="preset-tag-text">{{item.tag}}</text>
-          <view wx:if="{{selectedPresetId === item.id}}" class="preset-check">
-            <t-icon name="check" size="20rpx" color="#111111" />
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- 补充描述词区域 -->
-  <view class="section">
-    <view class="section-head">
-      <text class="section-title">描述词调整 (Prompt)</text>
-      <text wx:if="{{promptExtra}}" class="clear-link" bindtap="onClearPrompt">清空</text>
-    </view>
-    <view class="prompt-box xt-card">
-      <textarea
-        class="prompt-textarea"
-        placeholder="例如：冷白通透皮肤、复古暖光、电影大片构图…"
-        placeholder-class="prompt-placeholder"
-        maxlength="800"
-        value="{{promptExtra}}"
-        bindinput="onPromptChange"
-      />
-      <view class="prompt-footer">
-        <text class="word-counter">{{promptExtra.length}} / 800</text>
-      </view>
-    </view>
-
-    <!-- 快捷关键词胶囊 -->
-    <view class="quick-tags-wrap">
+    <view wx:if="{{!keyboard}}" class="recs">
+      <text class="recs-k">为你推荐</text>
       <view
-        wx:for="{{quickTags}}"
+        wx:for="{{tool === 'image' ? imageIdeas : chatIdeas}}"
         wx:key="*this"
-        class="quick-pill"
-        data-tag="{{item}}"
-        bindtap="onAddTag"
-      >
-        <t-icon name="add" size="24rpx" color="#76767B" />
-        <text class="quick-pill-text">{{item}}</text>
-      </view>
+        class="idea"
+        data-text="{{item}}"
+        bindtap="onIdea"
+      >{{item}}</view>
     </view>
   </view>
 
-  <!-- 底部吸底主按钮 -->
-  <view class="bottom-bar">
-    <view
-      class="xt-pill-btn submit-btn {{!imagePath ? 'disabled' : ''}}"
-      bindtap="onGoEditor"
-    >
-      <t-icon name="sparkles" size="36rpx" color="{{!imagePath ? '#AEAFB8' : '#D4F826'}}" style="margin-right: 12rpx;" />
-      <text>{{imagePath ? '开始生成新图' : '请先导入照片'}}</text>
+  <scroll-view
+    wx:else
+    class="thread"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    scroll-top="{{scrollTick}}"
+    scroll-with-animation
+  >
+    <conversation
+      turns="{{turns}}"
+      bind:create="onOpenImage"
+      bind:retry="onRetry"
+      bind:preview="onPreview"
+      bind:save="onSave"
+      bind:choose="onChoose"
+    />
+  </scroll-view>
+
+  <view wx:if="{{menuOpen || panelOpen}}" class="shade" catchtap="onClosePop"></view>
+
+  <view class="dock">
+    <view class="above">
+      <view class="tool">
+        <view class="chip" catchtap="onToggleMenu">
+          <text>{{tool === 'image' ? '画图' : '对话'}}</text>
+          <t-icon name="{{menuOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#111111" />
+        </view>
+        <view wx:if="{{menuOpen}}" class="menu" catchtap="noop">
+          <view class="menu-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" catchtap="onPickTool">对话</view>
+          <view class="menu-item {{tool === 'image' ? 'on' : ''}}" data-tool="image" catchtap="onPickTool">画图</view>
+        </view>
+      </view>
+      <view wx:if="{{tool === 'image'}}" class="chip" catchtap="onTogglePanel">
+        <text>{{ratioLabel}}</text>
+        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#111111" />
+      </view>
+      <view wx:if="{{refImage}}" class="thumb">
+        <image class="thumb-img" src="{{refImage}}" mode="aspectFit" />
+        <view class="thumb-x" catchtap="onClearRef">
+          <t-icon name="close" size="20rpx" color="#ffffff" />
+        </view>
+      </view>
     </view>
+
+    <view wx:if="{{panelOpen}}" class="panel" catchtap="noop">
+      <text class="k">模型</text>
+      <view class="model">{{imageModel}}</view>
+
+      <text class="k">质量</text>
+      <view class="opts">
+        <view
+          wx:for="{{qualities}}"
+          wx:key="id"
+          class="opt {{quality === item.id ? 'on' : ''}}"
+          data-id="{{item.id}}"
+          data-group="quality"
+          catchtap="onPickOpt"
+        >{{item.label}}</view>
+      </view>
+
+      <text class="k">数量</text>
+      <view class="opts">
+        <view
+          wx:for="{{counts}}"
+          wx:key="*this"
+          class="opt {{count === item ? 'on' : ''}}"
+          data-id="{{item}}"
+          data-group="count"
+          catchtap="onPickOpt"
+        >{{item}}张</view>
+      </view>
+
+      <text class="k">比例</text>
+      <view class="opts">
+        <view
+          wx:for="{{ratios}}"
+          wx:key="id"
+          class="opt {{ratioId === item.id ? 'on' : ''}}"
+          data-id="{{item.id}}"
+          data-group="ratio"
+          catchtap="onPickOpt"
+        >{{item.label}}</view>
+      </view>
+
+      <text class="k">分辨率</text>
+      <view class="opts">
+        <view
+          wx:for="{{resolutions}}"
+          wx:key="id"
+          class="opt {{resolution === item.id ? 'on' : ''}}"
+          data-id="{{item.id}}"
+          data-group="resolution"
+          catchtap="onPickOpt"
+        >{{item.label}}</view>
+      </view>
+    </view>
+
+      <t-chat-sender
+        value="{{draft}}"
+        placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息'}}"
+        adjust-position="{{false}}"
+        auto-rise-with-keyboard="{{false}}"
+        render-presets="{{senderPresets}}"
+        bind:change="onDraft"
+        bind:send="onSend"
+        bind:keyboardheightchange="onKeyboard"
+      >
+        <view slot="footer-prefix" class="bits">
+          <view class="cam" catchtap="onCamera">
+            <t-icon name="camera" size="40rpx" color="#111111" />
+          </view>
+          <view wx:if="{{canSend}}" class="side go" catchtap="onSendTap">
+            <view class="go-icon">
+              <t-icon name="send-filled" size="32rpx" color="#ffffff" />
+            </view>
+          </view>
+          <view wx:else class="side plus" catchtap="onAlbum">
+            <t-icon name="add" size="40rpx" color="#111111" />
+          </view>
+        </view>
+      </t-chat-sender>
   </view>
 
   <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">

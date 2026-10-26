@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "效果",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
 }

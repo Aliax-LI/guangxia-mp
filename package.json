@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "postinstall": "node scripts/sync-babel-runtime.mjs",
     "build:manifest": "node scripts/build-youmind-manifest.mjs",
     "build:dev-manifest": "node scripts/build-dev-manifest-ts.mjs",
     "export:cloud-db": "node scripts/export-cloud-db-json.mjs",
@@ -16,6 +17,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@babel/runtime": "^7.29.10",
     "tdesign-miniprogram": "^1.17.0"
   }
 }

@@ -1,5 +1,9 @@
 {
   "navigationBarTitleText": "灵感",
   "renderer": "webview",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-loading": "tdesign-miniprogram/loading/loading"
+  }
 }

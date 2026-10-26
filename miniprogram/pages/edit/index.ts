@@ -1,19 +1,36 @@
 import { CHAT_MODEL, IMAGE_MODEL } from '../../config/index'
 import { ensureApiKey, isLoggedIn } from '../../services/auth'
 import { chatStream } from '../../services/chat'
+import type { ChatMessage } from '../../services/chat'
 import { humanizeGenerateError, runGenerate } from '../../services/image-gen'
+import { buildUserChatContent, chatTurnLabel } from '../../utils/chat-media'
 import { persistGenerateOutputs } from '../../utils/image-result'
-import { pickOneImage } from '../../utils/pick-image'
+import { pickImages } from '../../utils/pick-image'
 import {
   consumeComposerDraft,
   consumeOpenComposer,
   consumePendingCompose,
-  loadTurns,
-  saveTurns,
   setPendingCompose,
+  syncInputImages,
+  turnInputImages,
   type ChatTurn,
   type ComposeJob,
 } from '../../utils/compose'
+import {
+  activateOrCreate,
+  clearSessionTurns,
+  createSession,
+  deleteSession,
+  ensureBootstrapped,
+  formatSessionTime,
+  getSession,
+  loadAllSessions,
+  sessionKindToTool,
+  setActiveSessionId,
+  updateSessionTurns,
+  type ChatSession,
+  type SessionKind,
+} from '../../utils/chat-sessions'
 import {
   onPagePrivacyAgree,
   openPrivacyContractPage,
@@ -76,13 +93,41 @@ function workExt(path: string): string {
   return 'png'
 }
 
+const MAX_CHAT_REFS = 9
+const MAX_IMAGE_REFS = 1
+
+function mergeRefPaths(existing: string[], added: string[], max: number): string[] {
+  const seen = new Set(existing)
+  const out = existing.slice()
+  for (const path of added) {
+    if (!path || seen.has(path)) continue
+    seen.add(path)
+    out.push(path)
+    if (out.length >= max) break
+  }
+  return out.slice(0, max)
+}
+
+type SessionRow = {
+  id: string
+  kind: SessionKind
+  kindLabel: string
+  title: string
+  timeLabel: string
+  active: boolean
+}
+
 Page({
   turns: [] as ChatTurn[],
+  sessionId: '',
   pickSource: 'album' as 'album' | 'camera',
-
   data: {
-    turns: [] as ChatTurn[],
-    scrollTick: 0,
+    /** 仅用于空态；完整 turns 在 this.turns，避免 setData 整表传输 */
+    turnCount: 0,
+    sessionId: '',
+    sessionTitle: '新对话',
+    historyOpen: false,
+    sessionRows: [] as SessionRow[],
     draft: '',
     tool: 'chat' as 'chat' | 'image',
     menuOpen: false,
@@ -98,7 +143,7 @@ Page({
     quality: 'auto',
     resolution: 'auto',
     count: 1,
-    refImage: '',
+    refImages: [] as string[],
     templateId: '',
     templateTitle: '',
     keyboard: 0,
@@ -112,15 +157,108 @@ Page({
   },
 
   onLoad() {
-    const turns = loadTurns().map((turn) =>
+    const session = ensureBootstrapped()
+    const turns = session.turns.map((turn) =>
       turn.status === 'generating'
-        ? { ...turn, status: 'error' as const, error: '上次生成中断了，点重试' }
+        ? Object.assign({}, turn, { status: 'error' as const, error: '上次生成中断了，点重试' })
         : turn,
     )
-    saveTurns(turns)
-    this.turns = turns
-    const last = turns[turns.length - 1]
-    this.setData({ turns, scrollTick: last ? 999999 : 0 })
+    if (turns.some((t, i) => t !== session.turns[i])) {
+      updateSessionTurns(session.id, turns)
+    }
+    this.mountSession(session, turns)
+  },
+
+  mountSession(session: ChatSession, turns?: ChatTurn[]) {
+    const list = turns ?? session.turns
+    this.sessionId = session.id
+    this.turns = list
+    const last = list[list.length - 1]
+    this.setData({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      tool: sessionKindToTool(session.kind),
+      turnCount: list.length,
+      sessionRows: this.buildSessionRows(session.id),
+    })
+    wx.nextTick(() => {
+      this.syncConversation()
+      if (last) this.scrollConversationToBottom()
+    })
+  },
+
+  syncConversation() {
+    const conv = this.selectComponent('#chat-conversation') as WechatMiniprogram.Component.TrivialInstance & {
+      applyTurns?: (turns: ChatTurn[]) => void
+      scrollToBottom?: () => void
+      scheduleScrollToBottom?: () => void
+    }
+    conv?.applyTurns?.(this.turns || [])
+  },
+
+  scrollConversationToBottom() {
+    const conv = this.selectComponent('#chat-conversation') as WechatMiniprogram.Component.TrivialInstance & {
+      scrollToBottom?: () => void
+      scheduleScrollToBottom?: () => void
+    }
+    conv?.scheduleScrollToBottom?.()
+  },
+
+  buildSessionRows(activeId: string): SessionRow[] {
+    return loadAllSessions().map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      kindLabel: s.kind === 'image' ? '画图' : '对话',
+      title: s.title,
+      timeLabel: formatSessionTime(s.updatedAt),
+      active: s.id === activeId,
+    }))
+  },
+
+  persistTurns(turns: ChatTurn[], titleFromPrompt?: string) {
+    const id = this.sessionId
+    if (!id) return
+    updateSessionTurns(id, turns, titleFromPrompt ? { titleFromPrompt } : undefined)
+    const session = getSession(id)
+    this.setData({
+      sessionTitle: session?.title || this.data.sessionTitle,
+      sessionRows: this.buildSessionRows(id),
+    })
+  },
+
+  switchSession(id: string) {
+    const session = getSession(id)
+    if (!session || session.id === this.sessionId) {
+      this.setData({ historyOpen: false })
+      return
+    }
+    setActiveSessionId(id)
+    this.mountSession(session)
+    this.setData({ historyOpen: false, menuOpen: false, panelOpen: session.kind === 'image' && this.data.panelOpen })
+  },
+
+  openNewSession(kind: SessionKind) {
+    const session = createSession(kind)
+    this.mountSession(session, [])
+    this.setData({
+      historyOpen: false,
+      menuOpen: false,
+      panelOpen: kind === 'image',
+      draft: '',
+      canSend: false,
+      refImages: [] as string[],
+      templateId: '',
+      templateTitle: '',
+    })
+  },
+
+  ensureToolSession(tool: 'chat' | 'image') {
+    const kind: SessionKind = tool === 'image' ? 'image' : 'chat'
+    const current = getSession(this.sessionId)
+    if (current?.kind === kind) return current
+    const session = activateOrCreate(kind)
+    this.mountSession(session)
+    return session
   },
 
   onShow() {
@@ -130,18 +268,20 @@ Page({
     void refreshPagePrivacy((patch) => this.setData(patch), 'picker')
     const job = isLoggedIn() ? consumePendingCompose() : null
     if (job) {
+      this.ensureToolSession('image')
       this.pushTurn(job)
       return
     }
     if (consumeOpenComposer()) {
-      this.setData({ tool: 'image', panelOpen: true, menuOpen: false })
+      this.ensureToolSession('image')
+      this.setData({ panelOpen: true, menuOpen: false })
     }
     const draft = consumeComposerDraft()
     if (!draft) return
+    this.ensureToolSession('image')
     this.setData({
       draft: draft.prompt,
       canSend: !!draft.prompt.trim(),
-      tool: 'image',
       panelOpen: true,
       menuOpen: false,
       templateId: draft.templateId,
@@ -151,8 +291,91 @@ Page({
 
   noop() {},
 
+  onToggleHistory() {
+    const open = !this.data.historyOpen
+    this.setData({
+      historyOpen: open,
+      menuOpen: false,
+      panelOpen: false,
+      sessionRows: open ? this.buildSessionRows(this.sessionId) : this.data.sessionRows,
+    })
+  },
+
+  onCloseHistory() {
+    this.setData({ historyOpen: false })
+  },
+
+  onPickSession(e: WechatMiniprogram.BaseEvent) {
+    const id = String(e.currentTarget.dataset.id || '')
+    if (id) this.switchSession(id)
+  },
+
+  onNewSessionTap(e: WechatMiniprogram.BaseEvent) {
+    const kind = e.currentTarget.dataset.kind === 'image' ? 'image' : 'chat'
+    this.openNewSession(kind)
+  },
+
+  onNewSameKind() {
+    const kind: SessionKind = this.data.tool === 'image' ? 'image' : 'chat'
+    this.openNewSession(kind)
+  },
+
+  onDeleteSession(e: WechatMiniprogram.BaseEvent) {
+    const id = String(e.currentTarget.dataset.id || '')
+    if (!id) return
+    wx.showModal({
+      title: '删除会话',
+      content: '删除后无法恢复，确定吗？',
+      confirmColor: '#e34d59',
+      success: (res) => {
+        if (!res.confirm) return
+        const fallback = deleteSession(id)
+        if (fallback) {
+          this.mountSession(fallback)
+          this.setData({
+            historyOpen: false,
+            menuOpen: false,
+            panelOpen: fallback.kind === 'image' && this.data.panelOpen,
+            draft: '',
+            canSend: false,
+            refImages: [] as string[],
+          })
+        } else {
+          this.setData({ sessionRows: this.buildSessionRows(this.sessionId) })
+        }
+        wx.showToast({ title: '已删除', icon: 'success' })
+      },
+    })
+  },
+
+  onClearCurrentSession() {
+    if (!this.data.turnCount) {
+      wx.showToast({ title: '当前没有消息', icon: 'none' })
+      return
+    }
+    const id = this.sessionId
+    if (!id) return
+    wx.showModal({
+      title: '清空当前会话',
+      content: '将删除本会话全部消息，会话仍保留在列表中。确定吗？',
+      confirmColor: '#e34d59',
+      success: (res) => {
+        if (!res.confirm) return
+        const session = clearSessionTurns(id)
+        this.turns = []
+        this.setData({
+          turnCount: 0,
+          sessionTitle: session?.title || this.data.sessionTitle,
+          sessionRows: this.buildSessionRows(id),
+        })
+        this.syncConversation()
+        wx.showToast({ title: '已清空', icon: 'success' })
+      },
+    })
+  },
+
   onClosePop() {
-    this.setData({ menuOpen: false, panelOpen: false })
+    this.setData({ menuOpen: false, panelOpen: false, historyOpen: false })
   },
 
   onToggleMenu() {
@@ -164,7 +387,8 @@ Page({
   },
 
   onOpenImage() {
-    this.setData({ tool: 'image', panelOpen: true, menuOpen: false })
+    this.ensureToolSession('image')
+    this.setData({ panelOpen: true, menuOpen: false })
   },
 
   onIdea(e: WechatMiniprogram.BaseEvent) {
@@ -176,17 +400,15 @@ Page({
   onKeyboard(e: WechatMiniprogram.CustomEvent<{ height?: number }>) {
     const keyboard = Number(e.detail?.height) || 0
     const was = this.data.keyboard
-    this.setData({
-      keyboard,
-      scrollTick: keyboard && !was ? this.data.scrollTick + 100000 : this.data.scrollTick,
-    })
+    this.setData({ keyboard })
+    if (keyboard && !was) this.scrollConversationToBottom()
   },
 
   onPickTool(e: WechatMiniprogram.BaseEvent) {
     const tool = e.currentTarget.dataset.tool
     if (tool !== 'chat' && tool !== 'image') return
+    this.ensureToolSession(tool)
     this.setData({
-      tool,
       menuOpen: false,
       panelOpen: tool === 'image' ? this.data.panelOpen : false,
     })
@@ -214,9 +436,21 @@ Page({
     }
   },
 
+  composerRefLimit(): number {
+    return this.data.tool === 'image' ? MAX_IMAGE_REFS : MAX_CHAT_REFS
+  },
+
+  syncCanSend(patch?: { draft?: string; refImages?: string[] }) {
+    const draft = patch?.draft ?? this.data.draft
+    const refImages = patch?.refImages ?? this.data.refImages
+    const canSend = !!String(draft).trim() || !!(refImages && refImages.length)
+    if (canSend !== this.data.canSend) this.setData({ canSend })
+  },
+
   onDraft(e: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     const draft = e.detail?.value || ''
-    this.setData({ draft, canSend: !!draft.trim() })
+    this.setData({ draft })
+    this.syncCanSend({ draft })
   },
 
   onOpenPrivacyContract() {
@@ -245,20 +479,35 @@ Page({
   },
 
   chooseRef() {
-    pickOneImage(this.pickSource)
-      .then((path) => this.setData({ refImage: path, tool: 'image', menuOpen: false }))
+    const max = this.composerRefLimit()
+    const current = this.data.refImages || []
+    if (current.length >= max) {
+      wx.showToast({ title: max === 1 ? '画图仅支持 1 张参考图' : `最多 ${max} 张图片`, icon: 'none' })
+      return
+    }
+    const pickCount = this.pickSource === 'camera' ? 1 : max - current.length
+    pickImages(this.pickSource, pickCount)
+      .then((paths) => {
+        const refImages =
+          max === 1 ? paths.slice(0, 1) : mergeRefPaths(current, paths, max)
+        this.setData({ refImages, menuOpen: false })
+        this.syncCanSend({ refImages })
+      })
       .catch(() => {})
   },
 
-  onClearRef() {
-    this.setData({ refImage: '' })
+  onRemoveRef(e: WechatMiniprogram.BaseEvent) {
+    const index = Number(e.currentTarget.dataset.index)
+    const refImages = (this.data.refImages || []).filter((_, i) => i !== index)
+    this.setData({ refImages })
+    this.syncCanSend({ refImages })
   },
 
-  imageJob(prompt: string): ComposeJob {
+  imageJob(prompt: string, imagePaths: string[]): ComposeJob {
     const sized = pickedSize(this.data.ratioId, this.data.resolution)
-    return {
+    const synced = syncInputImages(imagePaths)
+    return Object.assign({}, synced, {
       prompt,
-      imagePath: this.data.refImage || '',
       size: sized.size,
       ratioLabel: sized.label,
       count: this.data.count,
@@ -266,7 +515,7 @@ Page({
       templateId: this.data.templateId,
       templateTitle: this.data.templateTitle,
       model: IMAGE_MODEL,
-    }
+    })
   },
 
   onChoose(e: WechatMiniprogram.CustomEvent<{ prompt?: string }>) {
@@ -290,13 +539,20 @@ Page({
 
   submit(raw: string) {
     const prompt = raw.trim()
-    if (!prompt) {
-      if (this.data.tool === 'image') wx.showToast({ title: '先写下想生成的画面', icon: 'none' })
+    const refImages = (this.data.refImages || []).slice()
+    if (this.data.tool === 'image') {
+      if (!prompt) {
+        wx.showToast({ title: '先写下想生成的画面', icon: 'none' })
+        return
+      }
+    } else if (!prompt && !refImages.length) {
+      wx.showToast({ title: '输入文字或添加图片', icon: 'none' })
       return
     }
-    this.setData({ menuOpen: false, panelOpen: false, draft: '', canSend: false })
+    this.ensureToolSession(this.data.tool)
+    this.setData({ menuOpen: false, panelOpen: false, draft: '', canSend: false, refImages: [] })
     if (this.data.tool === 'image') {
-      const job = this.imageJob(prompt)
+      const job = this.imageJob(prompt, refImages)
       this.setData({ templateId: '', templateTitle: '' })
       if (!isLoggedIn()) {
         setPendingCompose(job)
@@ -307,76 +563,89 @@ Page({
       return
     }
     if (!isLoggedIn()) {
-      this.setData({ draft: prompt, canSend: true })
+      this.setData({ draft: prompt, refImages, canSend: true })
       wx.navigateTo({ url: '/pages/login/index' })
       return
     }
-    this.pushText(prompt)
+    this.pushText(prompt, refImages)
   },
 
-  pushText(prompt: string) {
-    const turn: ChatTurn = {
+  pushText(prompt: string, imagePaths: string[] = []) {
+    const synced = syncInputImages(imagePaths)
+    const turn = Object.assign({}, synced, {
       id: `t${Date.now()}`,
-      kind: 'text',
+      kind: 'text' as const,
       prompt,
       reply: '',
-      imagePath: '',
       size: '',
       ratioLabel: '',
       count: 1,
       templateId: '',
       templateTitle: '',
       model: CHAT_MODEL,
-      status: 'generating',
-      images: [],
+      status: 'generating' as const,
+      images: [] as string[],
       error: '',
-    }
-    const turns = (this.turns || this.data.turns).concat(turn).slice(-40)
+    }) as ChatTurn
+    const turns = (this.turns || []).concat(turn).slice(-40)
     this.turns = turns
-    this.setData({ turns, scrollTick: this.data.scrollTick + 100000 })
-    saveTurns(turns)
+    this.setData({ turnCount: turns.length })
+    this.syncConversation()
+    this.persistTurns(turns, chatTurnLabel(prompt, synced.imagePaths))
     void this.runTurn(turn.id)
   },
 
   pushTurn(job: ComposeJob) {
-    const turn: ChatTurn = {
-      ...job,
+    const turn = Object.assign({}, job, {
       id: `t${Date.now()}`,
-      kind: 'image',
+      kind: 'image' as const,
       model: job.model || IMAGE_MODEL,
       reply: '',
-      status: 'generating',
-      images: [],
+      status: 'generating' as const,
+      images: [] as string[],
       error: '',
-    }
-    const turns = (this.turns || this.data.turns).concat(turn).slice(-40)
+    }) as ChatTurn
+    const turns = (this.turns || []).concat(turn).slice(-40)
     this.turns = turns
-    this.setData({ turns, scrollTick: this.data.scrollTick + 100000 })
-    saveTurns(turns)
+    this.setData({ turnCount: turns.length })
+    this.syncConversation()
+    this.persistTurns(turns, job.prompt)
     void this.runTurn(turn.id)
   },
 
   patchTurn(id: string, patch: Partial<ChatTurn>, persist = true) {
-    const turns = (this.turns || this.data.turns).map((turn) => (turn.id === id ? { ...turn, ...patch } : turn))
+    const prev = this.turns || []
+    const idx = prev.findIndex((turn) => turn.id === id)
+    if (idx < 0) return
+    const turns = prev.map((turn, i) =>
+      i === idx ? (Object.assign({}, turn, patch) as ChatTurn) : turn,
+    )
     this.turns = turns
-    this.setData({ turns, scrollTick: this.data.scrollTick + 100000 })
-    if (persist) saveTurns(turns)
+
+    if (Object.keys(patch).length) this.syncConversation()
+    if (persist) this.persistTurns(turns)
   },
 
   async runTurn(id: string) {
-    const turn = (this.turns || this.data.turns).find((item) => item.id === id)
+    const turn = (this.turns || []).find((item) => item.id === id)
     if (!turn) return
     this.patchTurn(id, { status: 'generating', error: '', images: [], reply: '' })
     try {
       await ensureApiKey()
       if (turn.kind === 'text') {
-        const messages: { role: 'user' | 'assistant'; content: string }[] = []
-        ;(this.turns || []).forEach((item) => {
-          if (item.kind !== 'text' || item.id === id || item.status !== 'done' || !item.reply) return
-          messages.push({ role: 'user', content: item.prompt })
+        const messages: ChatMessage[] = []
+        for (const item of this.turns || []) {
+          if (item.kind !== 'text' || item.id === id || item.status !== 'done' || !item.reply) continue
+          messages.push({
+            role: 'user',
+            content: await buildUserChatContent(item.prompt, turnInputImages(item)),
+          })
           messages.push({ role: 'assistant', content: item.reply })
+        }
+        messages.push({
+          role: 'user',
+          content: await buildUserChatContent(turn.prompt, turnInputImages(turn)),
         })
-        messages.push({ role: 'user', content: turn.prompt })
         let latest = ''
         let timer: ReturnType<typeof setTimeout> | 0 = 0
         const paint = () => {
@@ -411,7 +680,7 @@ Page({
 
   onRetry(e: WechatMiniprogram.CustomEvent<{ id?: string }>) {
     const id = String(e.detail?.id || '')
-    const turn = (this.turns || this.data.turns).find((item) => item.id === id)
+    const turn = (this.turns || []).find((item) => item.id === id)
     if (!id || !turn || turn.status === 'generating') return
     this.patchTurn(id, { status: 'generating', error: '', images: [] })
     void this.runTurn(id)
@@ -420,7 +689,7 @@ Page({
   onPreview(e: WechatMiniprogram.CustomEvent<{ id?: string; src?: string }>) {
     const id = String(e.detail?.id || '')
     const src = String(e.detail?.src || '')
-    const turn = (this.turns || this.data.turns).find((item) => item.id === id)
+    const turn = (this.turns || []).find((item) => item.id === id)
     const urls = turn?.images?.length ? turn.images : src ? [src] : []
     if (!src || !urls.length) return
     wx.previewImage({ current: src, urls })
@@ -428,7 +697,7 @@ Page({
 
   async onSave(e: WechatMiniprogram.CustomEvent<{ id?: string }>) {
     const id = String(e.detail?.id || '')
-    const turn = (this.turns || this.data.turns).find((item) => item.id === id)
+    const turn = (this.turns || []).find((item) => item.id === id)
     if (!turn?.images.length) return
     wx.showLoading({ title: '保存中', mask: true })
     try {

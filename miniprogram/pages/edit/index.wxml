@@ -1,14 +1,30 @@
+<!--
+  Primary: 当前会话消息流
+  Secondary: 顶栏会话标题、历史抽屉
+  Tertiary: 工具切换、画图参数
+  One primary action: 发送
+-->
 <view class="home" style="{{keyboard ? 'padding-bottom:' + keyboard + 'px' : ''}}">
-  <view wx:if="{{!turns.length}}" class="stage">
+  <view class="topbar">
+    <view class="topbar-btn" catchtap="onToggleHistory" aria-role="button" aria-label="会话历史">
+      <t-icon name="view-list" size="40rpx" color="#111111" />
+    </view>
+    <view class="topbar-center">
+      <text class="topbar-kind">{{tool === 'image' ? '画图' : '对话'}}</text>
+      <text class="topbar-title">{{sessionTitle}}</text>
+    </view>
+    <view class="topbar-btn" catchtap="onNewSameKind" aria-role="button" aria-label="新建会话">
+      <t-icon name="chat-add" size="40rpx" color="#111111" />
+    </view>
+  </view>
+
+  <view wx:if="{{!turnCount}}" class="stage">
     <view class="hello-block">
-      <text class="hello">有什么我能帮你的吗？</text>
-      <view class="seg">
-        <view class="seg-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" bindtap="onPickTool">对话</view>
-        <view class="seg-item {{tool === 'image' ? 'on' : ''}}" data-tool="image" bindtap="onPickTool">画图</view>
-      </view>
+      <text class="hello">{{tool === 'image' ? '描述画面，我来生成' : '有什么我能帮你的吗？'}}</text>
+      <text class="hello-sub">{{tool === 'image' ? '每个画图会话独立保存' : '每个对话会话独立保存'}}</text>
     </view>
     <view wx:if="{{!keyboard}}" class="recs">
-      <text class="recs-k">为你推荐</text>
+      <text class="recs-k">试试这些</text>
       <view
         wx:for="{{tool === 'image' ? imageIdeas : chatIdeas}}"
         wx:key="*this"
@@ -19,26 +35,79 @@
     </view>
   </view>
 
-  <scroll-view
-    wx:else
-    class="thread"
-    scroll-y
-    enhanced
-    show-scrollbar="{{false}}"
-    scroll-top="{{scrollTick}}"
-    scroll-with-animation
-  >
+  <view wx:else class="thread">
     <conversation
-      turns="{{turns}}"
+      id="chat-conversation"
       bind:create="onOpenImage"
       bind:retry="onRetry"
       bind:preview="onPreview"
       bind:save="onSave"
       bind:choose="onChoose"
     />
-  </scroll-view>
+  </view>
 
-  <view wx:if="{{menuOpen || panelOpen}}" class="shade" catchtap="onClosePop"></view>
+  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="shade" catchtap="onClosePop"></view>
+
+  <view class="drawer {{historyOpen ? 'open' : ''}}" catchtap="noop">
+    <view class="drawer-head">
+      <text class="drawer-title">会话</text>
+      <view class="drawer-close" catchtap="onCloseHistory">
+        <t-icon name="close" size="36rpx" color="#111111" />
+      </view>
+    </view>
+    <view class="drawer-new">
+      <view class="new-btn" data-kind="chat" catchtap="onNewSessionTap">
+        <t-icon name="chat" size="32rpx" color="#111111" />
+        <text>新对话</text>
+      </view>
+      <view class="new-btn" data-kind="image" catchtap="onNewSessionTap">
+        <t-icon name="image" size="32rpx" color="#111111" />
+        <text>新画图</text>
+      </view>
+    </view>
+    <view
+      class="drawer-clear {{turnCount ? '' : 'disabled'}}"
+      catchtap="onClearCurrentSession"
+      aria-role="button"
+      aria-label="清空当前会话消息"
+    >
+      <t-icon name="clear" size="32rpx" color="{{turnCount ? '#111111' : '#c8c8cc'}}" />
+      <text>清空当前会话</text>
+    </view>
+    <scroll-view class="drawer-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="drawer-list-inner">
+        <block wx:if="{{sessionRows.length}}">
+          <view
+            wx:for="{{sessionRows}}"
+            wx:key="id"
+            class="sess {{item.active ? 'on' : ''}}"
+            data-id="{{item.id}}"
+            catchtap="onPickSession"
+          >
+            <view class="sess-main">
+              <text class="sess-kind">{{item.kindLabel}}</text>
+              <text class="sess-title">{{item.title}}</text>
+            </view>
+            <view class="sess-side">
+              <text class="sess-time">{{item.timeLabel}}</text>
+              <view
+                class="sess-del"
+                data-id="{{item.id}}"
+                catchtap="onDeleteSession"
+                aria-role="button"
+                aria-label="删除会话"
+              >
+                <t-icon name="delete" size="36rpx" color="#aeafb8" />
+              </view>
+            </view>
+          </view>
+        </block>
+        <view wx:else class="drawer-empty">
+          <text>还没有记录，发一条消息开始吧</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
 
   <view class="dock">
     <view class="above">
@@ -56,12 +125,22 @@
         <text>{{ratioLabel}}</text>
         <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#111111" />
       </view>
-      <view wx:if="{{refImage}}" class="thumb">
-        <image class="thumb-img" src="{{refImage}}" mode="aspectFit" />
-        <view class="thumb-x" catchtap="onClearRef">
-          <t-icon name="close" size="20rpx" color="#ffffff" />
+      <scroll-view
+        wx:if="{{refImages.length}}"
+        class="ref-strip"
+        scroll-x
+        enhanced
+        show-scrollbar="{{false}}"
+      >
+        <view class="ref-row">
+          <view wx:for="{{refImages}}" wx:key="*this" class="thumb">
+            <image class="thumb-img" src="{{item}}" mode="aspectFill" />
+            <view class="thumb-x" data-index="{{index}}" catchtap="onRemoveRef">
+              <t-icon name="close" size="20rpx" color="#ffffff" />
+            </view>
+          </view>
         </view>
-      </view>
+      </scroll-view>
     </view>
 
     <view wx:if="{{panelOpen}}" class="panel" catchtap="noop">
@@ -119,7 +198,7 @@
 
       <t-chat-sender
         value="{{draft}}"
-        placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息'}}"
+        placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息，可添加多张图片'}}"
         adjust-position="{{false}}"
         auto-rise-with-keyboard="{{false}}"
         render-presets="{{senderPresets}}"

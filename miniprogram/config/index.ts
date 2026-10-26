@@ -33,7 +33,7 @@ export const USE_DEV_MANIFEST = true
 export const MANIFEST_BASE_URL =
   'https://inner-oss-wlcb.bellecdn.cn/files/platform-ai-base/youmind/manifest'
 
-/** 对话模型。创作出图不用这个。 */
+/** 对话模型（Open Responses `/v1/responses`）。创作出图不用这个。 */
 export const CHAT_MODEL = 'auto'
 
 /** 创作出图模型（与 sub2api 渠道配置一致） */

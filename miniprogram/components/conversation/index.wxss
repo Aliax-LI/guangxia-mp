@@ -2,8 +2,14 @@
   display: block;
   width: 100%;
   max-width: 100%;
+  height: 100%;
+  min-height: 0;
   box-sizing: border-box;
-  overflow: hidden;
+}
+
+.thread-scroll {
+  width: 100%;
+  height: 100%;
 }
 
 .empty {
@@ -31,9 +37,103 @@
 
 .list {
   width: 100%;
-  padding: 24rpx 32rpx 12rpx;
+  padding: 12rpx 32rpx 24rpx;
   box-sizing: border-box;
-  overflow: hidden;
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
+}
+
+.turn-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+  max-width: 100%;
+}
+
+.user-media {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12rpx;
+  max-width: 560rpx;
+}
+
+.user-img {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 20rpx;
+  background: #f4f4f7;
+}
+
+.user-media.many .user-img {
+  width: 176rpx;
+  height: 176rpx;
+}
+
+.user-bubble {
+  max-width: 560rpx;
+  padding: 18rpx 28rpx;
+  border-radius: 28rpx 8rpx 28rpx 28rpx;
+  background: #111111;
+  box-sizing: border-box;
+}
+
+.user-text {
+  font-size: 28rpx;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.turn-assist {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.turn-assist.err {
+  align-self: flex-start;
+  max-width: 560rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 8rpx 28rpx 28rpx 28rpx;
+  background: #f4f4f7;
+  box-sizing: border-box;
+}
+
+.err-msg {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #111111;
+}
+
+.err-retry {
+  margin-top: 16rpx;
+  align-self: flex-start;
+  height: 64rpx;
+  padding: 0 32rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #111111;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #111111;
+  box-sizing: border-box;
+}
+
+.err-retry:active {
+  background: #f4f4f7;
 }
 
 .shots {
@@ -193,8 +293,13 @@
   .mist.on,
   .glow.on,
   .ink-bar.on,
+  .think-dot.on,
   .shot.photo {
     animation: none;
+  }
+
+  .think-dot {
+    opacity: 0.5;
   }
 
   .ink-bar {
@@ -225,6 +330,63 @@
   border-radius: 8rpx 28rpx 28rpx 28rpx;
   background: #f4f4f7;
   color: #111111;
+}
+
+/* 等待首 token：与助手气泡同形，弱层级，不用全宽 TDesign pending */
+.think {
+  display: inline-flex;
+  align-items: center;
+  gap: 16rpx;
+  max-width: 560rpx;
+  padding: 18rpx 28rpx;
+  border-radius: 8rpx 28rpx 28rpx 28rpx;
+  background: #f4f4f7;
+  box-sizing: border-box;
+}
+
+.think-label {
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #5c5c61;
+}
+
+.think-dots {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.think-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #111111;
+  opacity: 0.22;
+}
+
+.think-dot.on {
+  animation: think-pulse 900ms ease-in-out infinite;
+}
+
+.think-dot.d1.on {
+  animation-delay: 160ms;
+}
+
+.think-dot.d2.on {
+  animation-delay: 320ms;
+}
+
+@keyframes think-pulse {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.15);
+  }
 }
 
 .card {
@@ -288,4 +450,17 @@
   justify-content: center;
   font-size: 28rpx;
   font-weight: 600;
+}
+
+.copy-act {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #ececef;
+  background: #ffffff;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #111111;
 }

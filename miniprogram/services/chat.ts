@@ -1,12 +1,13 @@
 import { CHAT_MODEL, SUB2API_BASE_URL } from '../config/index'
 import { getApiKey } from '../utils/storage'
+import type { ChatContentPart, ChatMessage, ChatRole } from './chat-types'
+import {
+  chatMessagesToResponseInput,
+  deltaFromStreamEvent,
+  textFromResponsePayload,
+} from './open-responses'
 
-export type ChatRole = 'user' | 'assistant'
-
-export type ChatMessage = {
-  role: ChatRole
-  content: string
-}
+export type { ChatContentPart, ChatMessage, ChatRole }
 
 type ChunkTask = {
   abort?: () => void
@@ -18,70 +19,6 @@ class StreamMiss extends Error {
   constructor() {
     super('没有收到回复')
   }
-}
-
-function readReply(data: unknown): string {
-  if (data instanceof ArrayBuffer) data = pushUtf8([], data)
-  if (typeof data === 'string') {
-    const trimmed = data.trim()
-    if (!trimmed) return ''
-    if (trimmed.startsWith('data:')) return readSse(trimmed)
-    try {
-      data = JSON.parse(trimmed)
-    } catch {
-      return trimmed
-    }
-  }
-  if (data && typeof data === 'object' && 'code' in data) {
-    const env = data as { code?: number; message?: string; data?: unknown }
-    if (env.code !== 0) throw new Error(env.message || '对话失败')
-    data = env.data
-  }
-  if (!data || typeof data !== 'object') throw new Error('对话响应格式异常')
-  const body = data as {
-    choices?: Array<{ message?: { content?: string | Array<{ text?: string }> }; delta?: { content?: string } }>
-    error?: { message?: string }
-  }
-  if (body.error?.message) throw new Error(body.error.message)
-  const content = body.choices?.[0]?.message?.content ?? body.choices?.[0]?.delta?.content
-  if (typeof content === 'string' && content.trim()) return content
-  if (Array.isArray(content)) {
-    const text = content.map((part) => part?.text || '').join('')
-    if (text.trim()) return text
-  }
-  throw new Error('没有收到回复')
-}
-
-function readSse(raw: string): string {
-  let full = ''
-  raw.split('\n').forEach((line) => {
-    const piece = deltaOf(line)
-    if (piece) full += piece
-  })
-  if (!full.trim()) throw new Error('没有收到回复')
-  return full
-}
-
-function deltaOf(line: string): string {
-  const trimmed = line.trim()
-  if (!trimmed.startsWith('data:')) return ''
-  const payload = trimmed.slice(5).trim()
-  if (!payload || payload === '[DONE]') return ''
-  let json: {
-    error?: { message?: string }
-    choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>
-  }
-  try {
-    json = JSON.parse(payload)
-  } catch {
-    return ''
-  }
-  if (json.error?.message) throw new Error(json.error.message)
-  const choice = json.choices?.[0]
-  const delta = choice?.delta?.content
-  if (typeof delta === 'string') return delta
-  const message = choice?.message?.content
-  return typeof message === 'string' ? message : ''
 }
 
 function readFail(data: unknown): string {
@@ -146,9 +83,23 @@ function drip(text: string, onDelta: (text: string) => void): Promise<void> {
   })
 }
 
-function requestChat(messages: ChatMessage[], stream: boolean, onDelta?: (text: string) => void): Promise<string> {
+function parseSseDataLine(line: string): unknown | null {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('data:')) return null
+  const payload = trimmed.slice(5).trim()
+  if (!payload || payload === '[DONE]') return null
+  try {
+    return JSON.parse(payload)
+  } catch {
+    return null
+  }
+}
+
+function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (text: string) => void): Promise<string> {
   const apiKey = getApiKey()
   if (!apiKey) return Promise.reject(new Error('未登录'))
+
+  const input = chatMessagesToResponseInput(messages)
 
   return new Promise((resolve, reject) => {
     let buffer = ''
@@ -164,19 +115,25 @@ function requestChat(messages: ChatMessage[], stream: boolean, onDelta?: (text: 
       fn()
     }
 
-    const takeLine = (line: string) => {
-      try {
-        const piece = deltaOf(line)
-        if (!piece) return
+    const consumeEvent = (json: unknown) => {
+      const piece = deltaFromStreamEvent(json)
+      if (piece) {
         full += piece
         if (onDelta) onDelta(full)
+      }
+    }
+
+    const takeLine = (line: string) => {
+      try {
+        const json = parseSseDataLine(line)
+        if (json) consumeEvent(json)
       } catch (err) {
         failed = err instanceof Error ? err.message : '对话失败'
       }
     }
 
     const task = wx.request({
-      url: `${SUB2API_BASE_URL}/v1/chat/completions`,
+      url: `${SUB2API_BASE_URL}/v1/responses`,
       method: 'POST',
       timeout: 120000,
       dataType: stream ? '其他' : 'json',
@@ -184,11 +141,13 @@ function requestChat(messages: ChatMessage[], stream: boolean, onDelta?: (text: 
       header: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
       },
       data: {
         model: CHAT_MODEL,
-        messages,
+        input,
         stream,
+        store: false,
       },
       success(res) {
         if (failed) {
@@ -206,7 +165,7 @@ function requestChat(messages: ChatMessage[], stream: boolean, onDelta?: (text: 
         }
         if (!sawChunk) {
           try {
-            const text = readReply(res.data)
+            const text = textFromResponsePayload(res.data)
             finish(() => {
               if (onDelta) drip(text, onDelta).then(() => resolve(text), reject)
               else resolve(text)
@@ -243,7 +202,7 @@ function requestChat(messages: ChatMessage[], stream: boolean, onDelta?: (text: 
   })
 }
 
-/** 对话一律走流式。分片到达就往外写；工具把整段一次性给回时，再按字铺开。 */
+/** 对话走 Open Responses 流式（`response.output_text.delta`）。 */
 export function chatStream(messages: ChatMessage[], onDelta: (text: string) => void): Promise<string> {
-  return requestChat(messages, true, onDelta)
+  return requestResponses(messages, true, onDelta)
 }

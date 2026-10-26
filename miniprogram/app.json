@@ -42,17 +42,7 @@
       }
     ]
   },
-  "usingComponents": {
-    "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-empty": "tdesign-miniprogram/empty/empty",
-    "t-loading": "tdesign-miniprogram/loading/loading"
-  },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
-  "__usePrivacyCheck__": true,
-  "permission": {
-    "scope.writePhotosAlbum": {
-      "desc": "用于把生成的图片保存到相册"
-    }
-  }
+  "__usePrivacyCheck__": true
 }

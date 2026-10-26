@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "修图编辑",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-loading": "tdesign-miniprogram/loading/loading"
+  }
 }

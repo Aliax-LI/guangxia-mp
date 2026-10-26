@@ -1,87 +1,145 @@
-<view wx:if="{{!rows.length}}" class="empty">
-  <text class="title">直接说，或去做一张图</text>
-  <text class="link" bindtap="onCreate">画图</text>
-</view>
-
-<view wx:else class="list">
-  <block wx:for="{{rows}}" wx:key="id">
-    <t-chat-message
-      role="user"
-      placement="right"
-      variant="base"
-      status="complete"
-      content="{{item.userContent}}"
-    />
-    <t-chat-message
-      role="assistant"
-      placement="left"
-      variant="base"
-      status="{{item.assistantStatus}}"
-      content="{{item.assistantContent}}"
-      animation="dots"
-    >
-      <view wx:if="{{item.segments.length}}" slot="content" class="rich">
-        <block wx:for="{{item.segments}}" wx:for-item="seg" wx:for-index="si" wx:key="si">
-          <t-chat-markdown wx:if="{{seg.kind === 'md'}}" content="{{seg.text}}" />
-          <view wx:elif="{{seg.kind === 'choices'}}" class="card">
-            <text wx:if="{{seg.card.hint}}" class="hint">{{seg.card.hint}}</text>
-            <view
-              wx:for="{{seg.card.options}}"
-              wx:for-item="opt"
-              wx:key="value"
-              class="choice {{item.pick === opt.value ? 'on' : ''}}"
-              data-id="{{item.id}}"
-              data-value="{{opt.value}}"
-              bindtap="onPickChoice"
-            >{{opt.label}}</view>
-            <textarea
-              wx:if="{{seg.card.placeholder}}"
-              class="extra"
-              placeholder="{{seg.card.placeholder}}"
-              placeholder-class="extra-ph"
-              data-id="{{item.id}}"
-              value="{{item.detail}}"
-              bindinput="onDetail"
-              auto-height
-              maxlength="200"
-            />
-            <view class="go" data-id="{{item.id}}" bindtap="onStartChoice">{{seg.card.button}}</view>
-          </view>
-        </block>
-      </view>
-      <view wx:elif="{{item.generating || item.showImages}}" slot="content" class="shots {{item.places.length > 1 || item.images.length > 1 ? 'many' : ''}}">
-        <block wx:if="{{item.generating}}">
-          <view wx:for="{{item.places}}" wx:for-item="place" wx:key="*this" class="shot wait">
-            <view class="mist {{motion ? 'on' : ''}}"></view>
-            <view class="glow {{motion ? 'on' : ''}}"></view>
-            <view class="wait-copy">
-              <text class="wait-pct">{{item.progress}}%</text>
-              <text wx:if="{{item.model}}" class="wait-model">{{item.model}}</text>
-            </view>
-          </view>
-        </block>
-        <block wx:else>
-          <image
-            wx:for="{{item.images}}"
-            wx:for-item="src"
-            wx:for-index="imgIndex"
-            wx:key="imgIndex"
-            class="shot photo"
-            src="{{src}}"
-            mode="aspectFill"
-            data-id="{{item.id}}"
-            data-src="{{src}}"
-            bindtap="onPreview"
-          />
-        </block>
-      </view>
-      <view wx:if="{{item.liveText}}" slot="actionbar" class="ink">
-        <view class="ink-bar {{motion ? 'on' : ''}}"></view>
-      </view>
-      <view wx:if="{{item.status === 'error' || item.showImages}}" slot="actionbar" class="actions">
-        <text wx:if="{{item.status === 'error'}}" class="act" data-id="{{item.id}}" bindtap="onRetry">重试</text>
-        <text wx:if="{{item.showImages}}" class="act" data-id="{{item.id}}" bindtap="onSave">存作品集</text>
-      </view>
-    </t-chat-message>
-  </block>
-</view>
+<!--
+  Primary: 助手回复 / 生成结果
+  Secondary: 用户图文（同组右对齐）
+  Tertiary: 重试、存作品集
+-->
+<scroll-view
+  wx:if="{{rows.length}}"
+  class="thread-scroll"
+  scroll-y
+  enhanced
+  show-scrollbar="{{false}}"
+  scroll-into-view="{{scrollIntoView}}"
+  scroll-with-animation
+  enable-back-to-top
+>
+  <view class="list">
+    <view wx:for="{{rows}}" wx:key="id" id="turn-{{item.id}}" class="turn">
+      <view wx:if="{{item.inputImages.length || item.prompt}}" class="turn-user">
+        <view
+          wx:if="{{item.inputImages && item.inputImages.length}}"
+          class="user-media {{item.inputImages.length > 1 ? 'many' : ''}}"
+        >
+          <image
+            wx:for="{{item.inputImages}}"
+            wx:for-item="src"
+            wx:for-index="imgIndex"
+            wx:key="imgIndex"
+            class="user-img"
+            src="{{src}}"
+            mode="aspectFill"
+            data-id="{{item.id}}"
+            data-src="{{src}}"
+            bindtap="onPreviewInput"
+          />
+        </view>
+        <view wx:if="{{item.prompt}}" class="user-bubble">
+          <text class="user-text">{{item.prompt}}</text>
+        </view>
+      </view>
+
+      <block wx:if="{{item.status === 'error'}}">
+        <view class="turn-assist err">
+          <text class="err-msg">{{item.errorLabel}}</text>
+          <view class="err-retry" data-id="{{item.id}}" bindtap="onRetry">重试</view>
+        </view>
+      </block>
+
+      <block
+        wx:if="{{item.status !== 'error' && (item.thinking || item.generating || item.showImages || item.segments.length || item.liveText || item.assistantContent.length || item.status === 'generating')}}"
+      >
+        <t-chat-message
+          role="assistant"
+          placement="left"
+          variant="base"
+          status="{{item.assistantStatus}}"
+          content="{{item.assistantContent}}"
+          animation="dots"
+        >
+        <view wx:if="{{item.thinking}}" slot="content" class="think">
+          <view class="think-dots" aria-hidden="true">
+            <view class="think-dot d0 {{motion ? 'on' : ''}}"></view>
+            <view class="think-dot d1 {{motion ? 'on' : ''}}"></view>
+            <view class="think-dot d2 {{motion ? 'on' : ''}}"></view>
+          </view>
+          <text class="think-label">思考中</text>
+        </view>
+        <view wx:elif="{{item.segments.length}}" slot="content" class="rich">
+          <block wx:for="{{item.segments}}" wx:for-item="seg" wx:for-index="si" wx:key="si">
+            <t-chat-markdown wx:if="{{seg.kind === 'md'}}" content="{{seg.text}}" />
+            <view
+              wx:elif="{{seg.kind === 'copy'}}"
+              class="copy-act"
+              data-id="{{item.id}}"
+              data-si="{{si}}"
+              bindtap="onCopyGenUi"
+            >{{seg.label}}</view>
+            <view wx:elif="{{seg.kind === 'choices'}}" class="card">
+              <text wx:if="{{seg.card.hint}}" class="hint">{{seg.card.hint}}</text>
+              <view
+                wx:for="{{seg.card.options}}"
+                wx:for-item="opt"
+                wx:key="value"
+                class="choice {{item.pick === opt.value ? 'on' : ''}}"
+                data-id="{{item.id}}"
+                data-value="{{opt.value}}"
+                bindtap="onPickChoice"
+              >{{opt.label}}</view>
+              <textarea
+                wx:if="{{seg.card.placeholder}}"
+                class="extra"
+                placeholder="{{seg.card.placeholder}}"
+                placeholder-class="extra-ph"
+                data-id="{{item.id}}"
+                value="{{item.detail}}"
+                bindinput="onDetail"
+                auto-height
+                maxlength="200"
+              />
+              <view class="go" data-id="{{item.id}}" bindtap="onStartChoice">{{seg.card.button}}</view>
+            </view>
+          </block>
+        </view>
+        <view wx:elif="{{item.generating || item.showImages}}" slot="content" class="shots {{item.places.length > 1 || item.images.length > 1 ? 'many' : ''}}">
+          <block wx:if="{{item.generating}}">
+            <view wx:for="{{item.places}}" wx:for-item="place" wx:key="*this" class="shot wait">
+              <view class="mist {{motion ? 'on' : ''}}"></view>
+              <view class="glow {{motion ? 'on' : ''}}"></view>
+              <view class="wait-copy">
+                <text class="wait-pct">{{item.progress}}%</text>
+                <text wx:if="{{item.model}}" class="wait-model">{{item.model}}</text>
+              </view>
+            </view>
+          </block>
+          <block wx:else>
+            <image
+              wx:for="{{item.images}}"
+              wx:for-item="src"
+              wx:for-index="imgIndex"
+              wx:key="imgIndex"
+              class="shot photo"
+              src="{{src}}"
+              mode="aspectFill"
+              data-id="{{item.id}}"
+              data-src="{{src}}"
+              bindtap="onPreview"
+            />
+          </block>
+        </view>
+        <view wx:if="{{item.liveText}}" slot="actionbar" class="ink">
+          <view class="ink-bar {{motion ? 'on' : ''}}"></view>
+        </view>
+        <view wx:if="{{item.showImages}}" slot="actionbar" class="actions">
+          <text class="act" data-id="{{item.id}}" bindtap="onSave">存作品集</text>
+        </view>
+        </t-chat-message>
+      </block>
+    </view>
+  </view>
+</scroll-view>
+
+<view wx:else class="empty">
+  <text class="title">直接说，或去做一张图</text>
+  <text class="link" bindtap="onCreate">画图</text>
+</view>
+

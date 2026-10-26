@@ -3,6 +3,7 @@
   "renderer": "webview",
   "usingComponents": {
     "conversation": "/components/conversation/index",
-    "t-chat-sender": "tdesign-miniprogram/chat-sender/chat-sender"
+    "t-chat-sender": "tdesign-miniprogram/chat-sender/chat-sender",
+    "t-icon": "tdesign-miniprogram/icon/icon"
   }
 }

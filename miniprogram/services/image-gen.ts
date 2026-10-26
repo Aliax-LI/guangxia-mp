@@ -97,6 +97,9 @@ export function humanizeGenerateError(raw: string): string {
   if (/downloadFile:fail/i.test(raw)) return '参考图下载失败，请换一张本地照片'
   if (/timeout/i.test(raw)) return '生成超时，点重试'
   if (/interrupted|abort/i.test(raw)) return '连接中断了，点重试'
+  if (/image generation tool encountered an error/i.test(raw)) {
+    return '上游生图服务异常，请稍后点重试；持续失败请联系网关或换渠道'
+  }
   return raw || '生成失败，请再试一次'
 }
 

@@ -42,10 +42,10 @@ function showPickError(source: PickImageSource, msg: string) {
   })
 }
 
-function chooseMediaOnce(source: PickImageSource): Promise<string> {
+function chooseMediaMany(source: PickImageSource, count: number): Promise<string[]> {
   const sourceType = sourceTypes(source)
   const opts: WechatMiniprogram.ChooseMediaOption = {
-    count: 1,
+    count: Math.max(1, Math.min(9, count)),
     mediaType: ['image'],
     sourceType,
   }
@@ -57,8 +57,10 @@ function chooseMediaOnce(source: PickImageSource): Promise<string> {
     wx.chooseMedia({
       ...opts,
       success: (res) => {
-        const path = res.tempFiles[0]?.tempFilePath
-        if (path) resolve(path)
+        const paths = (res.tempFiles || [])
+          .map((f) => f.tempFilePath)
+          .filter((p): p is string => !!p)
+        if (paths.length) resolve(paths)
         else reject(new Error('未选择图片'))
       },
       fail: reject,
@@ -66,16 +68,16 @@ function chooseMediaOnce(source: PickImageSource): Promise<string> {
   })
 }
 
-function chooseImageLegacy(source: PickImageSource): Promise<string> {
+function chooseImageMany(source: PickImageSource, count: number): Promise<string[]> {
   const sourceType = sourceTypes(source)
   return new Promise((resolve, reject) => {
     wx.chooseImage({
-      count: 1,
+      count: Math.max(1, Math.min(9, count)),
       sizeType: ['compressed', 'original'],
       sourceType,
       success: (res) => {
-        const path = res.tempFilePaths[0]
-        if (path) resolve(path)
+        const paths = (res.tempFilePaths || []).filter(Boolean)
+        if (paths.length) resolve(paths)
         else reject(new Error('未选择图片'))
       },
       fail: reject,
@@ -83,20 +85,26 @@ function chooseImageLegacy(source: PickImageSource): Promise<string> {
   })
 }
 
-async function pickWithMediaApis(source: PickImageSource): Promise<string> {
+async function pickWithMediaApis(source: PickImageSource, count: number): Promise<string[]> {
   try {
-    return await chooseMediaOnce(source)
+    return await chooseMediaMany(source, count)
   } catch (e) {
     const msg = failMessage(e)
     if (msg.includes('cancel')) throw e
-    return chooseImageLegacy(source)
+    return chooseImageMany(source, count)
   }
+}
+
+/** 选 1–9 张；相机始终 1 张。 */
+export function pickImages(source: PickImageSource = 'any', count = 1): Promise<string[]> {
+  const n = source === 'camera' ? 1 : Math.max(1, Math.min(9, count))
+  return pickWithMediaApis(source, n).catch((e) => {
+    showPickError(source, failMessage(e))
+    throw e
+  })
 }
 
 /** 直接调相册/相机 API；隐私由页面弹层或微信官方弹窗处理 */
 export function pickOneImage(source: PickImageSource = 'any'): Promise<string> {
-  return pickWithMediaApis(source).catch((e) => {
-    showPickError(source, failMessage(e))
-    throw e
-  })
+  return pickImages(source, 1).then((paths) => paths[0] || Promise.reject(new Error('未选择图片')))
 }

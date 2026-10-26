@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "使用明细",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-loading": "tdesign-miniprogram/loading/loading"
+  }
 }

@@ -3,9 +3,24 @@ const PENDING_KEY = 'chat_pending_job'
 const OPEN_KEY = 'chat_open_sheet'
 const DRAFT_KEY = 'chat_composer_draft'
 
+/** 用户输入的参考图（多模态 / 图生图），与生成结果 `images` 区分。 */
+export function turnInputImages(turn: { imagePath?: string; imagePaths?: string[] }): string[] {
+  if (Array.isArray(turn.imagePaths) && turn.imagePaths.length) {
+    return turn.imagePaths.filter((p) => typeof p === 'string' && p)
+  }
+  const single = (turn.imagePath || '').trim()
+  return single ? [single] : []
+}
+
+export function syncInputImages(paths: string[]): { imagePath: string; imagePaths: string[] } {
+  const imagePaths = paths.filter(Boolean)
+  return { imagePaths, imagePath: imagePaths[0] || '' }
+}
+
 export type ComposeJob = {
   prompt: string
   imagePath: string
+  imagePaths?: string[]
   size: string
   ratioLabel: string
   count: number
@@ -48,7 +63,13 @@ export function loadTurns(): ChatTurn[] {
         reply: item.reply || '',
         images: item.images || [],
         error: item.error || '',
-        imagePath: item.imagePath || '',
+        ...syncInputImages(
+          Array.isArray(item.imagePaths) && item.imagePaths.length
+            ? item.imagePaths
+            : item.imagePath
+              ? [item.imagePath]
+              : [],
+        ),
         size: item.size || 'auto',
         ratioLabel: item.ratioLabel || '自动',
         count: item.count || 1,

@@ -1,10 +1,17 @@
 <view class="tpl-page">
+  <!-- 刊物式页头 -->
+  <view class="tpl-masthead">
+    <text class="xt-kicker">INSPIRATION</text>
+    <text class="xt-title">灵感</text>
+    <text class="xt-subtitle">找到喜欢的质感，一键复刻到你的照片</text>
+  </view>
+
   <!-- 顶部吸顶搜索栏与分类 -->
   <view class="sticky-header">
     <!-- 胶囊搜索条 -->
     <view class="search-bar">
       <view class="search-left">
-        <t-icon name="search" size="36rpx" color="#76767B" class="search-icon" />
+        <t-icon name="search" size="36rpx" color="#8A8A93" class="search-icon" />
         <input
           class="search-input"
           placeholder="{{searchPlaceholder}}"
@@ -17,7 +24,7 @@
           wx:if="{{keyword}}"
           name="close-circle-filled"
           size="32rpx"
-          color="#AEAFB8"
+          color="#8A8A93"
           catchtap="onClearSearch"
         />
       </view>
@@ -100,7 +107,7 @@
               <t-icon
                 name="{{item.liked ? 'heart-filled' : 'heart'}}"
                 size="26rpx"
-                color="{{item.liked ? '#FF3B30' : '#8E8E93'}}"
+                color="{{item.liked ? '#D4F826' : '#8A8A93'}}"
               />
               <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
             </view>
@@ -141,7 +148,7 @@
               <t-icon
                 name="{{item.liked ? 'heart-filled' : 'heart'}}"
                 size="26rpx"
-                color="{{item.liked ? '#FF3B30' : '#8E8E93'}}"
+                color="{{item.liked ? '#D4F826' : '#8A8A93'}}"
               />
               <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
             </view>
@@ -159,6 +166,6 @@
 
   <!-- 荧光绿悬浮加号 -->
   <view class="fab-btn" bindtap="onFabClick">
-    <t-icon name="add" size="52rpx" color="#111111" />
+    <t-icon name="add" size="52rpx" color="#0A0B05" />
   </view>
 </view>

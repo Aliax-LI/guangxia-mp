@@ -4,7 +4,7 @@
     <!-- 底层：原图 -->
     <view class="layer base">
       <image class="layer-img" src="{{original}}" mode="aspectFit" />
-      <view class="corner-tag left">
+      <view class="corner-tag tag-original">
         <text>原图</text>
       </view>
     </view>
@@ -17,7 +17,7 @@
         mode="aspectFit"
         style="width: {{compareWidth}}px; height: {{compareHeight}}px;"
       />
-      <view class="corner-tag right">
+      <view class="corner-tag tag-ai">
         <text>AI 成片</text>
       </view>
     </view>
@@ -31,7 +31,7 @@
     >
       <view class="handle-line" />
       <view class="handle-orb">
-        <t-icon name="swap" size="30rpx" color="#111111" />
+        <t-icon name="swap" size="30rpx" color="#0A0B05" />
       </view>
     </view>
 
@@ -43,12 +43,16 @@
 
   <!-- 底部操作按钮 -->
   <view class="actions-section page-pad">
+    <view class="result-note">
+      <view class="note-dot" />
+      <text>成片已就绪 · 建议先左右对比，再保存到相册</text>
+    </view>
     <view class="xt-pill-btn save-btn" bindtap="onSave">
-      <t-icon name="download" size="36rpx" color="#D4F826" style="margin-right: 12rpx;" />
+      <t-icon name="download" size="36rpx" color="#0A0B05" style="margin-right: 12rpx;" />
       <text>保存到系统相册</text>
     </view>
     <view class="xt-pill-btn-outline back-btn" bindtap="onBack">
-      <t-icon name="edit" size="32rpx" color="#111111" style="margin-right: 12rpx;" />
+      <t-icon name="edit" size="32rpx" color="#F4F4F6" style="margin-right: 12rpx;" />
       <text>继续微调编辑</text>
     </view>
   </view>

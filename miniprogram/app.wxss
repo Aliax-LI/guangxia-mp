@@ -1,8 +1,8 @@
 @import './styles/tdesign-theme.wxss';
 
 page {
-  background: var(--td-bg-color-page);
-  color: var(--td-text-color-primary);
+  background: var(--ink-0);
+  color: var(--text-hi);
   font-size: 28rpx;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -19,54 +19,110 @@ page {
 }
 
 .section-gap {
-  margin-top: 32rpx;
+  margin-top: 36rpx;
 }
 
-/* 光匣卡片容器 */
+/* 页头：小标签 + 大标题，影像刊物质感 */
+.xt-masthead {
+  padding: 12rpx 0 36rpx;
+}
+
+.xt-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 20rpx;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 6rpx;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+
+.xt-kicker::before {
+  content: '';
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--brand-neon);
+  box-shadow: 0 0 14rpx 4rpx rgba(212, 248, 38, 0.55);
+}
+
+.xt-title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 56rpx;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -1.5rpx;
+  color: var(--text-hi);
+}
+
+.xt-subtitle {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.45;
+  color: #8a8a93;
+}
+
+/* 光匣暗色卡片 */
 .xt-card {
-  background: #ffffff;
+  background: var(--ink-1);
+  border: 1rpx solid var(--line-weak);
   border-radius: 28rpx;
-  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
   overflow: hidden;
   box-sizing: border-box;
 }
 
-/* 光匣胶囊按钮 */
+/* 内嵌凹陷区域：输入框、提示块 */
+.xt-inset {
+  background: var(--ink-2);
+  border: 1rpx solid var(--line-weak);
+  border-radius: 20rpx;
+  box-sizing: border-box;
+}
+
+/* 光匣主按钮：荧光绿实心 */
 .xt-pill-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 96rpx;
   border-radius: 9999rpx;
-  background: #111111;
-  color: #ffffff;
-  font-size: 32rpx;
-  font-weight: 600;
+  background: var(--brand-neon);
+  color: var(--brand-neon-ink);
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
   transition: all 0.2s ease;
-  box-shadow: 0 8rpx 24rpx rgba(17, 17, 17, 0.12);
+  box-shadow: 0 12rpx 32rpx rgba(212, 248, 38, 0.16);
 }
 
 .xt-pill-btn:active {
   transform: scale(0.985);
-  background: #262626;
+  background: var(--brand-neon-active);
 }
 
 .xt-pill-btn.disabled {
-  background: #e5e5ea;
-  color: #aeafb8;
+  background: var(--ink-3);
+  border: 1rpx solid var(--line-weak);
+  color: #5c5c65;
   box-shadow: none;
   pointer-events: none;
 }
 
+/* 次级按钮：暗底描边 */
 .xt-pill-btn-outline {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 96rpx;
   border-radius: 9999rpx;
-  background: #ffffff;
-  color: #111111;
-  border: 2rpx solid #111111;
+  background: transparent;
+  color: var(--text-hi);
+  border: 2rpx solid var(--line-strong);
   font-size: 30rpx;
   font-weight: 600;
   box-sizing: border-box;
@@ -74,7 +130,7 @@ page {
 }
 
 .xt-pill-btn-outline:active {
-  background: #f5f5f7;
+  background: rgba(255, 255, 255, 0.06);
   transform: scale(0.985);
 }
 
@@ -83,7 +139,7 @@ page {
   width: 140rpx;
   height: 140rpx;
   border-radius: 50%;
-  background: #d4f826;
+  background: var(--brand-neon);
   box-shadow: 0 0 70rpx 20rpx rgba(212, 248, 38, 0.55);
 }
 
@@ -92,7 +148,7 @@ page {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,9 +159,11 @@ page {
 .privacy-card {
   width: 100%;
   max-width: 620rpx;
-  padding: 40rpx 36rpx 32rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
+  padding: 44rpx 36rpx 34rpx;
+  border-radius: 28rpx;
+  background: var(--ink-1);
+  border: 1rpx solid var(--line);
+  box-shadow: 0 32rpx 80rpx rgba(0, 0, 0, 0.6);
   box-sizing: border-box;
 }
 
@@ -113,7 +171,7 @@ page {
   display: block;
   font-size: 34rpx;
   font-weight: 700;
-  color: #111111;
+  color: var(--text-hi);
   text-align: center;
 }
 
@@ -121,15 +179,15 @@ page {
   display: block;
   margin-top: 24rpx;
   font-size: 28rpx;
-  color: #3a3a3c;
-  line-height: 1.5;
+  color: var(--text-mid);
+  line-height: 1.6;
 }
 
 .privacy-link {
   display: block;
   margin-top: 20rpx;
   font-size: 26rpx;
-  color: #7ab800;
+  color: var(--brand-neon);
   text-align: center;
 }
 
@@ -141,11 +199,11 @@ page {
   width: 100%;
   height: 88rpx;
   line-height: 88rpx;
-  border-radius: 16rpx;
-  background: #111111;
-  color: #ffffff;
+  border-radius: 9999rpx;
+  background: var(--brand-neon);
+  color: var(--brand-neon-ink);
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0;
 }
 

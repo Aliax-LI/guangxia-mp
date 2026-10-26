@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "使用明细",
+  "navigationBarTitleText": "积分明细",
   "usingComponents": {
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-loading": "tdesign-miniprogram/loading/loading"

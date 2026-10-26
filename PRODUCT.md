@@ -38,7 +38,7 @@ TypeScript + 原生小程序；Sub2API（`https://sub2api.343426.xyz`）负责�
 ## Brand Commitments
 
 - 产品名展示：**光匣**（AI 修图）。
-- 视觉：白底、荧光绿 `#C8F031` / `#D4F826`、黑色主按钮、大圆角操作块。
+- 视觉：暗色影像馆（深炭黑底让照片成为主角）、荧光绿 `#D4F826`、墨色文字与图形、大圆角操作块。
 - UI 框架：**TDesign 小程序**（主题见根目录 `DESIGN.md`）。
 
 ## Evidence on Hand

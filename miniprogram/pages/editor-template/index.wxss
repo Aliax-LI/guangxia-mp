@@ -377,5 +377,5 @@
   height: 16rpx;
   margin-right: 14rpx;
   border-radius: 50%;
-  background: #d4f826;
+  background: var(--brand-neon-ink, #0a0b05);
 }

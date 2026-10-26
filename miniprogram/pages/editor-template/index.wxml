@@ -72,7 +72,7 @@
       <view class="prompt-head">
         <text class="block-title">创作信息</text>
         <view class="copy-pill" bindtap="onCopyPrompt">
-          <t-icon name="file-copy" size="28rpx" color="#111111" />
+          <t-icon name="file-copy" size="28rpx" color="#F4F4F6" />
           <text>复制提示词</text>
         </view>
       </view>

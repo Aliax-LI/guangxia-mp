@@ -7,14 +7,14 @@
 <view class="home" style="{{keyboard ? 'padding-bottom:' + keyboard + 'px' : ''}}">
   <view class="topbar">
     <view class="topbar-btn" catchtap="onToggleHistory" aria-role="button" aria-label="会话历史">
-      <t-icon name="view-list" size="40rpx" color="#111111" />
+      <t-icon name="view-list" size="40rpx" color="#F4F4F6" />
     </view>
     <view class="topbar-center">
       <text class="topbar-kind">{{tool === 'image' ? '画图' : '对话'}}</text>
       <text class="topbar-title">{{sessionTitle}}</text>
     </view>
     <view class="topbar-btn" catchtap="onNewSameKind" aria-role="button" aria-label="新建会话">
-      <t-icon name="chat-add" size="40rpx" color="#111111" />
+      <t-icon name="chat-add" size="40rpx" color="#F4F4F6" />
     </view>
   </view>
 
@@ -52,16 +52,16 @@
     <view class="drawer-head">
       <text class="drawer-title">会话</text>
       <view class="drawer-close" catchtap="onCloseHistory">
-        <t-icon name="close" size="36rpx" color="#111111" />
+        <t-icon name="close" size="36rpx" color="#F4F4F6" />
       </view>
     </view>
     <view class="drawer-new">
       <view class="new-btn" data-kind="chat" catchtap="onNewSessionTap">
-        <t-icon name="chat" size="32rpx" color="#111111" />
+        <t-icon name="chat" size="32rpx" color="#F4F4F6" />
         <text>新对话</text>
       </view>
       <view class="new-btn" data-kind="image" catchtap="onNewSessionTap">
-        <t-icon name="image" size="32rpx" color="#111111" />
+        <t-icon name="image" size="32rpx" color="#F4F4F6" />
         <text>新画图</text>
       </view>
     </view>
@@ -71,7 +71,7 @@
       aria-role="button"
       aria-label="清空当前会话消息"
     >
-      <t-icon name="clear" size="32rpx" color="{{turnCount ? '#111111' : '#c8c8cc'}}" />
+      <t-icon name="clear" size="32rpx" color="{{turnCount ? '#F4F4F6' : '#5C5C65'}}" />
       <text>清空当前会话</text>
     </view>
     <scroll-view class="drawer-list" scroll-y enhanced show-scrollbar="{{false}}">
@@ -97,7 +97,7 @@
                 aria-role="button"
                 aria-label="删除会话"
               >
-                <t-icon name="delete" size="36rpx" color="#aeafb8" />
+                <t-icon name="delete" size="36rpx" color="#7A7A83" />
               </view>
             </view>
           </view>
@@ -114,7 +114,7 @@
       <view class="tool">
         <view class="chip" catchtap="onToggleMenu">
           <text>{{tool === 'image' ? '画图' : '对话'}}</text>
-          <t-icon name="{{menuOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#111111" />
+          <t-icon name="{{menuOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#F4F4F6" />
         </view>
         <view wx:if="{{menuOpen}}" class="menu" catchtap="noop">
           <view class="menu-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" catchtap="onPickTool">对话</view>
@@ -123,7 +123,7 @@
       </view>
       <view wx:if="{{tool === 'image'}}" class="chip" catchtap="onTogglePanel">
         <text>{{ratioLabel}}</text>
-        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#111111" />
+        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#F4F4F6" />
       </view>
       <scroll-view
         wx:if="{{refImages.length}}"
@@ -208,15 +208,15 @@
       >
         <view slot="footer-prefix" class="bits">
           <view class="cam" catchtap="onCamera">
-            <t-icon name="camera" size="40rpx" color="#111111" />
+            <t-icon name="camera" size="40rpx" color="#F4F4F6" />
           </view>
           <view wx:if="{{canSend}}" class="side go" catchtap="onSendTap">
             <view class="go-icon">
-              <t-icon name="send-filled" size="32rpx" color="#ffffff" />
+              <t-icon name="send-filled" size="32rpx" color="#0A0B05" />
             </view>
           </view>
           <view wx:else class="side plus" catchtap="onAlbum">
-            <t-icon name="add" size="40rpx" color="#111111" />
+            <t-icon name="add" size="40rpx" color="#F4F4F6" />
           </view>
         </view>
       </t-chat-sender>

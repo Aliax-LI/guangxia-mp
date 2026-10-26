@@ -3,8 +3,8 @@
   max-width: 100%;
   overflow-x: hidden;
   min-height: 100vh;
-  background: #ffffff;
-  padding-bottom: 160rpx;
+  background: #070709;
+  padding-bottom: 200rpx;
   box-sizing: border-box;
 }
 
@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 16rpx 28rpx 0;
+  padding: 24rpx 28rpx 0;
 }
 
 .user-header-left {
@@ -32,11 +32,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #f4f4f7;
+  background: #141519;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
 }
 
 .header-help-btn:active {
-  opacity: 0.75;
+  background: #1d1e24;
 }
 
 .avatar-shell {
@@ -46,8 +47,10 @@
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  background: #f0f0f3;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: #141519;
+  box-shadow:
+    0 0 0 3rpx rgba(212, 248, 38, 0.85),
+    0 0 32rpx rgba(212, 248, 38, 0.18);
 }
 
 .user-avatar {
@@ -92,7 +95,8 @@
   background: transparent;
   font-size: 40rpx;
   font-weight: 800;
-  color: #111111;
+  color: #f4f4f6;
+  caret-color: var(--brand-neon, #d4f826);
   height: 56rpx;
   line-height: 56rpx;
   box-sizing: border-box;
@@ -111,7 +115,7 @@
 .user-name {
   font-size: 40rpx;
   font-weight: 800;
-  color: #111111;
+  color: #f4f4f6;
   letter-spacing: -0.5rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -127,7 +131,7 @@
 
 .id-text {
   font-size: 24rpx;
-  color: #8e8e93;
+  color: #8a8a93;
 }
 
 .copy-icon {
@@ -136,13 +140,70 @@
 
 /* 账户概览卡片 */
 .account-card {
-  margin: 28rpx 28rpx 0;
+  position: relative;
+  margin: 30rpx 28rpx 0;
   padding: 26rpx;
-  border-radius: 20rpx;
-  background: #f7f7fa;
+  border-radius: 28rpx;
+  background: linear-gradient(150deg, #15160f 0%, #0e0f12 54%);
+  border: 1rpx solid rgba(212, 248, 38, 0.16);
+  overflow: hidden;
+  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.4);
+}
+
+.account-card::after {
+  content: '';
+  position: absolute;
+  top: -120rpx;
+  right: -100rpx;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 248, 38, 0.14) 0%, rgba(212, 248, 38, 0.03) 45%, transparent 70%);
+  pointer-events: none;
+}
+
+.account-head {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.account-head-left {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.account-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 0 10rpx rgba(212, 248, 38, 0.7);
+}
+
+.account-kicker {
+  font-size: 18rpx;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  color: #8a8a93;
+}
+
+.account-tag {
+  font-size: 20rpx;
+  line-height: 1;
+  color: var(--brand-neon, #d4f826);
+  padding: 8rpx 14rpx;
+  border-radius: 9999rpx;
+  background: rgba(212, 248, 38, 0.08);
+  border: 1rpx solid rgba(212, 248, 38, 0.2);
 }
 
 .stats-group {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16rpx;
@@ -154,10 +215,10 @@
 
 .stat-num {
   display: block;
-  font-size: 36rpx;
+  font-size: 38rpx;
   line-height: 1.2;
   font-weight: 800;
-  color: #111111;
+  color: #f4f4f6;
   letter-spacing: -0.5rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -165,73 +226,87 @@
   font-variant-numeric: tabular-nums;
 }
 
+.stat-item:first-child .stat-num {
+  color: var(--brand-neon, #d4f826);
+}
+
 .stat-label {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
   line-height: 1.3;
-  color: #6b6b70;
+  color: #8a8a93;
 }
 
 .profile-actions {
-  margin-top: 26rpx;
+  position: relative;
+  margin-top: 28rpx;
 }
 
 .edit-btn {
   width: 100%;
-  height: 72rpx;
+  height: 76rpx;
   box-sizing: border-box;
-  border-radius: 16rpx;
-  border: 2rpx solid #dcdce1;
-  background: #ffffff;
+  border-radius: 9999rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 27rpx;
   font-weight: 600;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .edit-btn:active {
-  background: #f2f2f5;
+  background: rgba(255, 255, 255, 0.09);
 }
 
 /* 签名行 */
 .bio-row {
-  padding: 24rpx 28rpx 0;
+  padding: 24rpx 32rpx 0;
 }
 
 .bio-text {
   font-size: 26rpx;
-  color: #8e8e93;
-  line-height: 1.4;
+  color: #8a8a93;
+  line-height: 1.45;
 }
 
 /* 快捷功能双卡片 */
 .feature-dual-cards {
   display: flex;
-  gap: 18rpx;
-  padding: 24rpx 28rpx 0;
+  gap: 16rpx;
+  padding: 28rpx 28rpx 0;
 }
 
 .feature-card {
   flex: 1;
-  background: #f4f4f7;
-  border-radius: 20rpx;
+  background: #0e0f12;
+  border: 1rpx solid rgba(255, 255, 255, 0.07);
+  border-radius: 24rpx;
   padding: 24rpx 20rpx;
   display: flex;
   align-items: center;
   gap: 16rpx;
+  transition: transform 0.15s ease;
+}
+
+.feature-card:active {
+  transform: scale(0.98);
+  background: #141519;
 }
 
 .feat-icon-box {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 50%;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: rgba(212, 248, 38, 0.1);
+  border: 1rpx solid rgba(212, 248, 38, 0.2);
 }
 
 .feat-text-box {
@@ -243,13 +318,13 @@
   display: block;
   font-size: 26rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .feat-sub {
   display: block;
   font-size: 20rpx;
-  color: #8e8e93;
+  color: #8a8a93;
   margin-top: 4rpx;
 }
 
@@ -257,9 +332,9 @@
 .works-tab-bar {
   display: flex;
   align-items: center;
-  gap: 48rpx;
-  padding: 32rpx 28rpx 20rpx;
-  border-bottom: 1rpx solid #f0f0f3;
+  gap: 44rpx;
+  padding: 36rpx 28rpx 0;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
 }
 
 .works-tab-item {
@@ -267,6 +342,7 @@
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding-bottom: 20rpx;
 }
 
 .tab-title-wrap {
@@ -278,38 +354,40 @@
 .tab-title {
   font-size: 30rpx;
   font-weight: 500;
-  color: #8e8e93;
+  color: #8a8a93;
   transition: all 0.15s ease;
 }
 
 .works-tab-item.active .tab-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .tab-line {
   position: absolute;
-  bottom: -18rpx;
+  bottom: -1rpx;
   width: 44rpx;
   height: 6rpx;
   border-radius: 9999rpx;
-  background: #111111;
+  background: var(--brand-neon, #d4f826);
+  box-shadow: 0 0 12rpx rgba(212, 248, 38, 0.5);
 }
 
 /* 九宫格方形作品集展示 */
 .works-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4rpx;
-  padding-top: 4rpx;
+  gap: 6rpx;
+  padding-top: 6rpx;
+  background: #070709;
 }
 
 .work-grid-item {
   position: relative;
   width: 100%;
   padding-bottom: 100%;
-  background: #ececf0;
+  background: #141519;
   overflow: hidden;
 }
 
@@ -329,7 +407,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
@@ -351,8 +429,8 @@
   bottom: 12rpx;
   width: 36rpx;
   height: 36rpx;
-  border-radius: 8rpx;
-  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10rpx;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -368,12 +446,13 @@
 .fab-btn {
   position: fixed;
   right: 36rpx;
-  bottom: calc(140rpx + env(safe-area-inset-bottom));
+  bottom: calc(160rpx + env(safe-area-inset-bottom));
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
   background: var(--brand-neon, #d4f826);
-  box-shadow: 0 10rpx 32rpx rgba(212, 248, 38, 0.65);
+  border: 4rpx solid rgba(7, 7, 9, 0.9);
+  box-shadow: 0 10rpx 32rpx rgba(212, 248, 38, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -384,69 +463,3 @@
 .fab-btn:active {
   transform: scale(0.92);
 }
-
-.privacy-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48rpx;
-  box-sizing: border-box;
-}
-
-.privacy-card {
-  width: 100%;
-  max-width: 620rpx;
-  padding: 40rpx 36rpx 32rpx;
-  border-radius: 24rpx;
-  background: #ffffff;
-  box-sizing: border-box;
-}
-
-.privacy-title {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #111111;
-  text-align: center;
-}
-
-.privacy-desc {
-  display: block;
-  margin-top: 24rpx;
-  font-size: 28rpx;
-  color: #3a3a3c;
-  line-height: 1.5;
-}
-
-.privacy-link {
-  display: block;
-  margin-top: 20rpx;
-  font-size: 26rpx;
-  color: #7ab800;
-  text-align: center;
-}
-
-.privacy-actions {
-  margin-top: 32rpx;
-}
-
-.privacy-agree-btn {
-  width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 16rpx;
-  background: #111111;
-  color: #ffffff;
-  font-size: 30rpx;
-  font-weight: 600;
-  padding: 0;
-}
-
-.privacy-agree-btn::after {
-  display: none;
-}
-

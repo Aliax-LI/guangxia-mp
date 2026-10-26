@@ -1,10 +1,20 @@
-<t-tab-bar value="{{value}}" bindchange="onChange" theme="normal" split="{{false}}" bordered="{{true}}">
-  <t-tab-bar-item
-    wx:for="{{list}}"
-    wx:key="value"
-    value="{{item.value}}"
-    icon="{{item.icon}}"
-  >
-    {{item.label}}
-  </t-tab-bar-item>
-</t-tab-bar>
+<view class="tab-shell">
+  <view class="tab-bar">
+    <view
+      wx:for="{{list}}"
+      wx:key="value"
+      class="tab-item {{value === item.value ? 'active' : ''}}"
+      data-value="{{item.value}}"
+      bindtap="onTap"
+    >
+      <view class="tab-icon-box">
+        <t-icon
+          name="{{item.icon}}"
+          size="36rpx"
+          color="{{value === item.value ? '#0A0B05' : '#8A8A93'}}"
+        />
+      </view>
+      <text class="tab-label">{{item.label}}</text>
+    </view>
+  </view>
+</view>

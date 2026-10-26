@@ -1,6 +1,6 @@
 .tpl-editor {
-  padding-top: 24rpx;
-  padding-bottom: 220rpx;
+  padding-top: 20rpx;
+  padding-bottom: 240rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -14,10 +14,11 @@
 /* 多图范例区 */
 .gallery-wrap {
   position: relative;
-  background: #f4f4f7;
+  background: #000;
   border-radius: 32rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  box-shadow: 0 12rpx 36rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 24rpx 56rpx rgba(0, 0, 0, 0.5);
 }
 
 .gallery-swiper {
@@ -48,7 +49,7 @@
   backdrop-filter: blur(12px);
   padding: 6rpx 20rpx;
   border-radius: 9999rpx;
-  color: #ffffff;
+  color: #f4f4f6;
   font-size: 20rpx;
   font-weight: 500;
 }
@@ -57,7 +58,7 @@
   width: 100%;
   padding: 16rpx 20rpx 20rpx;
   box-sizing: border-box;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
   position: absolute;
   left: 0;
   right: 0;
@@ -75,7 +76,7 @@
   height: 96rpx;
   border-radius: 16rpx;
   border: 3rpx solid transparent;
-  opacity: 0.75;
+  opacity: 0.55;
   flex-shrink: 0;
 }
 
@@ -87,23 +88,25 @@
 /* 模版说明卡片 */
 .meta-card {
   padding: 32rpx;
-  background: #ffffff;
+  background: #0e0f12;
   border-radius: 28rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
 }
 
 .author-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .author-avatar {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  background: #f0f0f3;
+  background: #1d1e24;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
@@ -116,19 +119,19 @@
   display: block;
   font-size: 28rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .author-meta {
   display: block;
   margin-top: 4rpx;
   font-size: 22rpx;
-  color: #8e8e93;
+  color: #8a8a93;
 }
 
 .like-pill {
   font-size: 22rpx;
-  color: #76767b;
+  color: #8a8a93;
   flex-shrink: 0;
 }
 
@@ -136,30 +139,33 @@
   display: block;
   font-size: 34rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
   line-height: 1.4;
+  letter-spacing: -0.3rpx;
 }
 
 .tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx;
-  margin-top: 16rpx;
+  margin-top: 18rpx;
 }
 
 .tag-chip {
   padding: 8rpx 18rpx;
   border-radius: 9999rpx;
-  background: #f4f4f7;
+  background: #1d1e24;
+  border: 1rpx solid rgba(255, 255, 255, 0.06);
   font-size: 22rpx;
-  color: #3a3a3c;
+  color: #b9b9c1;
 }
 
 .prompt-card {
   padding: 28rpx 32rpx 32rpx;
-  background: #ffffff;
+  background: #0e0f12;
   border-radius: 28rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
 }
 
 .prompt-head {
@@ -172,7 +178,7 @@
 .block-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .copy-pill {
@@ -181,61 +187,72 @@
   gap: 8rpx;
   padding: 10rpx 20rpx;
   border-radius: 9999rpx;
-  background: #f4f4f7;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
   font-size: 24rpx;
   font-weight: 600;
-  color: #111111;
+  color: #f4f4f6;
   flex-shrink: 0;
+}
+
+.copy-pill:active {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .prompt-label {
   display: block;
   margin-top: 20rpx;
   font-size: 22rpx;
-  color: #8e8e93;
+  color: #8a8a93;
 }
 
 .prompt-scroll {
   margin-top: 12rpx;
   max-height: 320rpx;
+  padding: 18rpx;
+  background: #16171b;
+  border-radius: 18rpx;
+  box-sizing: border-box;
 }
 
 .prompt-body {
   display: block;
   font-size: 26rpx;
-  line-height: 1.55;
-  color: #3a3a3c;
+  line-height: 1.6;
+  color: #b9b9c1;
   white-space: pre-wrap;
 }
 
 .desc {
   display: block;
-  margin-top: 14rpx;
+  margin-top: 16rpx;
   font-size: 26rpx;
-  color: #76767b;
-  line-height: 1.5;
+  color: #8a8a93;
+  line-height: 1.55;
 }
 
 .rule-tip {
   margin-top: 24rpx;
   padding: 16rpx 24rpx;
   border-radius: 18rpx;
-  background: #f4f4f7;
+  background: #16171b;
+  border: 1rpx solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   gap: 12rpx;
   font-size: 24rpx;
-  color: #76767b;
+  color: #8a8a93;
 }
 
 .rule-tip.must {
-  background: #f8fae8;
-  color: #2b3a00;
+  background: rgba(212, 248, 38, 0.08);
+  border-color: rgba(212, 248, 38, 0.24);
+  color: #d8ec8a;
 }
 
 /* 照片上传区域 */
 .upload-section {
-  margin-top: 36rpx;
+  margin-top: 40rpx;
 }
 
 .section-title-wrap {
@@ -248,19 +265,23 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .section-subtitle {
   font-size: 22rpx;
   font-weight: 600;
-  color: #8e8e93;
+  color: #8a8a93;
+}
+
+.section-subtitle.is-must {
+  color: #d4f826;
 }
 
 .upload-box {
   height: 320rpx;
-  background: #ffffff;
-  border: 3rpx dashed #dcdce0;
+  background: #0e0f12;
+  border: 3rpx dashed rgba(255, 255, 255, 0.14);
   border-radius: 28rpx;
   display: flex;
   flex-direction: column;
@@ -270,30 +291,31 @@
 }
 
 .upload-box:active {
-  background: #f8f8fa;
+  background: #141519;
+  border-color: rgba(212, 248, 38, 0.4);
 }
 
 .upload-circle {
   width: 96rpx;
   height: 96rpx;
-  border-radius: 50%;
+  border-radius: 30rpx;
   background: var(--brand-neon, #d4f826);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 24rpx rgba(212, 248, 38, 0.4);
+  box-shadow: 0 0 28rpx rgba(212, 248, 38, 0.28);
   margin-bottom: 20rpx;
 }
 
 .upload-main-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #111111;
+  color: #f4f4f6;
 }
 
 .upload-sub-text {
   font-size: 22rpx;
-  color: #8e8e93;
+  color: #8a8a93;
   margin-top: 8rpx;
 }
 
@@ -301,8 +323,10 @@
   position: relative;
   height: 380rpx;
   border-radius: 28rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.08);
+  background: #000;
+  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.4);
 }
 
 .user-img {
@@ -337,9 +361,9 @@
   right: 0;
   bottom: 0;
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1rpx solid #eeeeef;
+  background: rgba(7, 7, 9, 0.92);
+  backdrop-filter: blur(24px);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.07);
   z-index: 100;
   box-sizing: border-box;
 }

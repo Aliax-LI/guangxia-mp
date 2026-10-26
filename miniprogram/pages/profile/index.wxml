@@ -54,18 +54,25 @@
       </view>
       <view class="id-row" bindtap="onCopyAccount">
         <text class="id-text">账户：{{accountText}}</text>
-        <t-icon name="copy" size="24rpx" color="#8E8E93" class="copy-icon" />
+        <t-icon name="copy" size="24rpx" color="#8A8A93" class="copy-icon" />
       </view>
     </view>
     </view>
 
     <view class="header-help-btn" bindtap="onOpenHelp" aria-role="button" aria-label="使用帮助">
-      <t-icon name="help-circle" size="44rpx" color="#111111" />
+      <t-icon name="help-circle" size="44rpx" color="#F4F4F6" />
     </view>
   </view>
 
   <!-- 账户概览 -->
   <view class="account-card" aria-role="group" aria-label="账户使用概览">
+    <view class="account-head">
+      <view class="account-head-left">
+        <view class="account-dot" />
+        <text class="account-kicker">ACCOUNT</text>
+      </view>
+      <text class="account-tag">Sub2API</text>
+    </view>
     <view class="stats-group">
       <view class="stat-item">
         <text class="stat-num">{{balanceDisplay}}</text>
@@ -96,7 +103,7 @@
   <view class="feature-dual-cards">
     <view class="feature-card" bindtap="onRedeemCard">
       <view class="feat-icon-box">
-        <t-icon name="wallet" size="44rpx" color="#111111" />
+        <t-icon name="wallet" size="44rpx" color="#D4F826" />
       </view>
       <view class="feat-text-box">
         <text class="feat-title">卡密充值</text>
@@ -106,7 +113,7 @@
 
     <view class="feature-card" bindtap="onUsageDetail">
       <view class="feat-icon-box">
-        <t-icon name="bill" size="44rpx" color="#111111" />
+        <t-icon name="bill" size="44rpx" color="#D4F826" />
       </view>
       <view class="feat-text-box">
         <text class="feat-title">使用明细</text>
@@ -124,7 +131,7 @@
     >
       <view class="tab-title-wrap">
         <text class="tab-title">作品集</text>
-        <t-icon name="lock-on" size="22rpx" color="#8E8E93" class="lock-icon" />
+        <t-icon name="lock-on" size="22rpx" color="#8A8A93" class="lock-icon" />
       </view>
       <view wx:if="{{activeTab === 'works'}}" class="tab-line" />
     </view>
@@ -188,7 +195,7 @@
 
   <!-- 荧光绿悬浮加号 -->
   <view class="fab-btn" bindtap="onFabClick">
-    <t-icon name="add" size="52rpx" color="#111111" />
+    <t-icon name="add" size="52rpx" color="#0A0B05" />
   </view>
   </view>
 

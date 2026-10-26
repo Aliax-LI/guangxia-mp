@@ -8,12 +8,15 @@ Component({
     ],
   },
   methods: {
-    onChange(this: { data: { value: string }; setData: (data: Record<string, string>) => void }, e: any) {
-      const url: string = e.detail?.value || e.detail
+    onTap(
+      this: { data: { value: string }; setData: (data: Record<string, string>) => void },
+      e: WechatMiniprogram.BaseEvent,
+    ) {
+      const url = e.currentTarget?.dataset?.value as string
       if (url && url !== this.data.value) {
         this.setData({ value: url })
+        wx.switchTab({ url })
       }
-      wx.switchTab({ url })
     },
     init(this: { setData: (data: Record<string, string>) => void }) {
       const page = getCurrentPages().pop()

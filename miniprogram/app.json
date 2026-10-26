@@ -10,17 +10,18 @@
     "pages/logs/index"
   ],
   "window": {
-    "navigationBarTextStyle": "black",
+    "navigationBarTextStyle": "white",
     "navigationBarTitleText": "光匣",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#ffffff"
+    "navigationBarBackgroundColor": "#070709",
+    "backgroundColor": "#070709",
+    "backgroundTextStyle": "light"
   },
   "tabBar": {
     "custom": true,
-    "color": "#8e8e93",
-    "selectedColor": "#111111",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "white",
+    "color": "#6A6A74",
+    "selectedColor": "#D4F826",
+    "backgroundColor": "#0E0F12",
+    "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/edit/index",

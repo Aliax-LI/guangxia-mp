@@ -1,5 +1,9 @@
 <view class="logs-page page-pad">
-  <text class="page-tip">修图消耗的积分都会记在这里</text>
+  <view class="xt-masthead logs-masthead">
+    <text class="xt-kicker">ACTIVITY</text>
+    <text class="xt-title">积分明细</text>
+    <text class="xt-subtitle">修图消耗的积分都会记在这里</text>
+  </view>
 
   <view wx:if="{{loading && !items.length}}" class="center-state">
     <t-loading theme="circular" size="56rpx" text="加载中…" />
@@ -7,7 +11,7 @@
 
   <view wx:elif="{{!items.length && !loading}}" class="empty-wrap">
     <view class="empty-icon">
-      <t-icon name="image-edit" size="64rpx" color="#111111" />
+      <t-icon name="image-edit" size="64rpx" color="#D4F826" />
     </view>
     <text class="empty-title">还没有使用记录</text>
     <text class="empty-sub">完成一次 AI 修图后会自动出现在这里</text>
@@ -21,7 +25,7 @@
       class="record-row {{index < items.length - 1 ? 'record-row--line' : ''}}"
     >
       <view class="record-icon">
-        <t-icon name="image" size="40rpx" color="#111111" />
+        <t-icon name="image" size="40rpx" color="#D4F826" />
       </view>
       <view class="record-main">
         <text class="record-title">{{item.title}}</text>

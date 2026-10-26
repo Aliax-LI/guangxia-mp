@@ -1,33 +1,30 @@
 <view class="edit-page">
-  <!-- 顶部品牌标题栏 -->
-  <view class="header">
-    <view class="header-left">
-      <view class="brand-badge">
-        <view class="brand-orb" />
-        <text class="brand-title">AI 修图</text>
-      </view>
-      <text class="brand-sub">胶片级质感 · AI 画质重塑</text>
-    </view>
+  <!-- 顶部刊头 -->
+  <view class="xt-masthead">
+    <text class="xt-kicker">LIGHTBOX STUDIO</text>
+    <text class="xt-title">修图</text>
+    <text class="xt-subtitle">胶片级质感 · 把光装进照片里</text>
   </view>
 
   <!-- 照片导入区域 / 预览区域 -->
   <view wx:if="{{!imagePath}}" class="hero-import xt-card">
+    <view class="hero-glow" />
     <view class="hero-import-content" bindtap="onPickImage" data-source="any">
       <view class="import-badge">
-        <t-icon name="image-add" size="52rpx" color="#111111" />
+        <t-icon name="image-add" size="52rpx" color="#0A0B05" />
       </view>
       <view class="import-info">
         <text class="import-title">导入照片开启修图</text>
-        <text class="import-desc">支持相册选图或相机实拍，人像/风景/质感重绘</text>
+        <text class="import-desc">相册选图或相机实拍 · 人像 / 风景 / 质感重绘</text>
       </view>
     </view>
     <view class="import-actions">
-      <view class="action-pill" catchtap="onPickImage" data-source="album">
-        <t-icon name="photo" size="32rpx" color="#FFFFFF" />
-        <text class="pill-text">相册选择</text>
+      <view class="action-pill action-pill--accent" catchtap="onPickImage" data-source="album">
+        <t-icon name="photo" size="32rpx" color="#0A0B05" />
+        <text class="pill-text pill-text--ink">相册选择</text>
       </view>
       <view class="action-pill" catchtap="onPickImage" data-source="camera">
-        <t-icon name="camera" size="32rpx" color="#FFFFFF" />
+        <t-icon name="camera" size="32rpx" color="#F4F4F6" />
         <text class="pill-text">相机拍照</text>
       </view>
     </view>
@@ -58,7 +55,7 @@
       <text class="section-title">风格预设</text>
       <text class="section-tip">选择心仪质感</text>
     </view>
-    <scroll-view scroll-x class="presets-scroll" enable-flex>
+    <scroll-view scroll-x class="presets-scroll" enable-flex show-scrollbar="{{false}}">
       <view class="presets-track">
         <view
           wx:for="{{presets}}"
@@ -68,12 +65,12 @@
           bindtap="onSelectPreset"
         >
           <view class="preset-icon-wrap">
-            <t-icon name="{{item.icon}}" size="40rpx" color="{{selectedPresetId === item.id ? '#111111' : '#76767B'}}" />
+            <t-icon name="{{item.icon}}" size="40rpx" color="{{selectedPresetId === item.id ? '#0A0B05' : '#9C9CA4'}}" />
           </view>
           <text class="preset-name">{{item.label}}</text>
           <text class="preset-tag-text">{{item.tag}}</text>
           <view wx:if="{{selectedPresetId === item.id}}" class="preset-check">
-            <t-icon name="check" size="20rpx" color="#111111" />
+            <t-icon name="check" size="20rpx" color="#0A0B05" />
           </view>
         </view>
       </view>
@@ -83,7 +80,7 @@
   <!-- 补充描述词区域 -->
   <view class="section">
     <view class="section-head">
-      <text class="section-title">描述词调整 (Prompt)</text>
+      <text class="section-title">描述词调整</text>
       <text wx:if="{{promptExtra}}" class="clear-link" bindtap="onClearPrompt">清空</text>
     </view>
     <view class="prompt-box xt-card">
@@ -109,7 +106,7 @@
         data-tag="{{item}}"
         bindtap="onAddTag"
       >
-        <t-icon name="add" size="24rpx" color="#76767B" />
+        <t-icon name="add" size="24rpx" color="#8A8A93" />
         <text class="quick-pill-text">{{item}}</text>
       </view>
     </view>
@@ -121,7 +118,7 @@
       class="xt-pill-btn submit-btn {{!imagePath ? 'disabled' : ''}}"
       bindtap="onGoEditor"
     >
-      <t-icon name="sparkles" size="36rpx" color="{{!imagePath ? '#AEAFB8' : '#D4F826'}}" style="margin-right: 12rpx;" />
+      <t-icon name="sparkles" size="36rpx" color="{{!imagePath ? '#5C5C65' : '#0A0B05'}}" style="margin-right: 12rpx;" />
       <text>{{imagePath ? '开始生成新图' : '请先导入照片'}}</text>
     </view>
   </view>

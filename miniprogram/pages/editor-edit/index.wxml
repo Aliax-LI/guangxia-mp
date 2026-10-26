@@ -1,4 +1,11 @@
 <view class="editor-page page-pad">
+  <!-- 顶部刊头 -->
+  <view class="xt-masthead editor-masthead">
+    <text class="xt-kicker">EDIT SESSION</text>
+    <text class="xt-title">微调</text>
+    <text class="xt-subtitle">保留构图，只重塑光影与质感</text>
+  </view>
+
   <!-- 影像画布区域 -->
   <view class="studio-canvas xt-card">
     <image src="{{imagePath}}" mode="widthFix" class="canvas-image" />
@@ -12,7 +19,9 @@
   <view class="prompt-card xt-card section-gap">
     <view class="card-head">
       <view class="head-title-wrap">
-        <t-icon name="edit" size="32rpx" color="#111111" />
+        <view class="head-icon">
+          <t-icon name="edit" size="30rpx" color="#D4F826" />
+        </view>
         <text class="head-title">修图风格指令</text>
       </view>
       <text class="head-tip">按需微调</text>
@@ -20,6 +29,7 @@
     <textarea
       class="editor-textarea"
       placeholder="详细描述想要的效果、光影或局部调整…"
+      placeholder-class="editor-placeholder"
       maxlength="1200"
       value="{{prompt}}"
       bindinput="onPromptChange"
@@ -36,7 +46,7 @@
       bindtap="onGenerate"
     >
       <t-loading wx:if="{{generating}}" theme="dots" size="36rpx" style="margin-right: 12rpx;" />
-      <t-icon wx:else name="sparkles" size="36rpx" color="#D4F826" style="margin-right: 12rpx;" />
+      <t-icon wx:else name="sparkles" size="36rpx" color="#0A0B05" style="margin-right: 12rpx;" />
       <text>{{generating ? 'AI 正在渲染中…' : '立即开始生成'}}</text>
     </view>
   </view>

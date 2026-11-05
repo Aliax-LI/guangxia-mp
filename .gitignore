@@ -3,5 +3,7 @@ manifest-output/
 miniprogram/dev-manifest/detail/
 database-export/
 cloud-storage-assets/
+.cursor
+.impeccable
 project.private.config.json
 .DS_Store

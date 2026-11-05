@@ -23,6 +23,8 @@ Page({
     allItems: [] as TemplateListItem[],
     page: 1,
     hasMore: true,
+    /** 头部右侧的计数：只表达「多少条可挑」，无数据时返回空串，不印占位符 */
+    totalLabel: '',
   },
 
   onLoad() {
@@ -116,6 +118,7 @@ Page({
         page,
         hasMore,
         loadingMore: false,
+        totalLabel: allItems.length ? `${allItems.length} 个模板` : '',
       })
     } catch {
       this.setData({ loadingMore: false })

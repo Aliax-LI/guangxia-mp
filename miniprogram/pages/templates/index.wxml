@@ -1,76 +1,86 @@
 <view class="tpl-page">
-  <!-- 刊物式页头 -->
-  <view class="tpl-masthead">
-    <text class="xt-kicker">INSPIRATION</text>
-    <text class="xt-title">灵感</text>
-    <text class="xt-subtitle">找到喜欢的质感，一键复刻到你的照片</text>
-  </view>
-
-  <!-- 顶部吸顶搜索栏与分类 -->
+  <!-- 吸顶头部：搜索承接标题的位置，标题交给原生导航栏，不再重复报一次页面名 -->
   <view class="sticky-header">
-    <!-- 胶囊搜索条 -->
     <view class="search-bar">
-      <view class="search-left">
-        <t-icon name="search" size="36rpx" color="#8A8A93" class="search-icon" />
-        <input
-          class="search-input"
-          placeholder="{{searchPlaceholder}}"
-          placeholder-class="search-placeholder"
-          value="{{keyword}}"
-          bindinput="onKeywordChange"
-          bindconfirm="onSearch"
-        />
-        <t-icon
-          wx:if="{{keyword}}"
-          name="close-circle-filled"
-          size="32rpx"
-          color="#8A8A93"
-          catchtap="onClearSearch"
-        />
-      </view>
-      <view class="search-btn" bindtap="onSearch">
-        <text>搜索</text>
+      <t-icon name="search" size="32rpx" color="#6f6355" class="search-icon" />
+      <input
+        class="search-input"
+        placeholder="{{searchPlaceholder}}"
+        placeholder-class="search-placeholder"
+        value="{{keyword}}"
+        bindinput="onKeywordChange"
+        bindconfirm="onSearch"
+      />
+      <view wx:if="{{keyword}}" class="search-clear" catchtap="onClearSearch" aria-role="button" aria-label="清空搜索">
+        <t-icon name="close-circle-filled" size="30rpx" color="#8b7f70" />
       </view>
     </view>
 
-    <!-- 一级分类导航栏 -->
+    <!-- 一级分类：加载中先给 5 个文字宽度的骨架位，避免头部全空、内容区独灰 -->
     <scroll-view scroll-x class="primary-scroll" enhanced show-scrollbar="{{false}}">
       <view class="primary-track">
-        <view
-          wx:for="{{primaryCategories}}"
-          wx:key="id"
-          class="primary-item {{activePrimary === item.id ? 'active' : ''}}"
-          data-id="{{item.id}}"
-          bindtap="onSelectPrimary"
-        >
-          <text class="primary-text">{{item.name}}</text>
-        </view>
+        <block wx:if="{{loading}}">
+          <view class="sk-line primary-sk" wx:for="{{[0,1,2,3,4]}}" wx:key="*this" style="width: {{112 + (index % 3) * 40}}rpx;"></view>
+        </block>
+        <block wx:else>
+          <view
+            wx:for="{{primaryCategories}}"
+            wx:key="id"
+            class="primary-item {{activePrimary === item.id ? 'active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="onSelectPrimary"
+          >
+            <text class="primary-text">{{item.name}}</text>
+          </view>
+        </block>
       </view>
     </scroll-view>
 
-    <!-- 二级胶囊标签栏 -->
+    <!-- 二级标签 -->
     <scroll-view scroll-x class="sub-scroll" enhanced show-scrollbar="{{false}}">
       <view class="sub-track">
-        <view
-          wx:for="{{subTags}}"
-          wx:key="id"
-          class="sub-pill {{activeSubTag === item.id ? 'active' : ''}}"
-          data-id="{{item.id}}"
-          bindtap="onSelectSubTag"
-        >
-          <text class="sub-text">{{item.name}}</text>
-        </view>
+        <block wx:if="{{loading}}">
+          <view class="sk-pill sub-sk" wx:for="{{[0,1,2,3]}}" wx:key="*this" style="width: {{108 + (index % 2) * 32}}rpx;"></view>
+        </block>
+        <block wx:else>
+          <view
+            wx:for="{{subTags}}"
+            wx:key="id"
+            class="sub-pill {{activeSubTag === item.id ? 'active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="onSelectSubTag"
+          >
+            <text class="sub-text">{{item.name}}</text>
+          </view>
+        </block>
       </view>
     </scroll-view>
   </view>
 
-  <!-- 页面主体加载态 -->
-  <view wx:if="{{loading}}" class="center-loading">
-    <t-loading theme="circular" size="56rpx" text="探索精彩灵感…" />
+  <!-- 加载态：按真实瀑布流比例铺骨架，首屏结构先到位，图到了再替换 -->
+  <view wx:if="{{loading}}" class="wf-skeleton">
+    <view class="wf-skeleton-col">
+      <view class="sk-card" style="height: 620rpx;"></view>
+      <view class="sk-card" style="height: 520rpx;"></view>
+      <view class="sk-card" style="height: 700rpx;"></view>
+    </view>
+    <view class="wf-skeleton-col">
+      <view class="sk-card" style="height: 480rpx;"></view>
+      <view class="sk-card" style="height: 660rpx;"></view>
+      <view class="sk-card" style="height: 560rpx;"></view>
+    </view>
   </view>
 
-  <view wx:elif="{{!leftColumn.length && !rightColumn.length}}" class="center-empty">
-    <t-empty description="暂无相关灵感" />
+  <view wx:elif="{{!leftColumn.length && !rightColumn.length}}" class="empty">
+    <view class="empty-mark">
+      <t-icon name="search" size="52rpx" color="#6f6355" />
+    </view>
+    <text class="empty-title">{{keyword ? '没有找到「' + keyword + '」' : '这个分类还没有模板'}}</text>
+    <text class="empty-sub">{{keyword ? '换个词试试，或者回到精选看看大家都在用什么' : '换一个分类试试'}}</text>
+    <view class="empty-actions">
+      <view wx:if="{{keyword}}" class="btn btn--ghost btn--sm" bindtap="onClearSearch">清空搜索</view>
+      <view class="btn btn--primary btn--sm" bindtap="onSelectPrimary" data-id="ai">看精选</view>
+    </view>
   </view>
 
   <!-- 真正的错落双列瀑布流 -->
@@ -99,17 +109,14 @@
         <view class="wf-body">
           <text class="wf-title">{{item.title}}</text>
           <view class="wf-meta-row">
-            <view class="wf-author">
-              <image class="author-avatar" src="{{item.author.avatar || 'https://tdesign.gtimg.com/mobile/demos/avatar1.png'}}" mode="aspectFill" />
-              <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
-            </view>
+            <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
             <view class="wf-like" data-id="{{item.id}}" catchtap="onToggleLike">
               <t-icon
                 name="{{item.liked ? 'heart-filled' : 'heart'}}"
                 size="26rpx"
-                color="{{item.liked ? '#D4F826' : '#8A8A93'}}"
+                color="{{item.liked ? '#c9761b' : '#6f6355'}}"
               />
-              <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+              <text wx:if="{{item.liked}}" class="like-num liked">{{item.likes}}</text>
             </view>
           </view>
         </view>
@@ -140,17 +147,14 @@
         <view class="wf-body">
           <text class="wf-title">{{item.title}}</text>
           <view class="wf-meta-row">
-            <view class="wf-author">
-              <image class="author-avatar" src="{{item.author.avatar || 'https://tdesign.gtimg.com/mobile/demos/avatar2.png'}}" mode="aspectFill" />
-              <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
-            </view>
+            <text class="author-name">{{item.author.name || '光匣创作者'}}</text>
             <view class="wf-like" data-id="{{item.id}}" catchtap="onToggleLike">
               <t-icon
                 name="{{item.liked ? 'heart-filled' : 'heart'}}"
                 size="26rpx"
-                color="{{item.liked ? '#D4F826' : '#8A8A93'}}"
+                color="{{item.liked ? '#c9761b' : '#6f6355'}}"
               />
-              <text class="like-num {{item.liked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+              <text wx:if="{{item.liked}}" class="like-num liked">{{item.likes}}</text>
             </view>
           </view>
         </view>
@@ -161,11 +165,11 @@
   <!-- 底部触底状态 -->
   <view class="footer-state">
     <t-loading wx:if="{{loadingMore}}" theme="dots" size="36rpx" text="加载更多灵感" />
-    <text wx:elif="{{!hasMore && (leftColumn.length || rightColumn.length)}}" class="foot-tip">已经到底啦 · 更多精彩稍后更新</text>
+    <text wx:elif="{{!hasMore && (leftColumn.length || rightColumn.length)}}" class="foot-tip">到底了 · 新模板每天更新</text>
   </view>
 
-  <!-- 荧光绿悬浮加号 -->
-  <view class="fab-btn" bindtap="onFabClick">
-    <t-icon name="add" size="52rpx" color="#0A0B05" />
+  <!-- 悬浮主操作 -->
+  <view class="fab" bindtap="onFabClick" aria-role="button" aria-label="用这张做图">
+    <t-icon name="add" size="48rpx" color="#fffdf9" />
   </view>
 </view>

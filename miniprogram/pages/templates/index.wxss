@@ -1,196 +1,255 @@
+/* 注意：这里不能写 overflow-x: hidden。任何祖先带 overflow 非 visible，
+   position: sticky 就会失效（滚动容器变成该祖先而不是页面）。 */
 page {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  background: #070709;
+  background: transparent;
 }
 
 .tpl-page {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  padding-bottom: 200rpx;
+  padding-bottom: calc(var(--tabbar-h, 132rpx) + 96rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
-  background: #070709;
-  box-sizing: border-box;
+  background: transparent;
 }
 
-/* 刊物式页头 */
-.tpl-masthead {
-  padding: 20rpx 24rpx 10rpx;
-}
+/* ── 吸顶头部：搜索 + 两级筛选，滚动时固定在原生导航栏下方 ── */
 
-/* 顶部吸顶区域 */
 .sticky-header {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 60;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-  background: rgba(7, 7, 9, 0.94);
-  backdrop-filter: blur(24px);
-  padding: calc(12rpx + env(safe-area-inset-top)) 24rpx 16rpx;
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
+  padding: 0 var(--gutter);
+  background: transparent;
+  background: rgba(250, 246, 238, 0.96);
+  border-bottom: 1rpx solid var(--line-weak, rgba(28, 24, 21, 0.08));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* 胶囊搜索条 */
+/* 搜索：无框，一条相纸底线；琥珀只在聚焦时出现 */
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  margin-bottom: 20rpx;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 12rpx;
+  height: 96rpx;
+  border-bottom: 1rpx solid var(--line);
 }
 
-.search-left {
-  flex: 1;
-  min-width: 0;
-  height: 76rpx;
-  background: #16171b;
-  border: 1rpx solid rgba(255, 255, 255, 0.07);
-  border-radius: 9999rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 28rpx;
-  box-sizing: border-box;
+.search-bar:focus-within {
+  border-bottom-color: var(--brand-neon, #c9761b);
 }
 
 .search-icon {
-  margin-right: 14rpx;
   flex-shrink: 0;
 }
 
 .search-input {
   flex: 1;
+  min-width: 0;
   height: 100%;
-  font-size: 26rpx;
-  color: #f4f4f6;
-  caret-color: var(--brand-neon, #d4f826);
+  text-align: left;
+  font-size: 27rpx;
+  color: var(--text-hi, #1c1815);
+  caret-color: var(--brand-neon, #c9761b);
 }
 
 .search-placeholder {
-  color: #7a7a83;
-  font-size: 26rpx;
+  color: var(--text-low, #8b7f70);
+  font-size: 27rpx;
+  text-align: left;
 }
 
-.search-btn {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--brand-neon, #d4f826);
-  padding: 10rpx 8rpx;
+.search-clear {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-/* 一级大分类横滑条 */
-.primary-scroll {
+/* 一级分类：文字 + 琥珀下划线，不放大字号 */
+.primary-scroll,
+.sub-scroll {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
   white-space: nowrap;
-  margin-bottom: 20rpx;
+  overflow: hidden;
 }
 
 .primary-track {
   display: inline-flex;
-  gap: 36rpx;
-  padding: 6rpx 4rpx 8rpx;
-  box-sizing: border-box;
-  white-space: nowrap;
+  align-items: flex-end;
+  gap: 40rpx;
+  padding: 14rpx 4rpx 12rpx;
 }
 
 .primary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   position: relative;
   flex-shrink: 0;
   padding-bottom: 10rpx;
 }
 
 .primary-text {
-  font-size: 30rpx;
+  font-size: 29rpx;
   font-weight: 500;
-  color: #8a8a93;
-  transition: all 0.15s ease;
+  color: var(--text-soft, #6f6355);
+  transition: color 0.15s ease;
 }
 
 .primary-item.active .primary-text {
-  font-size: 34rpx;
   font-weight: 700;
-  color: #f4f4f6;
+  color: var(--text-hi, #1c1815);
 }
 
 .primary-item.active::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: 0;
   bottom: 0;
-  width: 32rpx;
-  height: 6rpx;
-  margin-left: -16rpx;
-  border-radius: 9999rpx;
-  background: var(--brand-neon, #d4f826);
-  box-shadow: 0 0 12rpx rgba(212, 248, 38, 0.55);
-}
-
-/* 二级胶囊药丸标签条 */
-.sub-scroll {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-  white-space: nowrap;
+  height: 4rpx;
+  border-radius: 9999rpx;
+  background: var(--brand-neon, #c9761b);
 }
 
+/* 二级标签：胶囊，选中为琥珀 */
 .sub-track {
   display: inline-flex;
-  gap: 14rpx;
-  padding: 4rpx 4rpx 6rpx;
-  box-sizing: border-box;
-  white-space: nowrap;
+  gap: 12rpx;
+  padding: 4rpx 4rpx 16rpx;
 }
 
 .sub-pill {
-  padding: 12rpx 30rpx;
+  height: 60rpx;
+  padding: 0 26rpx;
+  display: inline-flex;
+  align-items: center;
   border-radius: 9999rpx;
-  background: #16171b;
-  border: 1rpx solid rgba(255, 255, 255, 0.06);
-  transition: all 0.2s ease;
+  border: 1rpx solid var(--line-weak);
+  background: var(--ink-2, #efe8dc);
   flex-shrink: 0;
 }
 
-.sub-pill:active {
-  transform: scale(0.97);
-}
-
 .sub-pill.active {
-  background: var(--brand-neon, #d4f826);
-  border-color: var(--brand-neon, #d4f826);
-  box-shadow: 0 6rpx 20rpx rgba(212, 248, 38, 0.18);
+  background: var(--brand-neon, #c9761b);
+  border-color: var(--brand-neon, #c9761b);
 }
 
 .sub-text {
   font-size: 24rpx;
   font-weight: 500;
-  color: #a2a2ab;
+  color: var(--text-mid, #5c5145);
 }
 
 .sub-pill.active .sub-text {
-  color: #0a0b05;
+  color: var(--brand-neon-ink, #fffdf9);
   font-weight: 700;
 }
 
-/* 加载与空状态 */
-.center-loading,
-.center-empty {
-  padding: 220rpx 0;
+/* ── 加载态：瀑布流骨架，形状先于内容到位 ─────────────── */
+
+/* 筛选条的骨架：一级用文字线，二级用药丸，与真实元素同形同位 */
+.sk-line {
+  height: 28rpx;
+  border-radius: 8rpx;
+  background: var(--skeleton-from, #f7f0e3);
+  animation: sk-breathe 1.6s ease-in-out infinite;
+}
+
+.primary-sk {
+  flex-shrink: 0;
+  margin-right: 40rpx;
+  align-self: flex-end;
+  margin-bottom: 14rpx;
+}
+
+.sk-pill {
+  height: 60rpx;
+  border-radius: 9999rpx;
+  flex-shrink: 0;
+  background: var(--skeleton-from, #f7f0e3);
+  animation: sk-breathe 1.6s ease-in-out infinite;
+}
+
+.sub-sk {
+  margin-right: 12rpx;
+}
+
+.sk-line:nth-child(2),
+.sk-pill:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.sk-line:nth-child(3),
+.sk-pill:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.sk-line:nth-child(4),
+.sk-pill:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+.sk-line:nth-child(5),
+.sk-pill:nth-child(5) {
+  animation-delay: 0.48s;
+}
+
+
+
+.wf-skeleton {
   display: flex;
-  justify-content: center;
+  gap: 20rpx;
+  align-items: flex-start;
+  padding: 20rpx var(--gutter) 40rpx;
+}
+
+.wf-skeleton-col {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 骨架块：相纸灰在暖灰底上轻轻呼吸，不画转圈 */
+.sk-card {
+  width: 100%;
+  border-radius: 20rpx;
+  background: var(--skeleton-from, #f7f0e3);
+  animation: sk-breathe 1.6s ease-in-out infinite;
+}
+
+.wf-skeleton-col:last-child .sk-card {
+  animation-delay: 0.18s;
+}
+
+@keyframes sk-breathe {
+  0%,
+  100% {
+    background: var(--skeleton-from, #f7f0e3);
+  }
+  50% {
+    background: var(--skeleton-to, #efe6d6);
+  }
+}
+
+/* ── 空态：说明发生了什么 + 两个可执行的出口 ───────────── */
+
+.empty {
+  padding: 120rpx var(--gutter) 64rpx;
+}
+
+.empty-actions {
+  display: flex;
   align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+
+.empty-actions .btn {
+  padding: 0 var(--s4);
 }
 
 /* 双列错落瀑布流容器 */
@@ -220,38 +279,37 @@ page {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  background: #0e0f12;
-  border: 1rpx solid rgba(255, 255, 255, 0.06);
-  border-radius: 22rpx;
+  background: transparent;
+  border: none;
+  border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .wf-card:active {
-  transform: scale(0.985);
+  opacity: 0.82;
 }
 
 .wf-cover-box {
   position: relative;
   width: 100%;
-  background: #141519;
+  background: var(--skeleton-from, #f7f0e3);
 }
 
 .wf-cover-img {
   width: 100%;
   display: block;
-  background-color: #141519;
+  background-color: #f3ede2;
 }
 
 .wf-badge {
   position: absolute;
   top: 14rpx;
   right: 14rpx;
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(60, 45, 25, 0.62);
   backdrop-filter: blur(10px);
-  border: 1rpx solid rgba(255, 255, 255, 0.12);
-  color: #f4f4f6;
+  border: 1rpx solid rgba(28, 24, 21, 0.12);
+  color: #1c1815;
   font-size: 18rpx;
   font-weight: 500;
   padding: 4rpx 14rpx;
@@ -259,10 +317,10 @@ page {
 }
 
 .wf-body {
-  padding: 16rpx 16rpx 18rpx;
+  padding: 14rpx 4rpx 22rpx;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
   width: 100%;
   box-sizing: border-box;
 }
@@ -270,7 +328,7 @@ page {
 .wf-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #f4f4f6;
+  color: #1c1815;
   line-height: 1.38;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -282,7 +340,7 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2rpx;
+  gap: 12rpx;
   width: 100%;
   box-sizing: border-box;
 }
@@ -300,18 +358,18 @@ page {
   width: 34rpx;
   height: 34rpx;
   border-radius: 50%;
-  background: #1d1e24;
+  background: #e4dbcb;
   flex-shrink: 0;
 }
 
 .author-name {
+  flex: 1;
+  min-width: 0;
   font-size: 22rpx;
-  color: #8a8a93;
+  color: #6f6355;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
-  min-width: 0;
 }
 
 .wf-like {
@@ -323,13 +381,13 @@ page {
 }
 
 .like-num {
-  font-size: 22rpx;
-  color: #8a8a93;
+  font-size: 21rpx;
+  color: #6f6355;
   font-variant-numeric: tabular-nums;
 }
 
 .like-num.liked {
-  color: var(--brand-neon, #d4f826);
+  color: var(--brand-neon, #c9761b);
   font-weight: 600;
 }
 
@@ -343,7 +401,7 @@ page {
 
 .foot-tip {
   font-size: 22rpx;
-  color: #7a7a83;
+  color: #8b7f70;
 }
 
 /* 荧光绿悬浮加号 */
@@ -354,9 +412,9 @@ page {
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: var(--brand-neon, #d4f826);
-  border: 4rpx solid rgba(7, 7, 9, 0.9);
-  box-shadow: 0 10rpx 32rpx rgba(212, 248, 38, 0.45);
+  background: var(--brand-neon, #c9761b);
+  border: 4rpx solid rgba(250, 246, 238, 0.9);
+  box-shadow: 0 10rpx 32rpx rgba(201, 118, 27, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -366,4 +424,12 @@ page {
 
 .fab-btn:active {
   transform: scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-card,
+  .sk-line,
+  .sk-pill {
+    animation: none;
+  }
 }

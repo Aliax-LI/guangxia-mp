@@ -1,226 +1,226 @@
+/* 登录 / 注册：一盏安全灯下的空白相纸。
+   结构只有三段：品牌 → 表单 → 底部说明；中间一整块相纸，不切卡片。 */
+
 .login-page {
   position: relative;
   min-height: 100vh;
-  background:
-    radial-gradient(110% 52% at 50% -8%, rgba(212, 248, 38, 0.1) 0%, rgba(212, 248, 38, 0.02) 42%, transparent 68%),
-    #070709;
-  padding: calc(32rpx + env(safe-area-inset-top)) 48rpx calc(48rpx + env(safe-area-inset-bottom));
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  padding: calc(40rpx + env(safe-area-inset-top)) var(--gutter)
+    calc(40rpx + env(safe-area-inset-bottom));
+  background: transparent;
   overflow: hidden;
 }
 
+/* 安全灯：顶部一盏可过曝的琥珀光，只用一层，不做球体 */
 .login-glow {
   position: absolute;
-  top: -260rpx;
+  top: -420rpx;
   left: 50%;
-  width: 760rpx;
-  height: 760rpx;
-  margin-left: -380rpx;
+  width: 900rpx;
+  height: 900rpx;
+  margin-left: -450rpx;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 248, 38, 0.16) 0%, rgba(212, 248, 38, 0.05) 40%, transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(201, 118, 27, 0.1) 0%,
+    rgba(201, 118, 27, 0.03) 42%,
+    rgba(201, 118, 27, 0) 70%
+  );
   pointer-events: none;
 }
 
-/* 垂直居中容器（居中略微偏上符合人眼最佳视觉中心） */
 .login-center-wrap {
   position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-bottom: 60rpx;
+  padding-bottom: 40rpx;
 }
 
-/* 品牌光晕区域 */
-.brand-section {
+/* ── 品牌 ─────────────────────────────────────────────── */
+
+.brand {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0 0 56rpx;
-}
-
-.orb-container {
-  position: relative;
-  width: 180rpx;
-  height: 180rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.orb-halo {
-  position: absolute;
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 248, 38, 0.7) 0%, rgba(212, 248, 38, 0.28) 45%, transparent 70%);
-  filter: blur(14px);
-}
-
-.orb-core {
-  position: relative;
-  width: 116rpx;
-  height: 116rpx;
-  border-radius: 50%;
-  background: var(--brand-neon, #d4f826);
-  box-shadow: 0 0 44rpx rgba(212, 248, 38, 0.55);
+  align-items: flex-start;
+  padding-bottom: var(--s6);
 }
 
 .brand-title {
-  font-size: 56rpx;
+  font-size: 72rpx;
+  line-height: 1;
   font-weight: 800;
-  color: #f4f4f6;
-  letter-spacing: -1.5rpx;
-  margin-top: 32rpx;
+  letter-spacing: -3rpx;
+  color: var(--text-hi, #1c1815);
 }
 
 .brand-caption {
-  font-size: 26rpx;
-  color: #8a8a93;
-  margin-top: 10rpx;
+  margin-top: 16rpx;
+  font-size: 27rpx;
+  line-height: 1.5;
+  color: var(--text-soft, #6f6355);
 }
 
-/* 表单区域 */
+/* ── 表单 ─────────────────────────────────────────────── */
+
 .form-section {
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 胶囊输入框 */
+/* 字段：不加框，一条相纸底线；聚焦时才让琥珀出现 */
 .input-pill {
   display: flex;
   align-items: center;
-  height: 100rpx;
-  background: #141519;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: 9999rpx;
-  padding: 0 36rpx;
-  margin-bottom: 24rpx;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
+  gap: 16rpx;
+  height: 108rpx;
+  border-bottom: 1rpx solid var(--line);
+  transition: border-color 0.18s ease;
 }
 
 .input-pill:focus-within {
-  background: #191a1f;
-  border-color: rgba(212, 248, 38, 0.45);
-  box-shadow: 0 0 0 4rpx rgba(212, 248, 38, 0.08);
+  border-bottom-color: var(--brand-neon, #c9761b);
 }
 
 .input-icon {
-  margin-right: 20rpx;
   flex-shrink: 0;
 }
 
 .field-input {
   flex: 1;
+  min-width: 0;
   height: 100%;
   font-size: 30rpx;
-  color: #f4f4f6;
-  caret-color: var(--brand-neon, #d4f826);
+  color: var(--text-hi, #1c1815);
+  caret-color: var(--brand-neon, #c9761b);
 }
 
 .field-placeholder {
-  color: #7a7a83;
+  color: var(--text-low, #8b7f70);
   font-size: 28rpx;
 }
 
-/* 验证码组合行 */
+/* 验证码行 */
 .verify-pill-wrap {
   display: flex;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
+  align-items: center;
+  gap: var(--s3);
 }
 
 .verify-input-pill {
   flex: 1;
-  margin-bottom: 0;
+  min-width: 0;
 }
 
 .send-code-btn {
-  height: 100rpx;
-  padding: 0 36rpx;
-  border-radius: 9999rpx;
-  background: var(--brand-neon, #d4f826);
-  color: #0a0b05;
+  flex-shrink: 0;
+  height: 64rpx;
+  padding: 0 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26rpx;
-  font-weight: 700;
-  flex-shrink: 0;
+  border-radius: var(--r-pill);
+  border: 1rpx solid var(--line-strong);
+  font-size: 25rpx;
+  font-weight: 600;
+  color: var(--text-hi, #1c1815);
+  background: transparent;
+}
+
+.send-code-btn:active {
+  background: var(--fill-hover);
 }
 
 .send-code-btn.disabled {
-  background: #1d1e24;
-  color: #7a7a83;
+  border-color: var(--line-weak);
+  color: var(--text-low, #8b7f70);
   pointer-events: none;
 }
 
-/* 主按钮 */
-.main-submit-btn {
-  margin-top: 24rpx;
+/* 主按钮：唯一的填充块 */
+.submit {
+  width: 100%;
+  margin-top: var(--s6);
   height: 100rpx;
+  border-radius: var(--r-pill);
   font-size: 32rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 1rpx;
 }
 
-.sub-toggle-btn {
-  margin-top: 24rpx;
-  height: 100rpx;
+.btn.btn--primary.submit::after {
+  display: none;
 }
 
-/* 协议勾选行 */
+/* 次操作：文字链 */
+.switch-mode {
+  margin-top: var(--s4);
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--text-soft, #6f6355);
+}
+
+.switch-link {
+  margin-left: 8rpx;
+  font-weight: 700;
+  color: var(--brand-neon, #c9761b);
+}
+
+/* ── 协议 ─────────────────────────────────────────────── */
+
 .agreement-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  margin-top: 40rpx;
-  padding: 12rpx 0;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: var(--s5);
+  padding: 8rpx 0;
 }
 
 .custom-checkbox {
-  width: 36rpx;
-  height: 36rpx;
+  width: 34rpx;
+  height: 34rpx;
+  margin-top: 2rpx;
   border-radius: 50%;
-  border: 3rpx solid rgba(255, 255, 255, 0.28);
-  box-sizing: border-box;
+  border: 2rpx solid var(--line-strong);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
   flex-shrink: 0;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .custom-checkbox.checked {
-  background: var(--brand-neon, #d4f826);
-  border-color: var(--brand-neon, #d4f826);
+  background: var(--brand-neon, #c9761b);
+  border-color: var(--brand-neon, #c9761b);
 }
 
 .agreement-text {
+  flex: 1;
+  min-width: 0;
   font-size: 24rpx;
-  color: #8a8a93;
+  line-height: 1.6;
+  color: var(--text-soft, #6f6355);
 }
 
 .link {
-  color: #f4f4f6;
+  color: var(--text-hi, #1c1815);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 4rpx;
 }
 
-/* 底部服务说明 */
+/* ── 底部说明 ─────────────────────────────────────────── */
+
 .footer-hint {
   position: relative;
-  padding-top: 24rpx;
-  text-align: center;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .hint-text {
   font-size: 22rpx;
-  color: #4e4e57;
   line-height: 1.5;
+  color: var(--text-low, #8b7f70);
 }

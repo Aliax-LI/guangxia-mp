@@ -31,7 +31,7 @@
     >
       <view class="handle-line" />
       <view class="handle-orb">
-        <t-icon name="swap" size="30rpx" color="#0A0B05" />
+        <t-icon name="swap" size="30rpx" color="#fffdf9" />
       </view>
     </view>
 
@@ -48,11 +48,11 @@
       <text>成片已就绪 · 建议先左右对比，再保存到相册</text>
     </view>
     <view class="xt-pill-btn save-btn" bindtap="onSave">
-      <t-icon name="download" size="36rpx" color="#0A0B05" style="margin-right: 12rpx;" />
+      <t-icon name="download" size="36rpx" color="#fffdf9" style="margin-right: 12rpx;" />
       <text>保存到系统相册</text>
     </view>
     <view class="xt-pill-btn-outline back-btn" bindtap="onBack">
-      <t-icon name="edit" size="32rpx" color="#F4F4F6" style="margin-right: 12rpx;" />
+      <t-icon name="edit" size="32rpx" color="#1c1815" style="margin-right: 12rpx;" />
       <text>继续微调编辑</text>
     </view>
   </view>

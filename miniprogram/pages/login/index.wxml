@@ -3,20 +3,16 @@
 
   <!-- 中间主体区域（垂直居中布局） -->
   <view class="login-center-wrap">
-    <!-- 光匣品牌光晕 -->
-    <view class="brand-section">
-      <view class="orb-container">
-        <view class="orb-halo" />
-        <view class="orb-core" />
-      </view>
+    <!-- 品牌：一句话 + 一颗安全灯，不做发光球 -->
+    <view class="brand">
       <text class="brand-title">光匣</text>
-      <text class="brand-caption">{{mode === 'login' ? '把光装进照片里' : '注册开启专属修图积分'}}</text>
+      <text class="brand-caption">{{mode === 'login' ? '把光装进照片里' : '注册即送首批显影额度'}}</text>
     </view>
 
     <!-- 表单区域 -->
     <view class="form-section">
       <view class="input-pill">
-        <t-icon name="mail" size="38rpx" color="#8A8A93" class="input-icon" />
+        <t-icon name="mail" size="38rpx" color="#6f6355" class="input-icon" />
         <input
           class="field-input"
           placeholder="输入邮箱地址"
@@ -27,7 +23,7 @@
       </view>
 
       <view class="input-pill">
-        <t-icon name="lock-on" size="38rpx" color="#8A8A93" class="input-icon" />
+        <t-icon name="lock-on" size="38rpx" color="#6f6355" class="input-icon" />
         <input
           class="field-input"
           type="password"
@@ -41,7 +37,7 @@
       <!-- 邮箱验证码（注册模式且开启时） -->
       <view wx:if="{{mode === 'register' && emailVerifyEnabled}}" class="verify-pill-wrap">
         <view class="input-pill verify-input-pill">
-          <t-icon name="secured" size="38rpx" color="#8A8A93" class="input-icon" />
+          <t-icon name="secured" size="38rpx" color="#6f6355" class="input-icon" />
           <input
             class="field-input"
             placeholder="邮箱验证码"
@@ -58,26 +54,25 @@
         </view>
       </view>
 
-      <!-- 登录 / 注册 主按钮 -->
-      <view
-        class="xt-pill-btn main-submit-btn {{loading ? 'loading' : ''}}"
+      <!-- 主操作：唯一的填充色块 -->
+      <button
+        class="btn btn--primary submit"
+        hover-class="none"
+        loading="{{loading}}"
+        disabled="{{loading}}"
         bindtap="onSubmit"
-      >
-        <text>{{mode === 'login' ? '登 录' : '注册新账号'}}</text>
-      </view>
+      >{{mode === 'login' ? '登录' : '注册新账号'}}</button>
 
-      <!-- 切换模式 次要按钮 -->
-      <view
-        class="xt-pill-btn-outline sub-toggle-btn"
-        bindtap="onToggleMode"
-      >
-        <text>{{mode === 'login' ? '注册新账号' : '已有账号，去登录'}}</text>
+      <!-- 次操作：纯文字链，不与主按钮争夺注意力 -->
+      <view class="switch-mode" bindtap="onToggleMode">
+        <text>{{mode === 'login' ? '还没有账号？' : '已经有账号？'}}</text>
+        <text class="switch-link">{{mode === 'login' ? '立即注册' : '去登录'}}</text>
       </view>
 
       <!-- 协议勾选行 -->
       <view class="agreement-row" bindtap="onToggleAgreement">
         <view class="custom-checkbox {{agreed ? 'checked' : ''}}">
-          <t-icon wx:if="{{agreed}}" name="check" size="24rpx" color="#0A0B05" />
+          <t-icon wx:if="{{agreed}}" name="check" size="24rpx" color="#fffdf9" />
         </view>
         <view class="agreement-text">
           <text>已阅读并同意 </text>

@@ -1,7 +1,8 @@
-import { CHAT_MODEL, SUB2API_BASE_URL } from '../config/index'
+import { CHAT_INSTRUCTIONS, CHAT_MODEL, SUB2API_BASE_URL } from '../config/index'
 import { getApiKey } from '../utils/storage'
 import type { ChatContentPart, ChatMessage, ChatRole } from './chat-types'
 import {
+  createStreamTextAccumulator,
   chatMessagesToResponseInput,
   deltaFromStreamEvent,
   textFromResponsePayload,
@@ -37,9 +38,10 @@ function readFail(data: unknown): string {
 }
 
 /** 分片可能切断多字节字符，未完成的字节留到下一块。 */
-function pushUtf8(carry: number[], chunk: ArrayBuffer | string): string {
+function pushUtf8(carry: number[], chunk: ArrayBuffer | Uint8Array | string): string {
   if (typeof chunk === 'string') return chunk
-  const incoming = Array.prototype.slice.call(new Uint8Array(chunk)) as number[]
+  const view = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+  const incoming = Array.prototype.slice.call(view) as number[]
   const bytes = carry.length ? carry.concat(incoming) : incoming
   carry.length = 0
   let i = 0
@@ -103,7 +105,7 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
 
   return new Promise((resolve, reject) => {
     let buffer = ''
-    let full = ''
+    let full: string = ''
     let sawChunk = false
     let settled = false
     let failed = ''
@@ -115,12 +117,14 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
       fn()
     }
 
+    const acc = createStreamTextAccumulator()
     const consumeEvent = (json: unknown) => {
       const piece = deltaFromStreamEvent(json)
-      if (piece) {
-        full += piece
-        if (onDelta) onDelta(full)
-      }
+      if (!piece) return
+      const next = acc.feed(piece)
+      if (next === full) return
+      full = next
+      if (onDelta) onDelta(full)
     }
 
     const takeLine = (line: string) => {
@@ -145,6 +149,7 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
       },
       data: {
         model: CHAT_MODEL,
+        instructions: CHAT_INSTRUCTIONS,
         input,
         stream,
         store: false,
@@ -177,6 +182,7 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
           }
           return
         }
+        full = acc.end() // 提交挂起中的短块（网关重发容错的一部分）
         if (!full.trim()) {
           finish(() => reject(new Error('没有收到回复')))
           return
@@ -185,6 +191,7 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
       },
       fail(err) {
         const message = err.errMsg || '对话失败'
+        full = acc.end()
         if (full.trim()) finish(() => resolve(full))
         else finish(() => reject(new Error(message)))
       },

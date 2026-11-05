@@ -1,170 +1,467 @@
-@import './styles/tdesign-theme.wxss';
+/* ─────────────────────────────────────────────────────────
+   光匣 · 显影槽基础层
+   页面 = 暗房台面上的相纸；琥珀安全灯是唯一强调色；
+   照片永远比界面亮一档。编号住在左边线外侧的页边栏。
+   ───────────────────────────────────────────────────────── */
 
 page {
-  background: var(--ink-0);
-  color: var(--text-hi);
+  /* 兜底色：任何一处变量未解析，也只会掉到暖灰墨阶，不会掉回纯黑/白 */
+  --ink-0: #f6f1e7;
+  --ink-1: #fffdf9;
+  --ink-2: #efe8dc;
+  --ink-3: #e4dbcb;
+  --text-hi: #1c1815;
+  --text-mid: #5c5145;
+  --text-soft: #6f6355;
+  --text-low: #8b7f70;
+  --paper: #fffdf9;
+  --brand-neon: #c9761b;
+  --brand-neon-active: #a85f11;
+  --brand-neon-ink: #fffdf9;
+  --line-weak: rgba(28, 24, 21, 0.08);
+  --line: rgba(28, 24, 21, 0.14);
+  --line-strong: rgba(28, 24, 21, 0.24);
+  --fill-hover: rgba(28, 24, 21, 0.06);
+  --fill-active: rgba(28, 24, 21, 0.1);
+  --ink-0-translucent: rgba(250, 246, 238, 0.92);
+  --s1: 8rpx;
+  --s2: 16rpx;
+  --s3: 24rpx;
+  --s4: 32rpx;
+  --s5: 48rpx;
+  --s6: 64rpx;
+  --s7: 96rpx;
+  --gutter: 32rpx;
+  --edge: 44rpx;
+  --tabbar-h: 132rpx;
+  --r-inset: 20rpx;
+  --r-card: 28rpx;
+  --r-pill: 9999rpx;
+  --glow-neon: 0 12rpx 32rpx rgba(201, 118, 27, 0.18);
+  --shadow-float: 0 18rpx 48rpx rgba(60, 45, 25, 0.5);
+  --danger: #c0392b;
+
+  /* 渐变白：顶部最亮，向下沉到暖灰。两阶，不做多层堆叠。 */
+  background: #f6f1e7;
+  background: linear-gradient(180deg, #fffdfa 0%, #f6f1e7 46%, #efe7d9 100%);
+  background-attachment: fixed;
+  color: #1c1815;
   font-size: 28rpx;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  line-height: 1.55;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  /* 不要在这里写 overflow-x: hidden：会变成 sticky 的裁剪祖先，
+     让页面内吸顶（灵感页搜索与筛选）直接失效。横向溢出由各页面自行裁。 */
 }
 
-/* 页面通用内边距 */
-.page-pad {
-  padding: 0 32rpx 48rpx;
+view,
+text,
+scroll-view,
+swiper,
+image,
+input,
+textarea {
   box-sizing: border-box;
 }
 
-.section-gap {
-  margin-top: 36rpx;
+/* 数字统一等宽：积分、进度、格位编号不跳动 */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
 }
 
-/* 页头：小标签 + 大标题，影像刊物质感 */
-.xt-masthead {
-  padding: 12rpx 0 36rpx;
-}
-
-.xt-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 12rpx;
-  font-size: 20rpx;
+/* 格位 / 步骤编号：页边的铅字小号 */
+.stamp {
+  font-family: Menlo, 'SF Mono', monospace;
+  font-size: 19rpx;
   line-height: 1;
-  font-weight: 600;
-  letter-spacing: 6rpx;
-  text-transform: uppercase;
+  letter-spacing: 1rpx;
   color: var(--text-low);
 }
 
-.xt-kicker::before {
-  content: '';
-  width: 8rpx;
-  height: 8rpx;
-  border-radius: 50%;
-  background: var(--brand-neon);
-  box-shadow: 0 0 14rpx 4rpx rgba(212, 248, 38, 0.55);
+/* ── 页面骨架 ───────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  padding: 0 var(--gutter) 0 var(--edge);
+  padding-bottom: calc(var(--s7) + env(safe-area-inset-bottom));
+  background: transparent;
 }
 
-.xt-title {
+/* Tab 页：给悬浮标签条让位 */
+.page--tab {
+  padding-bottom: calc(var(--tabbar-h) + var(--s6) + env(safe-area-inset-bottom));
+}
+
+/* ── 页头：标题自己承担层级，不加 eyebrow / kicker ───────── */
+
+.hd {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s5) 0 var(--s4);
+}
+
+.hd-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.hd-title {
   display: block;
-  margin-top: 16rpx;
-  font-size: 56rpx;
-  line-height: 1.08;
+  font-size: 54rpx;
+  line-height: 1.05;
   font-weight: 800;
-  letter-spacing: -1.5rpx;
+  letter-spacing: -2rpx;
   color: var(--text-hi);
 }
 
-.xt-subtitle {
+.hd-sub {
   display: block;
   margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.45;
-  color: #8a8a93;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: var(--text-soft);
 }
 
-/* 光匣暗色卡片 */
-.xt-card {
+.hd-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding-bottom: 6rpx;
+}
+
+/* ── 区块 ───────────────────────────────────────────────── */
+
+.sec {
+  margin-top: var(--s6);
+}
+
+.sec:first-child {
+  margin-top: 0;
+}
+
+.sec-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+
+.sec-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: -0.3rpx;
+  color: var(--text-hi);
+}
+
+.sec-act {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-soft);
+  padding: 8rpx 0 8rpx var(--s2);
+}
+
+.sec-act:active {
+  color: var(--text-hi);
+}
+
+/* ── 相纸面板：靠相纸边线分层，不堆阴影 ─────────────────── */
+
+.panel {
   background: var(--ink-1);
   border: 1rpx solid var(--line-weak);
-  border-radius: 28rpx;
-  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
+  border-radius: var(--r-card);
   overflow: hidden;
-  box-sizing: border-box;
 }
 
-/* 内嵌凹陷区域：输入框、提示块 */
-.xt-inset {
+.panel--pad {
+  padding: var(--s4);
+}
+
+.inset {
   background: var(--ink-2);
   border: 1rpx solid var(--line-weak);
-  border-radius: 20rpx;
-  box-sizing: border-box;
+  border-radius: var(--r-inset);
 }
 
-/* 光匣主按钮：荧光绿实心 */
-.xt-pill-btn {
+/* ── 按钮 ───────────────────────────────────────────────── */
+
+.btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12rpx;
   height: 96rpx;
-  border-radius: 9999rpx;
-  background: var(--brand-neon);
-  color: var(--brand-neon-ink);
-  font-size: 30rpx;
+  padding: 0 var(--s5);
+  border-radius: var(--r-pill);
+  border: 1rpx solid transparent;
+  font-size: 29rpx;
   font-weight: 700;
-  letter-spacing: 0.5rpx;
-  transition: all 0.2s ease;
-  box-shadow: 0 12rpx 32rpx rgba(212, 248, 38, 0.16);
+  letter-spacing: 0.2rpx;
+  text-align: center;
+  transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
 }
 
-.xt-pill-btn:active {
+.btn:active {
   transform: scale(0.985);
+}
+
+.btn--primary {
+  background: var(--brand-neon);
+  color: var(--brand-neon-ink);
+  box-shadow: var(--glow-neon);
+}
+
+.btn--primary:active {
   background: var(--brand-neon-active);
 }
 
-.xt-pill-btn.disabled {
+.btn--ghost {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--text-hi);
+}
+
+.btn--ghost:active {
+  background: var(--fill-hover);
+}
+
+.btn--quiet {
+  background: var(--ink-2);
+  border-color: var(--line-weak);
+  color: var(--text-hi);
+}
+
+.btn--quiet:active {
   background: var(--ink-3);
-  border: 1rpx solid var(--line-weak);
-  color: #5c5c65;
+}
+
+.btn--sm {
+  height: 72rpx;
+  padding: 0 var(--s4);
+  font-size: 26rpx;
+}
+
+.btn[disabled],
+.btn--off {
+  background: var(--ink-3);
+  border-color: var(--line-weak);
+  color: var(--text-low);
   box-shadow: none;
   pointer-events: none;
 }
 
-/* 次级按钮：暗底描边 */
-.xt-pill-btn-outline {
+/* 圆形图标按钮：44rpx 视觉，88rpx 触控 */
+.icon-btn {
+  width: 88rpx;
+  height: 88rpx;
+  margin: -12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 96rpx;
-  border-radius: 9999rpx;
-  background: transparent;
+  border-radius: var(--r-pill);
   color: var(--text-hi);
-  border: 2rpx solid var(--line-strong);
-  font-size: 30rpx;
-  font-weight: 600;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
 }
 
-.xt-pill-btn-outline:active {
-  background: rgba(255, 255, 255, 0.06);
-  transform: scale(0.985);
+.icon-btn:active {
+  background: var(--fill-hover);
 }
 
-/* 标志性荧光光晕 */
-.xt-glow-orb {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 50%;
+.icon-btn--sm {
+  width: 64rpx;
+  height: 64rpx;
+  margin: 0;
+}
+
+/* ── 胶囊选择：相纸标签 ─────────────────────────────────── */
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.pill {
+  height: 64rpx;
+  padding: 0 26rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  border-radius: var(--r-pill);
+  border: 1rpx solid var(--line-weak);
+  background: var(--ink-2);
+  color: var(--text-mid);
+  font-size: 25rpx;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.pill:active {
+  background: var(--ink-3);
+}
+
+.pill--on {
   background: var(--brand-neon);
-  box-shadow: 0 0 70rpx 20rpx rgba(212, 248, 38, 0.55);
+  border-color: var(--brand-neon);
+  color: var(--brand-neon-ink);
+  font-weight: 700;
 }
 
-/* 微信隐私指引弹层（须用原生 button + agreePrivacyAuthorization） */
+.pill--quiet {
+  background: transparent;
+}
+
+.pill--quiet.pill--on {
+  background: var(--brand-neon-soft);
+  border-color: var(--brand-neon-line);
+  color: var(--brand-neon);
+}
+
+/* 横向滚动轨道：首尾留呼吸，隐藏原生滚动条 */
+.rail {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.rail-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 2rpx var(--gutter) 2rpx 0;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* ── 空状态：空位印出该有的轮廓与编号 ───────────────────── */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 88rpx var(--s4) 64rpx;
+}
+
+.empty-mark {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2rpx dashed var(--line-strong);
+}
+
+.empty-title {
+  margin-top: var(--s4);
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-hi);
+}
+
+.empty-sub {
+  margin-top: 10rpx;
+  max-width: 480rpx;
+  font-size: 25rpx;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+.empty-act {
+  margin-top: var(--s5);
+}
+
+/* ── 悬浮主操作（Tab 页右下，避让标签条） ───────────────── */
+
+.fab {
+  position: fixed;
+  right: var(--gutter);
+  bottom: calc(var(--tabbar-h) + var(--s4) + env(safe-area-inset-bottom));
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-neon);
+  color: var(--brand-neon-ink);
+  box-shadow: 0 14rpx 36rpx rgba(60, 45, 25, 0.55), 0 0 0 1rpx var(--line-weak);
+  z-index: 90;
+  transition: transform 0.16s ease, background-color 0.16s ease;
+}
+
+.fab:active {
+  transform: scale(0.94);
+  background: var(--brand-neon-active);
+}
+
+/* ── 底部固定操作条 ─────────────────────────────────────── */
+
+.dockbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: var(--s3) var(--gutter) calc(var(--s3) + env(safe-area-inset-bottom));
+  background: var(--ink-0-translucent);
+  border-top: 1rpx solid var(--line-weak);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── 内嵌页返回引导 ─────────────────────────────────────── */
+
+.backrow {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  height: 76rpx;
+  margin-left: -12rpx;
+  padding-right: var(--s3);
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.backrow:active {
+  color: var(--text-hi);
+}
+
+/* ── 隐私弹层（原生 button 承载 agreePrivacyAuthorization） ─ */
+
 .privacy-mask {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(10, 8, 6, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48rpx;
-  box-sizing: border-box;
+  padding: var(--gutter);
 }
 
 .privacy-card {
   width: 100%;
   max-width: 620rpx;
-  padding: 44rpx 36rpx 34rpx;
-  border-radius: 28rpx;
+  padding: var(--s5) var(--s4) var(--s4);
+  border-radius: var(--r-card);
   background: var(--ink-1);
   border: 1rpx solid var(--line);
-  box-shadow: 0 32rpx 80rpx rgba(0, 0, 0, 0.6);
-  box-sizing: border-box;
+  box-shadow: 0 32rpx 80rpx rgba(60, 45, 25, 0.6);
 }
 
 .privacy-title {
@@ -177,29 +474,30 @@ page {
 
 .privacy-desc {
   display: block;
-  margin-top: 24rpx;
-  font-size: 28rpx;
+  margin-top: var(--s3);
+  font-size: 27rpx;
   color: var(--text-mid);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .privacy-link {
   display: block;
-  margin-top: 20rpx;
+  margin-top: var(--s2);
   font-size: 26rpx;
   color: var(--brand-neon);
   text-align: center;
+  padding: 12rpx 0;
 }
 
 .privacy-actions {
-  margin-top: 32rpx;
+  margin-top: var(--s4);
 }
 
 .privacy-agree-btn {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 9999rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: var(--r-pill);
   background: var(--brand-neon);
   color: var(--brand-neon-ink);
   font-size: 30rpx;
@@ -209,4 +507,10 @@ page {
 
 .privacy-agree-btn::after {
   display: none;
+}
+
+/* 通用页容器：左边线外侧留出印样编号栏 */
+.page-pad {
+  padding-right: var(--gutter);
+  padding-left: var(--edge);
 }

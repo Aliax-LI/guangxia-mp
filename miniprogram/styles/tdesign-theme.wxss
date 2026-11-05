@@ -1,115 +1,162 @@
-/** TDesign 主题覆盖 — 光匣「暗色影像馆」视觉规范 */
+/** TDesign 主题覆盖 — 光匣「白相纸」视觉规范
+ *
+ *  世界：晴天里摊在桌面上的相纸。暖白纸是底，墨是字，琥珀是唯一的光。
+ *  与暗版（.impeccable/backup-theme.dark.wxss）的差别不止反色：
+ *  白底上对比度更贵，所以文字层级靠字重和灰度分层，不靠降低不透明度。
+ */
+
 page {
-  /* 墨色层级：从页面底到浮层 */
-  --ink-0: #070709;
-  --ink-1: #0e0f12;
-  --ink-2: #16171b;
-  --ink-3: #1d1e24;
-  --ink-4: #26272e;
+  /* ── 纸：从暖白到浅灰的三阶，卡片永远比页面白一档 ── */
+  --ink-0: #f6f1e7; /* 页面底（略沉的暖白，避免整屏刺眼） */
+  --ink-1: #fffdf9; /* 卡片 / 相纸卡面（比页面更亮） */
+  --ink-2: #efe8dc; /* 凹陷区、输入槽 */
+  --ink-3: #e4dbcb; /* 按压态、选中底 */
+  --ink-4: #d8cebc; /* 浮层最亮一档 */
 
-  /* 文字层级 */
-  --text-hi: #f4f4f6;
-  --text-mid: #a2a2ab;
-  --text-low: #8a8a93;
+  /* 骨架屏呼吸的起止色：比页面底只暗半档，接近「未显影的相纸」而非灰色块 */
+  --skeleton-from: #f7f0e3;
+  --skeleton-to: #efe6d6;
 
-  /* 描边 */
-  --line-weak: rgba(255, 255, 255, 0.06);
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  /* 渐变白：纵向两阶，肉眼可辨但不脏 */
+  --paper-grad: linear-gradient(180deg, #fffdfa 0%, #f6f1e7 42%, #efe7d9 100%);
 
-  /* 品牌荧光绿 */
-  --brand-neon: #d4f826;
-  --brand-neon-glow: rgba(212, 248, 38, 0.45);
-  --brand-neon-soft: rgba(212, 248, 38, 0.12);
-  --brand-neon-line: rgba(212, 248, 38, 0.34);
-  --brand-neon-active: #b8dc17;
-  --brand-neon-ink: #0a0b05;
+  /* ── 文字：暖墨，白底上按 7:1 / 4.5:1 两档分 ── */
+  --text-hi: #fffdf9; /* 标题、主文字 */
+  --text-mid: #5c5145; /* 正文 */
+  --text-soft: #6f6355; /* 说明、meta（≥4.5:1） */
+  --text-low: #8b7f70; /* 占位符 */
 
-  --danger: #ff5c57;
+  /* ── 描边：暖灰，白底上略深才看得见 ── */
+  --line-weak: rgba(28, 24, 21, 0.08);
+  --line: rgba(28, 24, 21, 0.14);
+  --line-strong: rgba(28, 24, 21, 0.24);
 
-  /* TDesign 品牌色 */
-  --td-brand-color: #d4f826;
-  --td-brand-color-light: rgba(212, 248, 38, 0.12);
-  --td-brand-color-focus: #d4f826;
-  --td-brand-color-active: #b8dc17;
-  --td-brand-color-disabled: #2a2b31;
-  --td-brand-color-light-active: rgba(212, 248, 38, 0.18);
+  /* 填充态（按压 / 浮层） */
+  --fill-hover: rgba(28, 24, 21, 0.05);
+  --fill-active: rgba(28, 24, 21, 0.09);
+  --ink-0-translucent: rgba(250, 246, 238, 0.94);
 
-  --td-primary-color-7: #d4f826;
-  --td-primary-color-1: rgba(212, 248, 38, 0.12);
+  /* 空间标尺：4 的倍数，语义命名 */
+  --s1: 8rpx;
+  --s2: 16rpx;
+  --s3: 24rpx;
+  --s4: 32rpx;
+  --s5: 48rpx;
+  --s6: 64rpx;
+  --s7: 96rpx;
+  --gutter: 32rpx;
+  --edge: 44rpx;
+  --tabbar-h: 132rpx;
 
-  /* 背景 */
-  --td-bg-color-page: #070709;
-  --td-bg-color-container: #0e0f12;
-  --td-bg-color-container-hover: #16171b;
-  --td-bg-color-container-active: #1d1e24;
-  --td-bg-color-secondarycontainer: #16171b;
-  --td-bg-color-secondarycontainer-hover: #1d1e24;
-  --td-bg-color-component: #16171b;
-  --td-bg-color-component-hover: #1d1e24;
-  --td-bg-color-component-disabled: #1d1e24;
-  --td-bg-color-specialcomponent: #0e0f12;
+  /* 半径标尺 */
+  --r-inset: 20rpx;
+  --r-card: 28rpx;
+  --r-pill: 9999rpx;
 
-  /* 字色 */
-  --td-text-color-primary: #f4f4f6;
-  --td-text-color-secondary: #a2a2ab;
-  --td-text-color-placeholder: #7a7a83;
-  --td-text-color-disabled: #4e4e57;
-  --td-text-color-anti: #0a0b05;
-  --td-font-gray-1: #f4f4f6;
-  --td-font-gray-2: #a2a2ab;
-  --td-font-gray-3: #8a8a93;
+  /* 相纸白：白底世界里它是「更白的纸」而不是金色文字 */
+  --paper: #fffdf9;
+
+  /* 安全灯琥珀：唯一强调色 */
+  --brand-neon: #c9761b; /* 白底上比暗版深一档，保证 4.5:1 */
+  --brand-neon-glow: rgba(201, 118, 27, 0.28);
+  --brand-neon-soft: rgba(201, 118, 27, 0.12);
+  --brand-neon-line: rgba(201, 118, 27, 0.38);
+  --brand-neon-active: #a85f11;
+  --brand-neon-ink: #fffdf9; /* 琥珀上的文字：白 */
+
+  /* 显影高光：只在「正在生成」的那一格出现 */
+  --develop: #e09b3c;
+  --develop-deep: #a86515;
+
+  --danger: #c0392b;
+
+  /* 深度：白底靠浅阴影分层，不用零偏移彩色泛光 */
+  --glow-neon: 0 10rpx 28rpx rgba(201, 118, 27, 0.22);
+  --shadow-float: 0 16rpx 40rpx rgba(60, 45, 25, 0.12);
+
+  /* ── TDesign 品牌色 ── */
+  --td-brand-color: #c9761b;
+  --td-brand-color-light: rgba(201, 118, 27, 0.12);
+  --td-brand-color-focus: #c9761b;
+  --td-brand-color-active: #a85f11;
+  --td-brand-color-disabled: #ddd3c3;
+  --td-brand-color-light-active: rgba(201, 118, 27, 0.18);
+
+  --td-primary-color-7: #c9761b;
+  --td-primary-color-1: rgba(201, 118, 27, 0.12);
+
+  /* ── 背景 ── */
+  --td-bg-color-page: #f6f1e7;
+  --td-bg-color-container: #fffdf9;
+  --td-bg-color-container-hover: #efe8dc;
+  --td-bg-color-container-active: #e4dbcb;
+  --td-bg-color-secondarycontainer: #efe8dc;
+  --td-bg-color-secondarycontainer-hover: #e4dbcb;
+  --td-bg-color-component: #efe8dc;
+  --td-bg-color-component-hover: #e4dbcb;
+  --td-bg-color-component-disabled: #f3ede2;
+  --td-bg-color-specialcomponent: #fffdf9;
+
+  /* ── 字色 ── */
+  --td-text-color-primary: #fffdf9;
+  --td-text-color-secondary: #5c5145;
+  --td-text-color-placeholder: #8b7f70;
+  --td-text-color-disabled: #b3a998;
+  --td-text-color-anti: #fffdf9;
+  --td-font-gray-1: #fffdf9;
+  --td-font-gray-2: #5c5145;
+  --td-font-gray-3: #6f6355;
   --td-font-white-1: #ffffff;
 
-  /* 描边与组件 */
-  --td-border-color: rgba(255, 255, 255, 0.1);
-  --td-border-level-1-color: rgba(255, 255, 255, 0.08);
-  --td-border-level-2-color: rgba(255, 255, 255, 0.14);
-  --td-component-stroke: rgba(255, 255, 255, 0.08);
-  --td-component-border: rgba(255, 255, 255, 0.14);
+  /* ── 描边与组件 ── */
+  --td-border-color: rgba(28, 24, 21, 0.14);
+  --td-border-level-1-color: rgba(28, 24, 21, 0.1);
+  --td-border-level-2-color: rgba(28, 24, 21, 0.2);
+  --td-component-stroke: rgba(28, 24, 21, 0.1);
+  --td-component-border: rgba(28, 24, 21, 0.2);
 
-  /* 圆角 */
+  /* ── 圆角 ── */
   --td-radius-small: 12rpx;
   --td-radius-default: 20rpx;
   --td-radius-large: 28rpx;
   --td-radius-extraLarge: 36rpx;
   --td-radius-round: 9999rpx;
 
-  /* 底部 TabBar */
-  --td-tab-bar-active-color: #d4f826;
-  --td-tab-item-active-color: #d4f826;
-  --td-tab-track-color: #d4f826;
-  --td-tab-bar-color: #8a8a93;
-  --td-tab-bar-bg-color: #0e0f12;
+  /* ── 底部 TabBar ── */
+  --td-tab-bar-active-color: #c9761b;
+  --td-tab-item-active-color: #c9761b;
+  --td-tab-track-color: #c9761b;
+  --td-tab-bar-color: #8b7f70;
+  --td-tab-bar-bg-color: #fffdf9;
 
-  /* 表单与反馈 */
-  --td-input-bg-color: #16171b;
-  --td-textarea-background-color: #16171b;
-  --td-loading-color: #d4f826;
-  --td-loading-text-color: #a2a2ab;
-  --td-loading-full-bg-color: rgba(7, 7, 9, 0.72);
-  --td-mask-color: rgba(0, 0, 0, 0.72);
-  --td-empty-icon-color: #3a3a42;
-  --td-empty-description-color: #8a8a93;
-  --td-scrollbar-color: rgba(255, 255, 255, 0.16);
+  /* ── 表单与反馈 ── */
+  --td-input-bg-color: #efe8dc;
+  --td-textarea-background-color: #efe8dc;
+  --td-loading-color: #c9761b;
+  --td-loading-text-color: #5c5145;
+  --td-loading-full-bg-color: rgba(246, 241, 231, 0.82);
+  --td-mask-color: rgba(28, 24, 21, 0.42);
+  --td-empty-icon-color: #cfc4b1;
+  --td-empty-description-color: #6f6355;
+  --td-scrollbar-color: rgba(28, 24, 21, 0.2);
 }
 
-/* 主操作按钮：荧光绿 */
+/* 主操作按钮：琥珀实心 + 白字 */
 .btn-ink {
-  --td-button-primary-bg-color: #d4f826 !important;
-  --td-button-primary-border-color: #d4f826 !important;
-  --td-button-primary-active-bg-color: #b8dc17 !important;
-  --td-button-primary-active-border-color: #b8dc17 !important;
-  --td-button-primary-color: #0a0b05 !important;
+  --td-button-primary-bg-color: #c9761b !important;
+  --td-button-primary-border-color: #c9761b !important;
+  --td-button-primary-active-bg-color: #a85f11 !important;
+  --td-button-primary-active-border-color: #a85f11 !important;
+  --td-button-primary-color: #fffdf9 !important;
   border-radius: 9999rpx !important;
   font-weight: 700 !important;
 }
 
 .btn-accent-fill {
-  --td-button-primary-bg-color: #d4f826 !important;
-  --td-button-primary-border-color: #d4f826 !important;
-  --td-button-primary-color: #0a0b05 !important;
-  --td-button-primary-active-bg-color: #b8dc17 !important;
+  --td-button-primary-bg-color: #c9761b !important;
+  --td-button-primary-border-color: #c9761b !important;
+  --td-button-primary-color: #fffdf9 !important;
+  --td-button-primary-active-bg-color: #a85f11 !important;
   border-radius: 9999rpx !important;
   font-weight: 700 !important;
 }
@@ -117,7 +164,7 @@ page {
 .btn-pill-outline {
   border-radius: 9999rpx !important;
   font-weight: 600 !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  color: #f4f4f6 !important;
+  border-color: rgba(28, 24, 21, 0.24) !important;
+  color: #fffdf9 !important;
   background: transparent !important;
 }

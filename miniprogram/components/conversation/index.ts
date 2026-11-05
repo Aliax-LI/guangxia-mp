@@ -1,5 +1,6 @@
 import type { ChatTurn } from '../../utils/compose'
 import { turnInputImages } from '../../utils/compose'
+import { toPreviewableAll } from '../../utils/preview-media'
 import {
   choicePrompt,
   normalizeReply,
@@ -23,10 +24,14 @@ type Row = {
   assistantContent: Content[]
   assistantStatus: 'pending' | 'streaming' | 'error' | 'complete'
   showImages: boolean
+  /** 是否已存入作品集：保存成功后置位，按钮转为已存态 */
+  saved: boolean
   generating: boolean
   liveText: boolean
   thinking: boolean
   progress: number
+  /** 显影阶段的文案：把百分比翻译成用户能理解的动作 */
+  stage: string
   places: number[]
   segments: ReplySegment[]
   pick: string
@@ -39,6 +44,8 @@ const parseCache = new Map<
 >()
 
 const startedAt: Record<string, number> = {}
+/** 已保存的 turn id：页面级状态，组件重挂载也不丢 */
+const savedTurns = new Set<string>()
 const picks: Record<string, { value: string; detail: string }> = {}
 let clock: ReturnType<typeof setInterval> | 0 = 0
 let paintTimer: ReturnType<typeof setTimeout> | 0 = 0
@@ -48,6 +55,15 @@ function arc(from: number, now: number): number {
   const elapsed = Math.max(0, now - from)
   const pct = 92 * (1 - Math.exp(-elapsed / 14000))
   return Math.max(1, Math.min(92, Math.round(pct)))
+}
+
+/** 百分比 → 动作说明。进度条只是数字，用户需要知道"现在在做什么"。 */
+function stageLabel(pct: number): string {
+  if (pct < 20) return '正在准备画布'
+  if (pct < 45) return '正在起稿'
+  if (pct < 70) return '正在上色'
+  if (pct < 88) return '正在收尾'
+  return '马上就好'
 }
 
 function resolveTextView(turn: ChatTurn, reply: string) {
@@ -122,10 +138,12 @@ function toRow(turn: ChatTurn, now: number): Row {
     assistantStatus:
       turn.status === 'error' ? 'error' : generating ? 'complete' : assistantStatus,
     showImages: turn.kind === 'image' && turn.status === 'done' && (turn.images || []).length > 0,
+    saved: savedTurns.has(turn.id),
     generating,
     liveText: textView?.liveText || false,
     thinking,
     progress,
+    stage: generating ? stageLabel(progress) : '',
     places,
     segments,
     pick: pick?.value || '',
@@ -212,6 +230,7 @@ Component({
       }
       const anchor = `turn-${last.id}`
       if (this.data.scrollIntoView === anchor) {
+        // 同一锚点重设会强制视图跳动；先清再在下一帧恢复，等价于"贴底刷新"
         this.setData({ scrollIntoView: '' })
         wx.nextTick(() => this.setData({ scrollIntoView: anchor }))
       } else {
@@ -227,16 +246,16 @@ Component({
       }, 80)
     },
 
-    schedulePaint(turns: ChatTurn[]) {
+    schedulePaint(turns: ChatTurn[], reason: 'append' | 'interaction' = 'append') {
       const list = Array.isArray(turns) ? turns : []
       if (paintTimer) clearTimeout(paintTimer)
       paintTimer = setTimeout(() => {
         paintTimer = 0
-        this.paint(list)
+        this.paint(list, reason)
       }, 80)
     },
 
-    paint(turns: ChatTurn[]) {
+    paint(turns: ChatTurn[], reason: 'append' | 'interaction' = 'append') {
       const list = Array.isArray(turns) ? turns : []
       const now = Date.now()
       const nextRows = list.map((turn) => toRow(turn, now))
@@ -259,7 +278,9 @@ Component({
         }
       }
 
-      if (changed && nextRows.length) this.scheduleScrollToBottom()
+      // 只有「内容在增长」才回贴底部；用户点选项/输备注引发的 repaint 不滚动，
+      // 否则视图会被强行拽走（用户看到的就是"跳到输出开头"）
+      if (changed && nextRows.length && reason === 'append') this.scheduleScrollToBottom()
 
       if (nextRows.some((row) => row.generating)) this.startClock()
       else this.stopClock()
@@ -296,13 +317,25 @@ Component({
       const id = String(e.currentTarget.dataset.id || '')
       const src = String(e.currentTarget.dataset.src || '')
       const turn = this.currentTurns().find((item) => item.id === id)
-      const urls = turn ? turnInputImages(turn) : src ? [src] : []
-      if (!src || !urls.length) return
-      wx.previewImage({ current: src, urls })
+      const raw = turn ? turnInputImages(turn) : src ? [src] : []
+      if (!src || !raw.length) return
+      toPreviewableAll(raw).then((urls) => {
+        const current = urls[raw.indexOf(src)] || urls[0]
+        wx.previewImage({ current, urls })
+      })
     },
 
     onSave(e: WechatMiniprogram.BaseEvent) {
       this.triggerEvent('save', { id: e.currentTarget.dataset.id })
+    },
+
+    /** 页面在保存成功后调用：按钮转为「已存作品集」并禁点 */
+    markSaved(id: string) {
+      if (!id) return
+      savedTurns.add(id)
+      const rows = (this.data.rows || []) as Array<{ id: string; saved: boolean }>
+      const next = rows.map((r) => (r.id === id && !r.saved ? { ...r, saved: true } : r))
+      if (next.some((r, i) => r !== rows[i])) this.setData({ rows: next })
     },
 
     onPickChoice(e: WechatMiniprogram.BaseEvent) {
@@ -310,7 +343,7 @@ Component({
       const value = String(e.currentTarget.dataset.value || '')
       if (!id || !value || !picks[id]) return
       picks[id].value = value
-      this.paint(this.currentTurns())
+      this.paint(this.currentTurns(), 'interaction')
     },
 
     onDetail(e: { currentTarget: { dataset: { id?: string } }; detail: { value?: string } }) {
@@ -334,7 +367,8 @@ Component({
       const id = String(e.currentTarget.dataset.id || '')
       const si = Number(e.currentTarget.dataset.si)
       if (!id || Number.isNaN(si)) return
-      const row = this.data.rows.find((item) => item.id === id)
+      const rows = this.data.rows as Row[]
+      const row = rows.find((item) => item.id === id)
       const seg = row?.segments[si]
       if (!seg || seg.kind !== 'copy' || !seg.text) return
       wx.setClipboardData({

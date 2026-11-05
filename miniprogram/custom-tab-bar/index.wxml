@@ -1,20 +1,34 @@
-<view class="tab-shell">
-  <view class="tab-bar">
-    <view
-      wx:for="{{list}}"
-      wx:key="value"
-      class="tab-item {{value === item.value ? 'active' : ''}}"
-      data-value="{{item.value}}"
-      bindtap="onTap"
-    >
-      <view class="tab-icon-box">
-        <t-icon
-          name="{{item.icon}}"
-          size="36rpx"
-          color="{{value === item.value ? '#0A0B05' : '#8A8A93'}}"
-        />
+<!-- 相纸标签条：三层视觉 = 图标块（选中）/ 标签 / 琥珀短线（选中）。
+     无图标资源依赖，t-icon 在自定义 TabBar 里会因 lazyCodeLoading 丢字形，这里改用内联 SVG。 -->
+<view class="tb">
+  <view
+    wx:for="{{list}}"
+    wx:key="value"
+    class="tb-item {{value === item.value ? 'on' : ''}}"
+    data-value="{{item.value}}"
+    catchtap="onTap"
+    aria-role="tab"
+    aria-selected="{{value === item.value}}"
+  >
+    <view class="tb-mark">
+      <view wx:if="{{item.icon === 'chat-bubble'}}" class="tb-glyph {{value === item.value ? 'on' : ''}}">
+        <view class="g-bubble"></view>
+        <view class="g-bubble-tail"></view>
       </view>
-      <text class="tab-label">{{item.label}}</text>
+      <view wx:elif="{{item.icon === 'app'}}" class="tb-glyph {{value === item.value ? 'on' : ''}}">
+        <view class="g-grid">
+          <view class="g-cell"></view>
+          <view class="g-cell"></view>
+          <view class="g-cell"></view>
+          <view class="g-cell"></view>
+        </view>
+      </view>
+      <view wx:else class="tb-glyph {{value === item.value ? 'on' : ''}}">
+        <view class="g-head"></view>
+        <view class="g-body"></view>
+      </view>
     </view>
+    <text class="tb-label">{{item.label}}</text>
+    <view class="tb-rule {{value === item.value ? 'on' : ''}}"></view>
   </view>
 </view>

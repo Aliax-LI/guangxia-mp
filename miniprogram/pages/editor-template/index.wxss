@@ -1,174 +1,160 @@
-.tpl-editor {
-  padding-top: 20rpx;
-  padding-bottom: 240rpx;
+/* 灵感详情：图先行，文字退后。
+   全页只有两段结构——贴边满宽的范例图，和一块相纸上的说明与提示词。 */
+
+.detail {
   min-height: 100vh;
-  box-sizing: border-box;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+  background: transparent;
 }
 
-.loading-wrap {
-  padding: 200rpx 0;
-  display: flex;
-  justify-content: center;
-}
+/* ── 范例图 ───────────────────────────────────────────── */
 
-/* 多图范例区 */
-.gallery-wrap {
+.hero {
   position: relative;
-  background: #000;
-  border-radius: 32rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  box-shadow: 0 24rpx 56rpx rgba(0, 0, 0, 0.5);
+  width: 100%;
 }
 
-.gallery-swiper {
+.hero-swiper {
   width: 100%;
   transition: height 0.2s ease;
 }
 
-.gallery-item {
+.hero-item {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   overflow: hidden;
 }
 
-.gallery-img {
+.hero-img {
   width: 100%;
   height: auto;
   display: block;
-  vertical-align: top;
 }
 
-.hero-badge {
+/* 图上的页码：一颗小胶囊，不遮内容 */
+.hero-count {
   position: absolute;
-  top: 20rpx;
-  left: 20rpx;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(12px);
-  padding: 6rpx 20rpx;
+  top: 24rpx;
+  right: 24rpx;
+  padding: 8rpx 20rpx;
   border-radius: 9999rpx;
-  color: #f4f4f6;
+  background: rgba(60, 45, 25, 0.62);
+  color: #1c1815;
   font-size: 20rpx;
-  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-.thumb-scroll {
-  width: 100%;
-  padding: 16rpx 20rpx 20rpx;
-  box-sizing: border-box;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+/* 多图缩略：贴在图上，不加渐变遮罩 */
+.hero-thumbs {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2;
+  padding: 20rpx 24rpx;
 }
 
-.thumb-inner {
+.hero-thumbs-in {
   display: inline-flex;
   gap: 12rpx;
 }
 
 .thumb {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 16rpx;
-  border: 3rpx solid transparent;
-  opacity: 0.55;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 14rpx;
+  opacity: 0.5;
   flex-shrink: 0;
 }
 
 .thumb.active {
-  border-color: #d4f826;
   opacity: 1;
+  box-shadow: inset 0 0 0 2rpx #c9761b;
 }
 
-/* 模版说明卡片 */
-.meta-card {
-  padding: 32rpx;
-  background: #0e0f12;
-  border-radius: 28rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
+/* ── 说明与提示词 ─────────────────────────────────────── */
+
+.body {
+  padding: 40rpx var(--gutter) 64rpx;
 }
 
-.author-row {
+.byline {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 22rpx;
 }
 
-.author-avatar {
-  width: 64rpx;
-  height: 64rpx;
+.avatar {
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
-  background: #1d1e24;
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  background: #e4dbcb;
   flex-shrink: 0;
 }
 
-.author-text {
+.byline-text {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
 }
 
-.author-name {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #f4f4f6;
+.byline-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1c1815;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.author-meta {
-  display: block;
-  margin-top: 4rpx;
-  font-size: 22rpx;
-  color: #8a8a93;
-}
-
-.like-pill {
-  font-size: 22rpx;
-  color: #8a8a93;
-  flex-shrink: 0;
+.byline-meta {
+  font-size: 21rpx;
+  color: #6f6355;
 }
 
 .title {
   display: block;
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #f4f4f6;
-  line-height: 1.4;
-  letter-spacing: -0.3rpx;
+  margin-top: 28rpx;
+  font-size: 44rpx;
+  line-height: 1.28;
+  font-weight: 800;
+  letter-spacing: -1.2rpx;
+  color: #fffdf9;
 }
 
-.tag-row {
+.tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 18rpx;
+  gap: 10rpx;
+  margin-top: 20rpx;
 }
 
-.tag-chip {
+.tag {
   padding: 8rpx 18rpx;
   border-radius: 9999rpx;
-  background: #1d1e24;
-  border: 1rpx solid rgba(255, 255, 255, 0.06);
-  font-size: 22rpx;
-  color: #b9b9c1;
+  border: 1rpx solid rgba(28, 24, 21, 0.1);
+  font-size: 21rpx;
+  color: #5c5145;
 }
 
-.prompt-card {
-  padding: 28rpx 32rpx 32rpx;
-  background: #0e0f12;
-  border-radius: 28rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.35);
+.desc {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 27rpx;
+  line-height: 1.7;
+  color: #5c5145;
 }
 
-.prompt-head {
+/* 分组线：一条 1rpx 相纸线，取代又一张卡片 */
+.rule {
+  height: 1rpx;
+  margin: 40rpx 0 32rpx;
+  background: rgba(28, 24, 21, 0.08);
+}
+
+.block-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -176,206 +162,102 @@
 }
 
 .block-title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
-  color: #f4f4f6;
+  color: #1c1815;
 }
 
-.copy-pill {
-  display: flex;
+.copy {
+  display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  padding: 10rpx 20rpx;
+  height: 56rpx;
+  padding: 0 22rpx;
   border-radius: 9999rpx;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  font-size: 24rpx;
+  border: 1rpx solid rgba(28, 24, 21, 0.16);
+  font-size: 23rpx;
   font-weight: 600;
-  color: #f4f4f6;
-  flex-shrink: 0;
+  color: #1c1815;
 }
 
-.copy-pill:active {
-  background: rgba(255, 255, 255, 0.1);
+.copy:active {
+  background: rgba(28, 24, 21, 0.06);
 }
 
-.prompt-label {
-  display: block;
+.prompt {
   margin-top: 20rpx;
-  font-size: 22rpx;
-  color: #8a8a93;
-}
-
-.prompt-scroll {
-  margin-top: 20rpx;
-  max-height: 320rpx;
-  padding: 18rpx;
-  background: #16171b;
-  border-radius: 18rpx;
-  box-sizing: border-box;
+  max-height: 420rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #fffdf9;
+  border: 1rpx solid rgba(28, 24, 21, 0.06);
 }
 
 .prompt-body {
   display: block;
-  font-size: 26rpx;
-  line-height: 1.6;
-  color: #b9b9c1;
+  font-size: 25rpx;
+  line-height: 1.75;
+  color: #5c5145;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.desc {
-  display: block;
-  margin-top: 16rpx;
-  font-size: 26rpx;
-  color: #8a8a93;
-  line-height: 1.55;
-}
+/* ── 主操作 ───────────────────────────────────────────── */
 
-.rule-tip {
-  margin-top: 24rpx;
-  padding: 16rpx 24rpx;
-  border-radius: 18rpx;
-  background: #16171b;
-  border: 1rpx solid rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  font-size: 24rpx;
-  color: #8a8a93;
-}
-
-.rule-tip.must {
-  background: rgba(212, 248, 38, 0.08);
-  border-color: rgba(212, 248, 38, 0.24);
-  color: #d8ec8a;
-}
-
-/* 照片上传区域 */
-.upload-section {
-  margin-top: 40rpx;
-}
-
-.section-title-wrap {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 20rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #f4f4f6;
-}
-
-.section-subtitle {
-  font-size: 22rpx;
-  font-weight: 600;
-  color: #8a8a93;
-}
-
-.section-subtitle.is-must {
-  color: #d4f826;
-}
-
-.upload-box {
-  height: 320rpx;
-  background: #0e0f12;
-  border: 3rpx dashed rgba(255, 255, 255, 0.14);
-  border-radius: 28rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.upload-box:active {
-  background: #141519;
-  border-color: rgba(212, 248, 38, 0.4);
-}
-
-.upload-circle {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 30rpx;
-  background: var(--brand-neon, #d4f826);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 28rpx rgba(212, 248, 38, 0.28);
-  margin-bottom: 20rpx;
-}
-
-.upload-main-text {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #f4f4f6;
-}
-
-.upload-sub-text {
-  font-size: 22rpx;
-  color: #8a8a93;
-  margin-top: 8rpx;
-}
-
-.preview-box {
-  position: relative;
-  height: 380rpx;
-  border-radius: 28rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  background: #000;
-  box-shadow: 0 20rpx 48rpx rgba(0, 0, 0, 0.4);
-}
-
-.user-img {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.preview-overlay {
-  position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-}
-
-.change-pill {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(12px);
-  padding: 10rpx 24rpx;
-  border-radius: 9999rpx;
-  color: #ffffff;
-  font-size: 24rpx;
-  font-weight: 500;
-}
-
-/* 底部操作条 */
-.bottom-action-bar {
+.dockbar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  background: rgba(7, 7, 9, 0.92);
-  backdrop-filter: blur(24px);
-  border-top: 1rpx solid rgba(255, 255, 255, 0.07);
   z-index: 100;
-  box-sizing: border-box;
+  padding: 20rpx var(--gutter) calc(20rpx + env(safe-area-inset-bottom));
+  background: rgba(250, 246, 238, 0.94);
+  border-top: 1rpx solid rgba(28, 24, 21, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.submit-btn {
+.make {
   width: 100%;
+  height: 96rpx;
+  border-radius: 9999rpx;
+  font-size: 30rpx;
 }
 
-.lime-dot {
-  width: 16rpx;
-  height: 16rpx;
-  margin-right: 14rpx;
-  border-radius: 50%;
-  background: var(--brand-neon-ink, #0a0b05);
+.make::after {
+  display: none;
+}
+
+/* ── 加载骨架 ─────────────────────────────────────────── */
+
+.hero-sk {
+  width: 100%;
+  height: 560rpx;
+  background: var(--skeleton-from, #f3ede2);
+  animation: sk-breathe 1.6s ease-in-out infinite;
+}
+
+.sk-line {
+  height: 28rpx;
+  margin: 16rpx var(--gutter) 0;
+  border-radius: 8rpx;
+  background: var(--skeleton-from, #f3ede2);
+  animation: sk-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes sk-breathe {
+  0%,
+  100% {
+    background: var(--skeleton-from, #f3ede2);
+  }
+  50% {
+    background: var(--skeleton-to, #e9e0d2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sk,
+  .sk-line {
+    animation: none;
+  }
 }

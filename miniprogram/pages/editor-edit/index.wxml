@@ -20,7 +20,7 @@
     <view class="card-head">
       <view class="head-title-wrap">
         <view class="head-icon">
-          <t-icon name="edit" size="30rpx" color="#D4F826" />
+          <t-icon name="edit" size="30rpx" color="#c9761b" />
         </view>
         <text class="head-title">修图风格指令</text>
       </view>
@@ -46,7 +46,7 @@
       bindtap="onGenerate"
     >
       <t-loading wx:if="{{generating}}" theme="dots" size="36rpx" style="margin-right: 12rpx;" />
-      <t-icon wx:else name="sparkles" size="36rpx" color="#0A0B05" style="margin-right: 12rpx;" />
+      <t-icon wx:else name="sparkles" size="36rpx" color="#fffdf9" style="margin-right: 12rpx;" />
       <text>{{generating ? 'AI 正在渲染中…' : '立即开始生成'}}</text>
     </view>
   </view>

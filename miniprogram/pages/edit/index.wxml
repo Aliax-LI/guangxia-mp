@@ -1,4 +1,4 @@
-<view class="home {{keyboard ? 'kb-open' : ''}}" style="height: calc(100vh - {{keyboard}}px);">
+<view class="home {{keyboard ? 'kb-open' : ''}}" style="height: {{viewportHeight - keyboard}}px;">
   <!-- 顶栏：会话历史 / 当前会话 / 新建同类型会话 -->
   <view class="nav">
     <view class="icon-btn" catchtap="onToggleHistory" aria-role="button" aria-label="会话历史">
@@ -16,7 +16,7 @@
   <!-- 空态：一句话说明能力 + 可直接点的起始句（一段文字，不是一摞卡片） -->
   <view wx:if="{{!turnCount}}" class="intro">
     <text class="intro-title">{{tool === 'image' ? '说画面，我来出图' : '今天想聊点什么？'}}</text>
-    <text class="intro-sub">{{tool === 'image' ? '每次画图单独成一个会话，结果自动进作品集' : '可以发文字，也可以带图一起问'}}</text>
+    <text class="intro-sub">{{tool === 'image' ? '上传参考图，或用一句话描述；出图后可以继续修改' : '可以发文字，也可以带图一起问'}}</text>
 
     <view wx:if="{{!keyboard}}" class="starters">
       <text class="starters-label">{{tool === 'image' ? '试试这些画面' : '试试这样问'}}</text>
@@ -41,10 +41,11 @@
       bind:preview="onPreview"
       bind:save="onSave"
       bind:choose="onChoose"
+      bind:editimage="onEditImage"
     />
   </view>
 
-  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="scrim" catchtap="onClosePop"></view>
+  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="scrim" catchtap="onClosePop" catchtouchmove="noop"></view>
 
   <!-- 会话抽屉 -->
   <view class="drawer {{historyOpen ? 'open' : ''}}" catchtap="noop">
@@ -154,92 +155,44 @@
         <t-icon name="chevron-down" size="26rpx" color="#6f6355" />
       </view>
 
-      <view wx:if="{{refImages.length}}" class="ref-strip">
+
+    </view>
+
+      <scroll-view wx:if="{{refImages.length}}" class="ref-strip" scroll-x><view class="ref-strip-in">
         <view wx:for="{{refImages}}" wx:key="*this" class="ref">
           <image class="ref-img" src="{{item}}" mode="aspectFill" />
           <view class="ref-x" data-index="{{index}}" catchtap="onRemoveRef" aria-role="button" aria-label="移除参考图">
             <t-icon name="close" size="18rpx" color="#1c1815" />
           </view>
         </view>
-      </view>
-    </view>
-
-    <view wx:if="{{panelOpen}}" class="panel" catchtap="noop">
-      <view class="p-row">
-        <text class="p-k">模型</text>
-        <text class="p-v num">{{imageModel}}</text>
-      </view>
-
-      <text class="p-k p-k--block">比例</text>
-      <view class="pills">
-        <view
-          wx:for="{{ratios}}"
-          wx:key="id"
-          class="pill {{ratioId === item.id ? 'pill--on' : ''}}"
-          data-id="{{item.id}}"
-          data-group="ratio"
-          catchtap="onPickOpt"
-        >{{item.label}}</view>
-      </view>
-
-      <text class="p-k p-k--block">张数</text>
-      <view class="pills">
-        <view
-          wx:for="{{counts}}"
-          wx:key="*this"
-          class="pill {{count === item ? 'pill--on' : ''}}"
-          data-id="{{item}}"
-          data-group="count"
-          catchtap="onPickOpt"
-        >{{item}}</view>
-      </view>
-
-      <view class="p-half">
-        <view class="p-col">
-          <text class="p-k p-k--block">质量</text>
-          <view class="pills">
-            <view
-              wx:for="{{qualities}}"
-              wx:key="id"
-              class="pill {{quality === item.id ? 'pill--on' : ''}}"
-              data-id="{{item.id}}"
-              data-group="quality"
-              catchtap="onPickOpt"
-            >{{item.label}}</view>
-          </view>
-        </view>
-      </view>
-
-      <text class="p-k p-k--block">分辨率</text>
-      <view class="pills">
-        <view
-          wx:for="{{resolutions}}"
-          wx:key="id"
-          class="pill {{resolution === item.id ? 'pill--on' : ''}}"
-          data-id="{{item.id}}"
-          data-group="resolution"
-          catchtap="onPickOpt"
-        >{{item.label}}</view>
-      </view>
-    </view>
-
+      </view></scroll-view>
     <view class="composer">
       <view class="composer-in">
         <view class="composer-cam" catchtap="onCamera" aria-role="button" aria-label="拍照或从相册选择">
           <t-icon name="camera" size="38rpx" color="#5c5145" />
         </view>
-        <t-chat-sender
-          class="composer-input"
+        <textarea
+          id="composer-textarea"
+          class="composer-input composer-textarea"
+          style="height: {{inputLines * 44 + 32}}rpx;"
           value="{{draft}}"
+          focus="{{inputFocus}}"
+          hidden="{{panelOpen || historyOpen || menuOpen}}"
+          placeholder="{{tool === 'image' ? (refImages.length ? '想修改这张图的哪里？' : '描述想生成的画面') : '发消息，可带图提问'}}"
+          placeholder-class="composer-placeholder"
+          disable-default-padding="{{true}}"
+          maxlength="4000"
           confirm-type="send"
           confirm-hold="{{true}}"
-          placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息，可带图提问'}}"
+          show-confirm-bar="{{false}}"
           adjust-position="{{false}}"
-          auto-rise-with-keyboard="{{false}}"
-          render-presets="{{senderPresets}}"
-          bind:change="onDraft"
-          bind:send="onSend"
-          bind:keyboardheightchange="onKeyboard"
+          cursor-spacing="16"
+          bindinput="onDraft"
+          bindlinechange="onInputLineChange"
+          bindconfirm="onSend"
+          bindfocus="onInputFocus"
+          bindblur="onInputBlur"
+          bindkeyboardheightchange="onKeyboard"
         />
         <view class="composer-actions">
           <view
@@ -252,7 +205,7 @@
           </view>
           <view
             wx:if="{{canSend}}"
-            class="composer-end go"
+            class="composer-end go {{busy ? 'busy' : ''}}" aria-disabled="{{busy}}"
             catchtap="onSendTap"
             aria-role="button"
             aria-label="发送"
@@ -263,6 +216,43 @@
         </view>
       </view>
     </view>
+  </view>
+
+  <view wx:if="{{panelOpen}}" class="panel" catchtap="noop" aria-role="dialog" aria-label="画图设置">
+    <view class="panel-heading">
+      <text class="panel-title">画图设置</text>
+      <view class="panel-close" catchtap="onClosePop" aria-role="button" aria-label="关闭设置"><t-icon name="close" size="36rpx" /></view>
+    </view>
+    <scroll-view class="panel-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="p-row model-picker" catchtap="onToggleModels" aria-role="button" aria-label="选择模型" aria-expanded="{{modelOpen}}">
+        <text class="p-k">模型</text><view class="model-value"><text>{{imageModel}}</text><t-icon name="{{modelOpen ? 'chevron-up' : 'chevron-down'}}" size="26rpx" /></view>
+      </view>
+      <view wx:if="{{modelOpen}}" class="model-options">
+        <view wx:for="{{imageModelLabels}}" wx:key="*this" class="model-option {{imageModelIndex === index ? 'selected' : ''}}" data-index="{{index}}" catchtap="onPickModel" aria-role="button" aria-pressed="{{imageModelIndex === index}}">
+          <text>{{item}}</text><t-icon wx:if="{{imageModelIndex === index}}" name="check" size="30rpx" color="#a85f11" />
+        </view>
+      </view>
+      <text class="p-k p-k--block">画幅</text>
+      <view class="pills ratio-options">
+        <view wx:for="{{ratios}}" wx:key="id" class="pill ratio-tile {{ratioId === item.id ? 'pill--on' : ''}}" data-id="{{item.id}}" data-group="ratio" catchtap="onPickOpt" aria-role="button" aria-label="{{item.label}}" aria-pressed="{{ratioId === item.id}}">
+          <view class="ratio-preview"><view class="ratio-shape {{item.id === 'auto' ? 'ratio-auto' : item.id === '1:1' ? 'ratio-square' : item.id === '2:3' ? 'ratio-portrait' : 'ratio-landscape'}}"></view></view>
+          <text class="ratio-name">{{item.id === 'auto' ? '自动' : item.id === '1:1' ? '方形' : item.id === '2:3' ? '竖版' : '横版'}}</text>
+          <text wx:if="{{item.id !== 'auto'}}" class="ratio-size">{{item.id}}</text>
+        </view>
+      </view>
+      <text class="p-k p-k--block">生成张数</text>
+      <view class="pills count-options">
+        <view wx:for="{{counts}}" wx:key="*this" class="pill {{count === item ? 'pill--on' : ''}}" data-id="{{item}}" data-group="count" catchtap="onPickOpt" aria-role="button" aria-pressed="{{count === item}}">{{item}} 张</view>
+      </view>
+      <view class="advanced-toggle" catchtap="onToggleAdvanced" aria-role="button" aria-expanded="{{advancedOpen}}"><text>更多设置</text><t-icon name="{{advancedOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" /></view>
+      <view wx:if="{{advancedOpen}}">
+        <text class="p-k p-k--block">画面质量</text>
+        <view class="pills quality-options">
+          <view wx:for="{{qualities}}" wx:key="id" class="pill {{quality === item.id ? 'pill--on' : ''}}" data-id="{{item.id}}" data-group="quality" catchtap="onPickOpt" aria-role="button" aria-pressed="{{quality === item.id}}">{{item.id === 'auto' ? '自动' : item.label}}</view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="panel-footer"><view class="panel-reset" catchtap="onResetOptions" aria-role="button">恢复默认</view><view class="panel-done" catchtap="onClosePop" aria-role="button">完成</view></view>
   </view>
 
   <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">

@@ -1,9 +1,26 @@
 :host {
+  --message-image-width: 320rpx;
+  position: relative;
   display: block;
   width: 100%;
   max-width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+.latest {
+  position: absolute;
+  right: 32rpx;
+  bottom: 16rpx;
+  min-height: 80rpx;
+  padding: 0 28rpx;
+  display: flex;
+  align-items: center;
+  border-radius: 40rpx;
+  background: var(--ink-1, #fffdf9);
+  border: 1rpx solid var(--line);
+  color: var(--text-mid);
+  font-size: 24rpx;
 }
 
 /* 对话流：用户靠右成组，助手左对齐无气泡，靠墨色块与留白区分 */
@@ -43,8 +60,8 @@
 }
 
 .user-img {
-  width: 240rpx;
-  height: 240rpx;
+  width: var(--message-image-width, 320rpx);
+  height: var(--message-image-width, 320rpx);
   border-radius: var(--r-inset);
   background: var(--ink-2);
 }
@@ -140,109 +157,113 @@
   height: 376rpx;
 }
 
-/* 显影格：暖白相纸底，不用深色块——白底页面里挖一个黑洞是最刺眼的 */
-.shot.wait {
+.generation-content { position: relative; }
+.generation-status { display: flex; align-items: center; gap: 12rpx; max-width: 100%; margin: 0 0 18rpx; color: #5c5145; font-size: 24rpx; line-height: 1.5; }
+.status-dot { width: 10rpx; height: 10rpx; flex-shrink: 0; border-radius: 50%; background: #c9761b; }
+.generation-label { color: #1c1815; font-weight: 600; }
+.generation-duration { align-self: center; color: #6f6355; font-size: 22rpx; font-variant-numeric: tabular-nums; }
+
+/* 固定点阵 + 移动亮度，中央计时不随动画位移。 */
+.wait-surface {
   position: relative;
-  display: flex;
-  align-items: flex-end;
+  width: 560rpx;
+  max-width: 100%;
+  height: auto;
+  display: block;
   overflow: hidden;
-  /* 白底页面上必须一眼可辨：比页面底明显暗一档的相纸 + 实线描边 */
-  background: #f3ead9;
-  border: 1rpx solid rgba(28, 24, 21, 0.16);
+  border-radius: var(--r-inset, 20rpx);
+  background: #faf6ef;
 }
-
-/* 光扫：一道斜向的琥珀色柔光从上往下掠过纸面 */
-.dev-sweep {
-  position: absolute;
-  top: -60%;
-  left: -30%;
-  width: 160%;
-  height: 220%;
-  background: linear-gradient(
-    115deg,
-    rgba(201, 118, 27, 0) 0%,
-    rgba(201, 118, 27, 0.1) 36%,
-    rgba(224, 155, 60, 0.34) 50%,
-    rgba(201, 118, 27, 0.1) 64%,
-    rgba(201, 118, 27, 0) 100%
-  );
+.wait-surface::before {
+  content: '';
+  display: block;
+  padding-top: var(--wait-padding, 100%);
 }
-
-.dev-sweep.on {
-  animation: dev-pass 2.8s ease-in-out infinite;
-}
-
-/* 纸纹：极淡的网点，避免大片纯色显得廉价 */
-.dev-grain {
+.wait-glow, .wait-dots, .wait-dot-wave {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(28, 24, 21, 0.05) 1rpx, transparent 1rpx);
-  background-size: 12rpx 12rpx;
   pointer-events: none;
 }
-
-/* 文字区：底部对齐，给显影留出上方大块留白 */
-.wait-copy {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  padding: 0 28rpx 28rpx;
+.wait-glow {
+  background: radial-gradient(ellipse at 50% 50%, rgba(223, 172, 101, 0.32), rgba(223, 172, 101, 0) 70%);
+  opacity: 0.45;
 }
-
+.wait-glow.on { animation: dot-glow 4.8s ease-in-out infinite; }
+.wait-dots {
+  background-image: radial-gradient(circle, rgba(168, 95, 17, 0.32) 1.5rpx, transparent 1.8rpx);
+  background-size: 20rpx 20rpx;
+  opacity: 0.5;
+}
+.wait-dots.on { animation: dot-breathe 4.8s ease-in-out infinite; }
+.wait-dot-wave {
+  right: auto;
+  width: 50%;
+  background-image: radial-gradient(circle, #b56a1b 2.4rpx, transparent 2.8rpx);
+  background-size: 20rpx 20rpx;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%, #000 60%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 40%, #000 60%, transparent);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  opacity: 0.7;
+}
+.wait-dot-wave.on { animation: dot-travel 2.8s ease-in-out infinite; }
+.wait-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse, #faf6ef 10%, rgba(250, 246, 239, 0.96) 26%, rgba(250, 246, 239, 0) 58%);
+  pointer-events: none;
+}
+.wait-time-label { color: #6f6355; font-size: 22rpx; line-height: 1.5; }
+.wait-elapsed {
+  display: block;
+  margin: 4rpx 0 12rpx;
+  color: #1c1815;
+  font-size: 58rpx;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  font-variant-numeric: tabular-nums;
+}
 .wait-stage {
   display: block;
-  font-size: 26rpx;
-  font-weight: 600;
-  letter-spacing: 0.5rpx;
-  color: var(--text-hi, #1c1815);
-}
-
-/* 进度：一条 4rpx 的纸面刻度，琥珀填充 */
-.wait-track {
-  position: relative;
-  height: 4rpx;
-  margin-top: 16rpx;
-  border-radius: 9999rpx;
-  background: rgba(28, 24, 21, 0.08);
-  overflow: hidden;
-}
-
-.wait-fill {
-  height: 100%;
-  border-radius: 9999rpx;
-  background: #c9761b;
-  transition: width 0.4s ease;
-}
-
-.wait-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12rpx;
-  margin-top: 12rpx;
-}
-
-.wait-pct {
   font-size: 24rpx;
-  font-weight: 700;
-  color: #c9761b;
+  line-height: 1.5;
+  color: #5c5145;
 }
-
-.wait-model {
-  font-size: 20rpx;
-  color: var(--text-soft, #6f6355);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.wait-activity { display: flex; align-items: center; justify-content: center; gap: 10rpx; height: 12rpx; margin-top: 14rpx; }
+.activity-dot { width: 8rpx; height: 8rpx; border-radius: 50%; background: #b56a1b; opacity: 0.35; }
+.activity-dot.on { animation: activity-breathe 1.2s ease-in-out infinite; }
+.activity-dot.a1 { animation-delay: 0.16s; }
+.activity-dot.a2 { animation-delay: 0.32s; }
+.wait-batch { position: absolute; top: 8rpx; right: 10rpx; z-index: 2; color: #6f6355; font-size: 18rpx; }
+@keyframes dot-glow {
+  0%, 100% { opacity: 0.3; transform: scale(0.88); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
-
-@keyframes dev-pass {
-  0% {
-    transform: translate3d(0, -40%, 0);
-  }
-  100% {
-    transform: translate3d(0, 40%, 0);
-  }
+@keyframes dot-breathe {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.85; }
+}
+@keyframes dot-travel {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+@keyframes activity-breathe {
+  0%, 70%, 100% { opacity: 0.25; transform: scale(0.8); }
+  35% { opacity: 1; transform: scale(1.35); }
 }
 
 .shot.photo {
@@ -298,6 +319,7 @@
 /* 成片后的动作条：轻量文字按钮，不与页面级主操作抢琥珀实心 */
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s3);
 }
 
@@ -522,7 +544,10 @@
 /* ── 降级：系统要求减少动效 ───────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .dev-sweep.on,
+  .wait-glow.on,
+  .wait-dots.on,
+  .wait-dot-wave.on,
+  .activity-dot.on,
   .ink-bar.on,
   .think-dot.on,
   .shot.photo {

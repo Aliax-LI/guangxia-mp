@@ -1,6 +1,6 @@
 <!-- 相纸标签条：三层视觉 = 图标块（选中）/ 标签 / 琥珀短线（选中）。
      无图标资源依赖，t-icon 在自定义 TabBar 里会因 lazyCodeLoading 丢字形，这里改用内联 SVG。 -->
-<view class="tb">
+<view wx:if="{{!keyboardHidden}}" class="tb">
   <view
     wx:for="{{list}}"
     wx:key="value"

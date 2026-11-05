@@ -12,10 +12,8 @@
   padding: 0 24rpx env(safe-area-inset-bottom);
   display: flex;
   align-items: stretch;
-  background: rgba(250, 246, 238, 0.96);
-  border-top: 1rpx solid rgba(28, 24, 21, 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: #f6f1e7;
+  border-top: 1rpx solid rgba(28, 24, 21, 0.06);
 }
 
 .tb-item {

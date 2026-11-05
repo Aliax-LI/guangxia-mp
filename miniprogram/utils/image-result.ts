@@ -41,9 +41,5 @@ export async function persistGenerateOutputs(result: GenerateResult): Promise<st
   const list = result.outputs?.length
     ? result.outputs
     : [{ imageUrl: result.imageUrl, b64: result.b64 }]
-  const paths: string[] = []
-  for (const item of list) {
-    paths.push(await persistGenerateResult(item))
-  }
-  return paths
+  return Promise.all(list.map((item) => persistGenerateResult(item)))
 }

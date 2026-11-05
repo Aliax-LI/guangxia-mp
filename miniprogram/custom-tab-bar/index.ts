@@ -8,6 +8,7 @@ const TABS: TabItem[] = [
 
 Component({
   data: {
+    keyboardHidden: false,
     value: '/pages/edit/index',
     list: TABS,
     /** TDesign 需要显式的十六进制色值，选中是墨黑（压在琥珀块上），未选中是相纸灰 */

@@ -29,9 +29,12 @@ type Row = {
   generating: boolean
   liveText: boolean
   thinking: boolean
-  progress: number
-  /** 显影阶段的文案：把百分比翻译成用户能理解的动作 */
   stage: string
+  loadingMessage: string
+  elapsed: string
+  duration: string
+  waitPadding: number
+  copyImageUrl: string
   places: number[]
   segments: ReplySegment[]
   pick: string
@@ -51,19 +54,23 @@ let clock: ReturnType<typeof setInterval> | 0 = 0
 let paintTimer: ReturnType<typeof setTimeout> | 0 = 0
 let scrollBottomTimer: ReturnType<typeof setTimeout> | 0 = 0
 
-function arc(from: number, now: number): number {
-  const elapsed = Math.max(0, now - from)
-  const pct = 92 * (1 - Math.exp(-elapsed / 14000))
-  return Math.max(1, Math.min(92, Math.round(pct)))
+function formatElapsed(milliseconds: number): string {
+  const seconds = Math.floor(Math.max(0, milliseconds) / 1000)
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remaining = seconds % 60
+  const two = (value: number) => String(value).padStart(2, '0')
+  return hours ? `${hours}:${two(minutes)}:${two(remaining)}` : `${two(minutes)}:${two(remaining)}`
 }
 
-/** 百分比 → 动作说明。进度条只是数字，用户需要知道"现在在做什么"。 */
-function stageLabel(pct: number): string {
-  if (pct < 20) return '正在准备画布'
-  if (pct < 45) return '正在起稿'
-  if (pct < 70) return '正在上色'
-  if (pct < 88) return '正在收尾'
-  return '马上就好'
+/** 等待时的提示文案；不代表服务端实际进度。 */
+function loadingMessage(milliseconds: number): string {
+  const seconds = Math.max(0, milliseconds) / 1000
+  if (seconds < 4) return '正在准备画布'
+  if (seconds < 10) return '正在起稿'
+  if (seconds < 22) return '正在上色'
+  if (seconds < 45) return '正在收尾'
+  return '正在努力生成'
 }
 
 function resolveTextView(turn: ChatTurn, reply: string) {
@@ -84,6 +91,10 @@ function resolveTextView(turn: ChatTurn, reply: string) {
 }
 
 function toRow(turn: ChatTurn, now: number): Row {
+  const dimensions = /^(\d+)x(\d+)$/.exec(turn.size || '')
+  const width = dimensions ? Number(dimensions[1]) : 0
+  const height = dimensions ? Number(dimensions[2]) : 0
+  const waitPadding = width > 0 && height > 0 ? (height / width) * 100 : 100
   const inputImages = turnInputImages(turn)
   const errorLabel = (turn.error || '失败了').replace(/，点重试$/, '')
 
@@ -117,10 +128,13 @@ function toRow(turn: ChatTurn, now: number): Row {
 
   const count = Math.max(1, Math.min(4, turn.count || 1))
   const places = generating ? Array.from({ length: count }, (_, i) => i) : []
-  let progress = 0
+  let elapsed = ''
+  let message = ''
   if (generating) {
     if (!startedAt[turn.id]) startedAt[turn.id] = now
-    progress = arc(startedAt[turn.id], now)
+    const elapsedMs = now - (turn.startedAt || startedAt[turn.id])
+    elapsed = formatElapsed(elapsedMs)
+    message = loadingMessage(elapsedMs)
   } else {
     delete startedAt[turn.id]
   }
@@ -142,8 +156,12 @@ function toRow(turn: ChatTurn, now: number): Row {
     generating,
     liveText: textView?.liveText || false,
     thinking,
-    progress,
-    stage: generating ? stageLabel(progress) : '',
+    stage: generating ? (inputImages.length ? '正在编辑图片' : '正在生成图片') : '',
+    loadingMessage: message,
+    elapsed,
+    duration: turn.status === 'done' && typeof turn.durationMs === 'number' ? formatElapsed(turn.durationMs) : '',
+    waitPadding,
+    copyImageUrl: (turn.images || []).find((src) => /^https?:\/\//i.test(src) && !/^https?:\/\/(tmp|usr)\//i.test(src)) || '',
     places,
     segments,
     pick: pick?.value || '',
@@ -164,7 +182,11 @@ function rowRenderKey(row: Row): string {
     row.thinking ? 1 : 0,
     row.liveText ? 1 : 0,
     row.generating ? 1 : 0,
-    row.progress,
+    row.elapsed,
+    row.loadingMessage,
+    row.duration,
+    row.waitPadding,
+    row.copyImageUrl,
     row.showImages ? 1 : 0,
     row.images.length,
     row.pick,
@@ -176,13 +198,14 @@ function rowRenderKey(row: Row): string {
   ].join('|')
 }
 
-type ConvSelf = WechatMiniprogram.Component.TrivialInstance & { _turnList?: ChatTurn[] }
+type ConvSelf = WechatMiniprogram.Component.TrivialInstance & { _turnList?: ChatTurn[]; _viewportHeight?: number }
 
 Component({
   data: {
     rows: [] as Row[],
     motion: true,
     scrollIntoView: '',
+    following: true,
   },
 
   lifetimes: {
@@ -216,19 +239,23 @@ Component({
     },
 
     applyTurns(turns: ChatTurn[]) {
+      const previous = this.currentTurns()
+      const appended = previous[previous.length - 1]?.id !== turns[turns.length - 1]?.id
       ;(this as ConvSelf)._turnList = Array.isArray(turns) ? turns : []
+      if (appended) this.setData({ following: true })
       if (!turns.length) this.setData({ rows: [], scrollIntoView: '' })
       this.schedulePaint(this.currentTurns())
     },
 
     scrollToBottom() {
+      this.setData({ following: true })
       const rows = (this.data.rows || []) as Row[]
       const last = rows[rows.length - 1]
       if (!last) {
         this.setData({ scrollIntoView: '' })
         return
       }
-      const anchor = `turn-${last.id}`
+      const anchor = 'thread-end'
       if (this.data.scrollIntoView === anchor) {
         // 同一锚点重设会强制视图跳动；先清再在下一帧恢复，等价于"贴底刷新"
         this.setData({ scrollIntoView: '' })
@@ -239,11 +266,42 @@ Component({
     },
 
     scheduleScrollToBottom() {
+      if (!this.data.following) return
       if (scrollBottomTimer) return
       scrollBottomTimer = setTimeout(() => {
         scrollBottomTimer = 0
         this.scrollToBottom()
       }, 80)
+    },
+
+    onThreadTouch() {
+      if (scrollBottomTimer) clearTimeout(scrollBottomTimer)
+      scrollBottomTimer = 0
+      this.setData({ following: false, scrollIntoView: '' })
+    },
+
+    onThreadScroll(e: WechatMiniprogram.CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
+      const update = (height: number) => {
+        const following = e.detail.scrollHeight - e.detail.scrollTop - height < 64
+        if (following !== this.data.following) this.setData({ following })
+      }
+      const height = (this as ConvSelf)._viewportHeight
+      if (height) update(height)
+      this.createSelectorQuery().select('.thread-scroll').boundingClientRect((rect) => {
+        const box = rect as WechatMiniprogram.BoundingClientRectCallbackResult
+        if (box?.height) {
+          ;(this as ConvSelf)._viewportHeight = box.height
+          update(box.height)
+        }
+      }).exec()
+    },
+
+    onMediaLoad() {
+      this.scheduleScrollToBottom()
+    },
+
+    onEditImage(e: WechatMiniprogram.BaseEvent) {
+      this.triggerEvent('editimage', { id: e.currentTarget.dataset.id })
     },
 
     schedulePaint(turns: ChatTurn[], reason: 'append' | 'interaction' = 'append') {
@@ -280,7 +338,12 @@ Component({
 
       // 只有「内容在增长」才回贴底部；用户点选项/输备注引发的 repaint 不滚动，
       // 否则视图会被强行拽走（用户看到的就是"跳到输出开头"）
-      if (changed && nextRows.length && reason === 'append') this.scheduleScrollToBottom()
+      const grew = nextRows.length !== prevRows.length || nextRows.some((row, i) => {
+        const prev = prevRows[i]
+        return !prev || row.showImages !== prev.showImages || row.status !== prev.status ||
+          (row.kind === 'text' && (row.assistantContent !== prev.assistantContent || row.segments !== prev.segments))
+      })
+      if (changed && grew && nextRows.length && reason === 'append') this.scheduleScrollToBottom()
 
       if (nextRows.some((row) => row.generating)) this.startClock()
       else this.stopClock()
@@ -290,7 +353,7 @@ Component({
       if (clock) return
       clock = setInterval(() => {
         this.paint(this.currentTurns())
-      }, 200)
+      }, 1000)
     },
 
     stopClock() {
@@ -304,6 +367,20 @@ Component({
 
     onRetry(e: WechatMiniprogram.BaseEvent) {
       this.triggerEvent('retry', { id: e.currentTarget.dataset.id })
+    },
+
+    onCopyReply(e: WechatMiniprogram.BaseEvent) {
+      const turn = this.currentTurns().find((item) => item.id === e.currentTarget.dataset.id)
+      if (!turn || turn.kind !== 'text' || !turn.reply) return
+      const data = stripGenUiForMarkdown(normalizeReply(turn.reply)).trim()
+      if (!data) return
+      wx.setClipboardData({ data, fail: () => wx.showToast({ title: '复制失败，请再试一次', icon: 'none' }) })
+    },
+
+    onCopyImageLink(e: WechatMiniprogram.BaseEvent) {
+      const row = (this.data.rows as Row[]).find((item) => item.id === e.currentTarget.dataset.id)
+      if (!row?.copyImageUrl) return
+      wx.setClipboardData({ data: row.copyImageUrl, fail: () => wx.showToast({ title: '复制失败，请再试一次', icon: 'none' }) })
     },
 
     onPreview(e: WechatMiniprogram.BaseEvent) {
@@ -333,7 +410,7 @@ Component({
     markSaved(id: string) {
       if (!id) return
       savedTurns.add(id)
-      const rows = (this.data.rows || []) as Array<{ id: string; saved: boolean }>
+      const rows = (this.data.rows || []) as Row[]
       const next = rows.map((r) => (r.id === id && !r.saved ? { ...r, saved: true } : r))
       if (next.some((r, i) => r !== rows[i])) this.setData({ rows: next })
     },

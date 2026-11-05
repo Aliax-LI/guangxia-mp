@@ -2,7 +2,7 @@ import { CHAT_MODEL, IMAGE_MODEL } from '../../config/index'
 import { ensureApiKey, isLoggedIn } from '../../services/auth'
 import { chatStream } from '../../services/chat'
 import type { ChatMessage } from '../../services/chat'
-import { humanizeGenerateError, runGenerate } from '../../services/image-gen'
+import { humanizeGenerateError, listImageModels, runGenerate } from '../../services/image-gen'
 import { buildUserChatContent, chatTurnLabel } from '../../utils/chat-media'
 import { persistGenerateOutputs } from '../../utils/image-result'
 import { pickImages } from '../../utils/pick-image'
@@ -40,23 +40,19 @@ import {
 
 type Opt = { id: string; label: string; size?: string }
 
-/** 网关尺寸只有 auto / 1024 方图 / 1536 横竖图。2:3、3:4、9:16 共用竖图，3:2、4:3、16:9 共用横图。 */
+/** 仅展示网关真实支持的尺寸，避免选中的画幅与请求不一致。 */
 const RATIOS: Opt[] = [
   { id: 'auto', label: '自动', size: 'auto' },
-  { id: '1:1', label: '1:1', size: '1024x1024' },
-  { id: '2:3', label: '2:3', size: '1024x1536' },
-  { id: '3:2', label: '3:2', size: '1536x1024' },
-  { id: '3:4', label: '3:4', size: '1024x1536' },
-  { id: '4:3', label: '4:3', size: '1536x1024' },
-  { id: '9:16', label: '9:16', size: '1024x1536' },
-  { id: '16:9', label: '16:9', size: '1536x1024' },
+  { id: '1:1', label: '方形 1:1', size: '1024x1024' },
+  { id: '2:3', label: '竖版 2:3', size: '1024x1536' },
+  { id: '3:2', label: '横版 3:2', size: '1536x1024' },
 ]
 
 const QUALITIES: Opt[] = [
-  { id: 'auto', label: '自动' },
-  { id: 'low', label: '低' },
-  { id: 'medium', label: '中' },
-  { id: 'high', label: '高' },
+  { id: 'auto', label: '自动推荐' },
+  { id: 'low', label: '快速' },
+  { id: 'medium', label: '标准' },
+  { id: 'high', label: '精细' },
 ]
 
 const RESOLUTIONS: Opt[] = [
@@ -127,6 +123,8 @@ Page({
   pickSource: 'album' as 'album' | 'camera',
   /** 已存入作品集的 turn id：防重复提交，并与组件内 saved 态联动 */
   savedTurnIds: new Set<string>(),
+  modelsLoaded: false,
+  modelsLoading: false,
   data: {
     /** 仅用于空态；完整 turns 在 this.turns，避免 setData 整表传输 */
     turnCount: 0,
@@ -138,8 +136,11 @@ Page({
     tool: 'chat' as 'chat' | 'image',
     menuOpen: false,
     panelOpen: false,
-    senderPresets: [{ name: 'send', type: 'icon' }],
     imageModel: IMAGE_MODEL,
+    imageModels: [IMAGE_MODEL],
+    imageModelLabels: [`${IMAGE_MODEL}（默认）`],
+    imageModelIndex: 0,
+    modelOpen: false,
     ratios: RATIOS,
     qualities: QUALITIES,
     resolutions: RESOLUTIONS,
@@ -153,6 +154,11 @@ Page({
     templateId: '',
     templateTitle: '',
     keyboard: 0,
+    inputFocus: false,
+    inputLines: 1,
+    viewportHeight: 0,
+    busy: false,
+    advancedOpen: false,
     nearLimit: false,
     overLimit: false,
     canSend: false,
@@ -165,6 +171,7 @@ Page({
   },
 
   onLoad() {
+    this.setData({ viewportHeight: wx.getWindowInfo().windowHeight })
     const session = ensureBootstrapped()
     const turns = session.turns.map((turn) =>
       turn.status === 'generating'
@@ -177,6 +184,10 @@ Page({
     this.mountSession(session, turns)
   },
 
+  onReady() {
+    this.syncConversation()
+  },
+
   mountSession(session: ChatSession, turns?: ChatTurn[]) {
     const list = turns ?? session.turns
     this.sessionId = session.id
@@ -187,6 +198,7 @@ Page({
       sessionTitle: session.title,
       tool: sessionKindToTool(session.kind),
       turnCount: list.length,
+      busy: list.some((turn) => turn.status === 'generating'),
       sessionRows: this.buildSessionRows(session.id),
     })
     wx.nextTick(() => {
@@ -201,7 +213,11 @@ Page({
       scrollToBottom?: () => void
       scheduleScrollToBottom?: () => void
     }
-    conv?.applyTurns?.(this.turns || [])
+    wx.nextTick(() => {
+      const mounted = this.selectComponent('#chat-conversation') as typeof conv
+      mounted?.applyTurns?.(this.turns || [])
+    })
+    this.setData({ busy: (this.turns || []).some((turn) => turn.status === 'generating') })
   },
 
   scrollConversationToBottom() {
@@ -251,8 +267,9 @@ Page({
     this.setData({
       historyOpen: false,
       menuOpen: false,
-      panelOpen: kind === 'image',
+      panelOpen: false,
       draft: '',
+      inputLines: 1,
       canSend: false,
       refImages: [] as string[],
       templateId: '',
@@ -270,6 +287,7 @@ Page({
   },
 
   onShow() {
+    this.syncConversation()
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ value: '/pages/edit/index' })
     }
@@ -300,6 +318,7 @@ Page({
   noop() {},
 
   onToggleHistory() {
+    this.onHideKeyboard()
     const open = !this.data.historyOpen
     this.setData({
       historyOpen: open,
@@ -307,10 +326,12 @@ Page({
       panelOpen: false,
       sessionRows: open ? this.buildSessionRows(this.sessionId) : this.data.sessionRows,
     })
+    this.syncTabBarVisibility()
   },
 
   onCloseHistory() {
     this.setData({ historyOpen: false })
+    this.syncTabBarVisibility()
   },
 
   onPickSession(e: WechatMiniprogram.BaseEvent) {
@@ -345,6 +366,7 @@ Page({
             menuOpen: false,
             panelOpen: fallback.kind === 'image' && this.data.panelOpen,
             draft: '',
+            inputLines: 1,
             canSend: false,
             refImages: [] as string[],
           })
@@ -383,20 +405,29 @@ Page({
   },
 
   onClosePop() {
-    this.setData({ menuOpen: false, panelOpen: false, historyOpen: false })
+    this.setData({ menuOpen: false, panelOpen: false, historyOpen: false, modelOpen: false })
+    this.syncTabBarVisibility()
   },
 
   onToggleMenu() {
+    this.onHideKeyboard()
     this.setData({ menuOpen: !this.data.menuOpen, panelOpen: false })
+    this.syncTabBarVisibility()
   },
 
   onTogglePanel() {
+    this.onHideKeyboard()
     this.setData({ panelOpen: !this.data.panelOpen, menuOpen: false })
+    this.syncTabBarVisibility()
+    if (this.data.panelOpen) void this.loadImageModels()
   },
 
   onOpenImage() {
+    this.onHideKeyboard()
     this.ensureToolSession('image')
     this.setData({ panelOpen: true, menuOpen: false })
+    this.syncTabBarVisibility()
+    void this.loadImageModels()
   },
 
   onIdea(e: WechatMiniprogram.BaseEvent) {
@@ -410,6 +441,7 @@ Page({
     const was = this.data.keyboard
     if (keyboard === was) return
     this.setData({ keyboard })
+    this.syncTabBarVisibility()
     // 键盘每一次高度变化都要把消息流贴回底部，否则会被顶起的输入坞盖住最后一条
     if (keyboard) {
       wx.nextTick(() => this.scrollConversationToBottom())
@@ -418,11 +450,85 @@ Page({
   },
 
   onHideKeyboard() {
-    const conv = this.selectComponent('#chat-conversation') as WechatMiniprogram.Component.TrivialInstance & {
-      blurInput?: () => void
+    this.setData({ inputFocus: false })
+    this.syncTabBarVisibility()
+    wx.hideKeyboard({ complete: () => {
+      this.setData({ keyboard: 0 })
+      this.syncTabBarVisibility()
+    } })
+  },
+
+  onInputFocus() {
+    this.setData({ inputFocus: true, panelOpen: false, menuOpen: false, historyOpen: false })
+    this.syncTabBarVisibility()
+  },
+
+  onInputBlur() {
+    this.setData({ inputFocus: false })
+  },
+
+  onInputLineChange(e: WechatMiniprogram.CustomEvent<{ lineCount?: number }>) {
+    const inputLines = Math.max(1, Math.min(4, Number(e.detail?.lineCount) || 1))
+    if (inputLines !== this.data.inputLines) this.setData({ inputLines })
+  },
+
+  onHide() {
+    this.setData({ panelOpen: false, menuOpen: false, historyOpen: false })
+    this.onHideKeyboard()
+  },
+
+  onResize(e: { size: { windowHeight: number } }) {
+    this.setData({ viewportHeight: e.size.windowHeight })
+  },
+
+  onToggleAdvanced() {
+    this.setData({ advancedOpen: !this.data.advancedOpen })
+  },
+
+  onResetOptions() {
+    this.setData({ ratioId: 'auto', ratioLabel: '自动', quality: 'auto', count: 1, resolution: 'auto', imageModel: IMAGE_MODEL, imageModelIndex: 0 })
+  },
+
+  syncTabBarVisibility() {
+    this.getTabBar?.()?.setData({ keyboardHidden: !!(this.data.keyboard || this.data.panelOpen || this.data.historyOpen || this.data.menuOpen) })
+  },
+
+  async loadImageModels() {
+    if (this.modelsLoaded || this.modelsLoading || !isLoggedIn()) return
+    this.modelsLoading = true
+    try {
+      const imageModels = await listImageModels()
+      this.modelsLoaded = true
+      this.setData({ imageModels, imageModelLabels: imageModels.map((id) => id === IMAGE_MODEL ? `${id}（默认）` : id), imageModelIndex: Math.max(0, imageModels.indexOf(this.data.imageModel)) })
+    } catch {
+      wx.showToast({ title: '模型列表暂不可用，保留默认模型', icon: 'none' })
+    } finally {
+      this.modelsLoading = false
     }
-    conv?.blurInput?.()
-    wx.hideKeyboard({ complete: () => this.setData({ keyboard: 0 }) })
+  },
+
+  onToggleModels() {
+    this.setData({ modelOpen: !this.data.modelOpen })
+    if (this.data.modelOpen) void this.loadImageModels()
+  },
+
+  onPickModel(e: WechatMiniprogram.BaseEvent) {
+    const imageModelIndex = Number(e.currentTarget.dataset.index)
+    const imageModel = this.data.imageModels[imageModelIndex]
+    if (imageModel) this.setData({ imageModel, imageModelIndex, modelOpen: false })
+  },
+
+  async onEditImage(e: WechatMiniprogram.CustomEvent<{ id?: string }>) {
+    const turn = this.turns.find((item) => item.id === e.detail.id)
+    if (!turn?.images.length) return
+    try {
+      const src = await localImage(turn.images[0])
+      this.setData({ refImages: [src], panelOpen: false, menuOpen: false, inputFocus: false })
+      this.syncCanSend({ refImages: [src] })
+      wx.nextTick(() => this.setData({ inputFocus: true }))
+    } catch {
+      wx.showToast({ title: '图片读取失败，请重新添加', icon: 'none' })
+    }
   },
 
   onPickTool(e: WechatMiniprogram.BaseEvent) {
@@ -475,6 +581,7 @@ Page({
     if (capped !== draft) wx.showToast({ title: `最多 ${PROMPT_LIMIT} 字`, icon: 'none' })
     const nearLimit = capped.length > PROMPT_LIMIT - 200
     const patch: Record<string, unknown> = { draft: capped, nearLimit, overLimit: capped.length >= PROMPT_LIMIT }
+    if (!capped) patch.inputLines = 1
     this.setData(patch)
     this.syncCanSend({ draft: capped })
   },
@@ -540,7 +647,7 @@ Page({
       quality: this.data.quality,
       templateId: this.data.templateId,
       templateTitle: this.data.templateTitle,
-      model: IMAGE_MODEL,
+      model: this.data.imageModel,
     })
   },
 
@@ -564,6 +671,10 @@ Page({
   },
 
   submit(raw: string) {
+    if (this.data.busy) {
+      wx.showToast({ title: '正在生成，可先编辑下一条消息', icon: 'none' })
+      return
+    }
     const prompt = raw.trim()
     const refImages = (this.data.refImages || []).slice()
     if (this.data.tool === 'image') {
@@ -582,6 +693,7 @@ Page({
       panelOpen: false,
       draft: '',
       canSend: false,
+      inputLines: 1,
       refImages: [],
       nearLimit: false,
       overLimit: false,
@@ -648,7 +760,15 @@ Page({
     void this.runTurn(turn.id)
   },
 
-  patchTurn(id: string, patch: Partial<ChatTurn>, persist = true) {
+  patchTurn(id: string, patch: Partial<ChatTurn>, persist = true, sessionId?: string) {
+    const targetSessionId = sessionId || this.sessionId
+    if (targetSessionId !== this.sessionId) {
+      const session = getSession(targetSessionId)
+      if (session && persist) updateSessionTurns(targetSessionId, session.turns.map((turn) =>
+        turn.id === id ? Object.assign({}, turn, patch) : turn,
+      ))
+      return
+    }
     const prev = this.turns || []
     const idx = prev.findIndex((turn) => turn.id === id)
     if (idx < 0) return
@@ -662,14 +782,18 @@ Page({
   },
 
   async runTurn(id: string) {
+    const sessionId = this.sessionId
+    const contextTurns = (this.turns || []).slice()
+    const patch = (value: Partial<ChatTurn>, persist = true) => this.patchTurn(id, value, persist, sessionId)
     const turn = (this.turns || []).find((item) => item.id === id)
     if (!turn) return
-    this.patchTurn(id, { status: 'generating', error: '', images: [], reply: '' })
+    const startedAt = Date.now()
+    patch({ status: 'generating', error: '', images: [], reply: '', startedAt, durationMs: undefined })
     try {
-      await ensureApiKey()
       if (turn.kind === 'text') {
+        await ensureApiKey()
         const messages: ChatMessage[] = []
-        for (const item of this.turns || []) {
+        for (const item of contextTurns) {
           if (item.kind !== 'text' || item.id === id || item.status !== 'done' || !item.reply) continue
           messages.push({
             role: 'user',
@@ -685,15 +809,19 @@ Page({
         let timer: ReturnType<typeof setTimeout> | 0 = 0
         const paint = () => {
           timer = 0
-          this.patchTurn(id, { reply: latest, status: 'generating' }, false)
+          patch({ reply: latest, status: 'generating' }, false)
         }
-        const reply = await chatStream(messages, (text) => {
-          latest = text
-          if (timer) return
-          timer = setTimeout(paint, 80)
-        })
-        if (timer) clearTimeout(timer)
-        this.patchTurn(id, { status: 'done', reply: reply || latest, error: '' })
+        let reply = ''
+        try {
+          reply = await chatStream(messages, (text) => {
+            latest = text
+            if (timer) return
+            timer = setTimeout(paint, 80)
+          })
+        } finally {
+          if (timer) clearTimeout(timer)
+        }
+        patch({ status: 'done', reply: reply || latest, error: '' })
         return
       }
       const result = await runGenerate({
@@ -705,10 +833,10 @@ Page({
         quality: turn.quality,
       })
       const images = await persistGenerateOutputs(result)
-      this.patchTurn(id, { status: 'done', images, error: '' })
+      patch({ status: 'done', images, error: '', durationMs: Date.now() - startedAt })
     } catch (err) {
       const raw = err instanceof Error ? err.message : '生成失败'
-      this.patchTurn(id, { status: 'error', error: humanizeGenerateError(raw), images: [] })
+      patch({ status: 'error', error: humanizeGenerateError(raw), images: [] })
       if (/未登录/.test(raw)) wx.navigateTo({ url: '/pages/login/index' })
     }
   },

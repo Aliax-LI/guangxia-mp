@@ -12,6 +12,8 @@
   scroll-into-view="{{scrollIntoView}}"
   scroll-with-animation
   enable-back-to-top
+  bindscroll="onThreadScroll"
+  bindtouchstart="onThreadTouch"
 >
   <view class="list">
     <view wx:for="{{rows}}" wx:key="id" id="turn-{{item.id}}" class="turn">
@@ -31,10 +33,11 @@
             data-id="{{item.id}}"
             data-src="{{src}}"
             bindtap="onPreviewInput"
+            show-menu-by-longpress="{{true}}"
           />
         </view>
         <view wx:if="{{item.prompt}}" class="user-bubble">
-          <text class="user-text">{{item.prompt}}</text>
+          <text class="user-text" selectable="{{true}}" user-select="{{true}}">{{item.prompt}}</text>
         </view>
       </view>
 
@@ -58,6 +61,8 @@
           status="{{item.assistantStatus}}"
           content="{{item.assistantContent}}"
           animation="dots"
+          data-id="{{item.id}}"
+          bindlongpress="onCopyReply"
         >
         <view wx:if="{{item.thinking}}" slot="content" class="think">
           <view class="think-dots" aria-hidden="true">
@@ -103,25 +108,25 @@
             </view>
           </block>
         </view>
-        <view wx:elif="{{item.generating || item.showImages}}" slot="content" class="shots {{item.places.length > 1 || item.images.length > 1 ? 'many' : ''}}">
-          <block wx:if="{{item.generating}}">
-            <view wx:for="{{item.places}}" wx:for-item="place" wx:key="*this" class="shot wait">
-              <!-- 相纸底：暖白纸面 + 缓慢流动的光扫，模拟照片正在显影 -->
-              <view class="dev-sweep {{motion ? 'on' : ''}}"></view>
-              <view class="dev-grain"></view>
-              <view class="wait-copy">
-                <text class="wait-stage">{{item.stage}}</text>
-                <view class="wait-track">
-                  <view class="wait-fill" style="width: {{item.progress}}%;"></view>
-                </view>
-                <view class="wait-foot">
-                  <text class="wait-pct num">{{item.progress}}%</text>
-                  <text wx:if="{{item.model}}" class="wait-model">{{item.model}}</text>
-                </view>
-              </view>
+        <view wx:elif="{{item.generating || item.showImages}}" slot="content" class="generation-content">
+        <view wx:if="{{item.generating}}" class="generation-status"><view class="status-dot"></view><text class="generation-label">{{item.stage}}</text></view>
+        <view wx:if="{{item.generating}}" class="wait-surface" style="--wait-padding: {{item.waitPadding}}%;">
+          <view class="wait-glow {{motion ? 'on' : ''}}" aria-hidden="true"></view>
+          <view class="wait-dots {{motion ? 'on' : ''}}" aria-hidden="true"></view>
+          <view class="wait-dot-wave {{motion ? 'on' : ''}}" aria-hidden="true"></view>
+          <view class="wait-center">
+            <text class="wait-time-label">已等待</text>
+            <text class="wait-elapsed">{{item.elapsed || '00:00'}}</text>
+            <text class="wait-stage">{{item.loadingMessage || '正在准备画布'}}</text>
+            <view class="wait-activity" aria-hidden="true">
+              <view class="activity-dot a0 {{motion ? 'on' : ''}}"></view>
+              <view class="activity-dot a1 {{motion ? 'on' : ''}}"></view>
+              <view class="activity-dot a2 {{motion ? 'on' : ''}}"></view>
             </view>
-          </block>
-          <block wx:else>
+          </view>
+          <text wx:if="{{item.places.length > 1}}" class="wait-batch">{{item.places.length}} 张</text>
+        </view>
+        <view wx:else class="shots {{item.images.length > 1 ? 'many' : ''}}">
             <image
               wx:for="{{item.images}}"
               wx:for-item="src"
@@ -133,15 +138,23 @@
               data-id="{{item.id}}"
               data-src="{{src}}"
               bindtap="onPreview"
+              bindload="onMediaLoad"
+              show-menu-by-longpress="{{true}}"
             />
-          </block>
+        </view>
         </view>
         <view wx:if="{{item.liveText}}" slot="actionbar" class="ink">
           <view class="ink-bar {{motion ? 'on' : ''}}"></view>
         </view>
+        <view wx:if="{{item.kind === 'text' && item.status === 'done' && (item.assistantContent.length || item.segments.length)}}" slot="actionbar" class="actions">
+          <view class="chip-act" data-id="{{item.id}}" bindtap="onCopyReply" aria-role="button" aria-label="复制回复">复制回复</view>
+        </view>
         <!-- 成片后的动作：轻量文字按钮。实心琥珀只留给页面级主操作（如「做同款」），
              消息流里的动作不与它抢层级，也不遮在图片上。 -->
         <view wx:if="{{item.showImages}}" slot="actionbar" class="actions">
+          <text wx:if="{{item.duration}}" class="generation-duration">耗时 {{item.duration}}</text>
+          <view class="chip-act" data-id="{{item.id}}" bindtap="onEditImage" aria-role="button" aria-label="继续修改这张图">继续修改</view>
+          <view wx:if="{{item.copyImageUrl}}" class="chip-act" data-id="{{item.id}}" bindtap="onCopyImageLink" aria-role="button">复制图片链接</view>
           <view
             class="chip-act {{item.saved ? 'done' : ''}}"
             data-id="{{item.id}}"
@@ -161,9 +174,12 @@
       </block>
     </view>
   </view>
+  <view id="thread-end" style="height: 1px;"></view>
 </scroll-view>
 
-<view wx:else class="empty">
+<view wx:if="{{rows.length && !following}}" class="latest" bindtap="scrollToBottom" aria-role="button">回到最新消息 ↓</view>
+
+<view wx:if="{{!rows.length}}" class="empty">
   <view class="empty-mark">
     <t-icon name="chat-bubble-smile" size="52rpx" color="#c9761b" />
   </view>

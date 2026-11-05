@@ -1,5 +1,6 @@
 /* 对话 / 画图首页：消息流是唯一主角，输入坞和 TabBar 是两块固定基座 */
 .home {
+  box-sizing: border-box;
   position: relative;
   height: 100vh;
   display: flex;
@@ -160,6 +161,8 @@ conversation {
   display: block;
   width: 100%;
   max-width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 /* ── 遮罩 & 抽屉 ──────────────────────────────────────── */
@@ -167,8 +170,8 @@ conversation {
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 4;
-  background: rgba(60, 45, 25, 0.62);
+  z-index: 1100;
+  background: rgba(28, 24, 21, 0.36);
 }
 
 .drawer {
@@ -178,7 +181,7 @@ conversation {
   bottom: 0;
   width: 600rpx;
   max-width: 88vw;
-  z-index: 6;
+  z-index: 1102;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -854,3 +857,87 @@ conversation {
 .t-chat-loading__moving--top {
   background-color: var(--brand-neon);
 }
+
+/* 原生输入保持挂载，焦点由页面管理，避免第二轮空占位挡住点击。 */
+.composer-textarea {
+  box-sizing: border-box;
+  width: 0;
+  min-height: 76rpx;
+  max-height: 216rpx;
+  padding: 16rpx 0;
+  overflow-y: auto;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: var(--text-hi);
+}
+.composer-placeholder { color: var(--text-soft); }
+.composer-end.busy { background: var(--ink-3); box-shadow: none; }
+.generating-note { display: block; padding: 8rpx 4rpx 16rpx; color: var(--text-soft); font-size: 23rpx; line-height: 1.5; }
+.ref-strip { display: block; width: 100%; height: 112rpx; white-space: nowrap; }
+.ref-strip-in { display: inline-flex; gap: 16rpx; padding: 6rpx 0 14rpx; }
+.ref-strip .ref { width: 88rpx; height: 88rpx; overflow: visible; }
+.ref-strip .ref-img { border-radius: 16rpx; }
+.ref-strip .ref-x { width: 44rpx; height: 44rpx; background: var(--ink-1); border-radius: 50%; top: -4rpx; right: -8rpx; }
+.panel {
+  position: fixed;
+  z-index: 1101;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 32rpx 32rpx 0 0;
+  background: var(--ink-1);
+  box-shadow: 0 -12rpx 40rpx rgba(60, 45, 25, 0.12);
+}
+.panel-heading { display: flex; align-items: center; justify-content: space-between; min-height: 88rpx; }
+.panel-title { font-size: 34rpx; font-weight: 700; color: var(--text-hi); }
+.panel-close { display: flex; align-items: center; justify-content: center; width: 88rpx; height: 88rpx; margin-right: -16rpx; }
+.panel-body { max-height: 54vh; }
+.panel .p-k { color: var(--text-mid); font-size: 26rpx; }
+.panel .p-k--block { margin: 18rpx 0 10rpx; }
+.p-help { display: block; color: var(--text-soft); font-size: 24rpx; line-height: 1.6; margin: 8rpx 0 20rpx; }
+.panel .pills { display: flex; flex-wrap: wrap; gap: 8rpx; }
+.panel .pill { box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 80rpx; padding: 10rpx 8rpx; border-radius: 16rpx; font-size: 24rpx; border: 1rpx solid var(--line); color: var(--text-mid); background: var(--ink-1); }
+.panel .pill--on { color: var(--text-hi); background: var(--safelight-soft, rgba(201,118,27,0.12)); border-color: var(--brand-neon); font-weight: 700; }
+.ratio-options .pill { flex: 1; min-width: 0; white-space: nowrap; }
+.count-options .pill, .quality-options .pill { flex: 1; }
+.advanced-toggle { display: flex; justify-content: space-between; align-items: center; min-height: 80rpx; margin-top: 16rpx; border-top: 1rpx solid var(--line-weak); color: var(--text-mid); font-size: 26rpx; }
+.panel-footer { display: flex; align-items: center; gap: 24rpx; padding-top: 12rpx; border-top: 1rpx solid var(--line-weak); }
+.panel-reset, .panel-done { display: flex; align-items: center; justify-content: center; min-height: 88rpx; font-size: 28rpx; font-weight: 600; }
+.panel-reset { width: 180rpx; color: var(--text-mid); }
+.panel-done { flex: 1; border-radius: 20rpx; color: var(--ink-1); background: var(--brand-neon); }
+.model-picker { min-height: 80rpx; padding-bottom: 0; }
+.model-value { display: flex; align-items: center; gap: 12rpx; color: var(--text-hi); font-size: 26rpx; }
+.model-options { margin: 8rpx 0 4rpx; padding: 4rpx; border: 1rpx solid var(--line); border-radius: 16rpx; background: var(--ink-2); }
+.model-option { min-height: 80rpx; padding: 0 20rpx; display: flex; align-items: center; justify-content: space-between; gap: 12rpx; color: var(--text-mid); font-size: 25rpx; border-radius: 12rpx; }
+.model-option.selected { background: rgba(201,118,27,0.12); color: var(--text-hi); font-weight: 600; }
+
+/* 画幅以真实方向提示，张数和质量使用同一组分段控件。 */
+.panel { padding-left: 36rpx; padding-right: 36rpx; }
+.panel-heading { min-height: 100rpx; }
+.panel-title { font-size: 32rpx; letter-spacing: -0.4rpx; }
+.panel .p-k { color: #5c5145; font-size: 25rpx; font-weight: 600; }
+.panel .p-k--block { margin: 22rpx 0 12rpx; }
+.model-picker { margin: 0; padding: 0 18rpx; min-height: 88rpx; border: 1rpx solid var(--line-weak); border-radius: 16rpx; background: var(--ink-2); }
+.model-value { gap: 12rpx; font-size: 25rpx; font-weight: 600; }
+.model-options { background: var(--ink-2); border-color: var(--line-weak); }
+.panel .ratio-options { gap: 10rpx; }
+.panel .ratio-tile { flex: 1; min-width: 0; min-height: 140rpx; padding: 12rpx 2rpx 10rpx; display: flex; flex-direction: column; gap: 3rpx; border-radius: 18rpx; background: #f8f4ed; border-color: transparent; }
+.panel .ratio-tile.pill--on { background: #f8ede0; border-color: #c9761b; }
+.ratio-preview { height: 54rpx; display: flex; align-items: center; justify-content: center; }
+.ratio-shape { box-sizing: border-box; border: 2rpx solid #86786a; border-radius: 4rpx; }
+.pill--on .ratio-shape { border-color: #a85f11; }
+.ratio-auto { width: 42rpx; height: 42rpx; border-style: dashed; }
+.ratio-square { width: 42rpx; height: 42rpx; }
+.ratio-portrait { width: 32rpx; height: 48rpx; }
+.ratio-landscape { width: 48rpx; height: 32rpx; }
+.ratio-name { font-size: 24rpx; font-weight: 600; line-height: 1.3; }
+.ratio-size { color: #6f6355; font-size: 19rpx; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.panel .count-options, .panel .quality-options { padding: 6rpx; gap: 2rpx; border-radius: 18rpx; background: var(--ink-2); }
+.panel .count-options .pill, .panel .quality-options .pill { min-height: 76rpx; border: 0; background: transparent; color: #5c5145; border-radius: 13rpx; }
+.panel .count-options .pill--on, .panel .quality-options .pill--on { color: #1c1815; background: #fffdf9; box-shadow: 0 2rpx 8rpx rgba(60,45,25,0.12); }
+.advanced-toggle { margin-top: 16rpx; min-height: 88rpx; font-weight: 600; }
+.panel-footer { gap: 18rpx; padding-top: 16rpx; }
+.panel-reset { width: 154rpx; font-size: 25rpx; font-weight: 500; }
+.panel-done { min-height: 88rpx; border-radius: 18rpx; }

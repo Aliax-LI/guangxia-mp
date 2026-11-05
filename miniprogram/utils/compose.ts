@@ -45,6 +45,8 @@ export type ChatTurn = ComposeJob & {
   status: 'generating' | 'done' | 'error'
   images: string[]
   error: string
+  startedAt?: number
+  durationMs?: number
 }
 
 const MAX_TURNS = 40

@@ -1,6 +1,19 @@
 import { IMAGE_MODEL, SUB2API_BASE_URL } from '../config/index'
 import { ensureApiKey, humanizeGatewayError, invalidateApiKeyOnGroupError } from './auth'
 import type { Sub2ApiEnvelope } from './http'
+import { requestJson } from './http'
+
+/** 从当前 Key 所属分组读取实际可用的画图模型，配置模型始终是默认项。 */
+export async function listImageModels(): Promise<string[]> {
+  const apiKey = await ensureApiKey()
+  const result = await requestJson<{ data?: { id?: string }[] }>({
+    url: '/v1/models', baseUrl: SUB2API_BASE_URL, apiKey, rawResponse: true,
+  })
+  const models = (Array.isArray(result.data) ? result.data : [])
+    .map((model) => String(model.id || ''))
+    .filter((id) => /^gpt-image/i.test(id))
+  return Array.from(new Set([IMAGE_MODEL, ...models]))
+}
 
 export type GenerateInput = {
   prompt: string

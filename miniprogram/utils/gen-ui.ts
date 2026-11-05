@@ -22,6 +22,13 @@ export type ReplySegment =
 
   | { kind: 'copy'; label: string; text: string }
 
+  | { kind: 'list'; title: string; items: ListItem[] }
+
+  | { kind: 'cite'; ids: string[] }
+
+/** 清单卡的一项：标题 + 一句说明，来自 <grid>/<grid-item> 或有序列表 */
+export type ListItem = { title: string; desc: string }
+
 
 
 type CopySite = { index: number; length: number; text: string; label: string }
@@ -68,6 +75,29 @@ function convertGenUiTags(text: string): string {
 
   return text
 
+    // grid-item 必须在 title/text 之前处理：它内部靠这两个标签包标题和说明
+    .replace(/<grid-item\b[^>]*>([\s\S]*?)<\/grid-item>/gi, (_, inner: string) => {
+
+      const plain = inner
+
+        .replace(/<title\b[^>]*>([\s\S]*?)<\/title>/gi, '$1')
+
+        .replace(/<text\b[^>]*>([\s\S]*?)<\/text>/gi, '$1')
+
+        .replace(/<[^>]+>/g, '\n')
+
+      const lines = plain.split('\n').map((l: string) => l.trim()).filter(Boolean)
+
+      if (!lines.length) return ''
+
+      const title = lines[0].replace(/^\*\*(.*)\*\*$/, '$1').replace(/^\d+[.、]\s*/, '')
+
+      const desc = lines.slice(1).join(' ')
+
+      return `- **${title}**${desc ? ` — ${desc}` : ''}`
+
+    })
+
     .replace(/<title\b[^>]*>([\s\S]*?)<\/title>/gi, (_, inner: string) => {
 
       const t = inner.replace(/<[^>]+>/g, '').trim()
@@ -80,7 +110,8 @@ function convertGenUiTags(text: string): string {
 
     .replace(/\{@body[\s\S]*?\}/g, '')
 
-    .replace(/<AsyncImage\b[^>]*\/>/g, '')
+    // AsyncImage / AsyncImageGroup：异步参考图占位，属性里可能含多行 JSON，一并剥掉
+    .replace(/<AsyncImage(?:Group)?\b[^>]*?>/gi, '')
 
     .replace(/<divider\b[^>]*\/>/g, '')
 
@@ -88,7 +119,13 @@ function convertGenUiTags(text: string): string {
 
     .replace(/<icon\b[^>]*>[\s\S]*?<\/icon>/gi, '')
 
-    .replace(/<\/?(box|row|card)\b[^>]*>/gi, '')
+    // grid：容器剥掉（条目已在上面转成列表行）
+    .replace(/<grid\b[^>]*>/gi, '\n')
+    .replace(/<\/grid>/gi, '\n')
+    // Cite / MemoryCite：引用节点整体剥掉（含属性里的 JSON 对象）
+    .replace(/<[A-Za-z]*[Cc]ite\b[^>]*\/>/gi, '')
+    .replace(/<[A-Za-z]*[Cc]ite\b[^>]*>[\s\S]*?<\/[A-Za-z]*[Cc]ite>/gi, '')
+    .replace(/<\/?(box|row|card|grid|column|section|panel|sheet|list|list-item)\b[^>]*>/gi, '')
 
 }
 
@@ -258,7 +295,7 @@ function polishMd(text: string): string {
 
 function hasGenUiMarkup(raw: string): boolean {
 
-  return /<(?:icon|button|title|text|box|row|card)\b|GenUI\.copy/i.test(raw)
+  return /<(?:icon|button|title|text|box|row|card|grid|grid-item|asyncimage(?:group)?|[A-Za-z]*cite)\b|GenUI\.copy|\{@body/i.test(raw)
 
 }
 
@@ -412,7 +449,7 @@ export function parseReply(raw: string): ReplySegment[] | null {
 
   const radioAt = /<radio-group\b/.test(raw) ? raw.search(/<radio-group\b/) : -1
 
-  if (radioAt < 0 || !/<(box|row|radio-group|AsyncImage)\b|\{@body/.test(raw)) {
+  if (radioAt < 0 || !/<(box|row|radio-group|AsyncImage|grid)\b|\{@body/.test(raw)) {
 
     return parseActionGenUi(raw)
 

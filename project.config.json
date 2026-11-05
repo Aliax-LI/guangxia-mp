@@ -15,7 +15,7 @@
     },
     "coverView": false,
     "postcss": false,
-    "minified": false,
+    "minified": true,
     "enhance": true,
     "showShadowRootInWxmlPanel": false,
     "packNpmRelationList": [
@@ -29,7 +29,7 @@
     "skylineRenderEnable": true,
     "es6": true,
     "compileWorklet": false,
-    "uglifyFileName": false,
+    "uglifyFileName": true,
     "uploadWithSourceMap": false,
     "packNpmManually": false,
     "minifyWXSS": true,

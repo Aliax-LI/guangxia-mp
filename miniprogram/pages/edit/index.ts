@@ -6,6 +6,7 @@ import { humanizeGenerateError, runGenerate } from '../../services/image-gen'
 import { buildUserChatContent, chatTurnLabel } from '../../utils/chat-media'
 import { persistGenerateOutputs } from '../../utils/image-result'
 import { pickImages } from '../../utils/pick-image'
+import { toPreviewableAll } from '../../utils/preview-media'
 import {
   consumeComposerDraft,
   consumeOpenComposer,
@@ -93,6 +94,9 @@ function workExt(path: string): string {
   return 'png'
 }
 
+/** 单条输入上限：与 Sub2API 侧 prompt 处理能力对齐，超长在输入阶段就截断 */
+const PROMPT_LIMIT = 4000
+
 const MAX_CHAT_REFS = 9
 const MAX_IMAGE_REFS = 1
 
@@ -121,6 +125,8 @@ Page({
   turns: [] as ChatTurn[],
   sessionId: '',
   pickSource: 'album' as 'album' | 'camera',
+  /** 已存入作品集的 turn id：防重复提交，并与组件内 saved 态联动 */
+  savedTurnIds: new Set<string>(),
   data: {
     /** 仅用于空态；完整 turns 在 this.turns，避免 setData 整表传输 */
     turnCount: 0,
@@ -147,6 +153,8 @@ Page({
     templateId: '',
     templateTitle: '',
     keyboard: 0,
+    nearLimit: false,
+    overLimit: false,
     canSend: false,
     chatIdeas: ['帮我写一段朋友圈文案', '今天适合拍什么', '把这段话改得更自然'],
     imageIdeas: ['一张清新的人像写真', '胶片感的街头照片', '一张极简海报'],
@@ -400,8 +408,21 @@ Page({
   onKeyboard(e: WechatMiniprogram.CustomEvent<{ height?: number }>) {
     const keyboard = Number(e.detail?.height) || 0
     const was = this.data.keyboard
+    if (keyboard === was) return
     this.setData({ keyboard })
-    if (keyboard && !was) this.scrollConversationToBottom()
+    // 键盘每一次高度变化都要把消息流贴回底部，否则会被顶起的输入坞盖住最后一条
+    if (keyboard) {
+      wx.nextTick(() => this.scrollConversationToBottom())
+      setTimeout(() => this.scrollConversationToBottom(), 220)
+    }
+  },
+
+  onHideKeyboard() {
+    const conv = this.selectComponent('#chat-conversation') as WechatMiniprogram.Component.TrivialInstance & {
+      blurInput?: () => void
+    }
+    conv?.blurInput?.()
+    wx.hideKeyboard({ complete: () => this.setData({ keyboard: 0 }) })
   },
 
   onPickTool(e: WechatMiniprogram.BaseEvent) {
@@ -449,8 +470,13 @@ Page({
 
   onDraft(e: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     const draft = e.detail?.value || ''
-    this.setData({ draft })
-    this.syncCanSend({ draft })
+    // 单次输入上限与后端 prompt 限制对齐，超长在输入阶段就截断，避免发送后才报错
+    const capped = draft.length > PROMPT_LIMIT ? draft.slice(0, PROMPT_LIMIT) : draft
+    if (capped !== draft) wx.showToast({ title: `最多 ${PROMPT_LIMIT} 字`, icon: 'none' })
+    const nearLimit = capped.length > PROMPT_LIMIT - 200
+    const patch: Record<string, unknown> = { draft: capped, nearLimit, overLimit: capped.length >= PROMPT_LIMIT }
+    this.setData(patch)
+    this.syncCanSend({ draft: capped })
   },
 
   onOpenPrivacyContract() {
@@ -550,7 +576,16 @@ Page({
       return
     }
     this.ensureToolSession(this.data.tool)
-    this.setData({ menuOpen: false, panelOpen: false, draft: '', canSend: false, refImages: [] })
+    // 发送后重置输入区状态：清空草稿、收起键盘、长度提示归零
+    this.setData({
+      menuOpen: false,
+      panelOpen: false,
+      draft: '',
+      canSend: false,
+      refImages: [],
+      nearLimit: false,
+      overLimit: false,
+    })
     if (this.data.tool === 'image') {
       const job = this.imageJob(prompt, refImages)
       this.setData({ templateId: '', templateTitle: '' })
@@ -686,23 +721,29 @@ Page({
     void this.runTurn(id)
   },
 
-  onPreview(e: WechatMiniprogram.CustomEvent<{ id?: string; src?: string }>) {
+  async onPreview(e: WechatMiniprogram.CustomEvent<{ id?: string; src?: string }>) {
     const id = String(e.detail?.id || '')
     const src = String(e.detail?.src || '')
     const turn = (this.turns || []).find((item) => item.id === id)
-    const urls = turn?.images?.length ? turn.images : src ? [src] : []
-    if (!src || !urls.length) return
-    wx.previewImage({ current: src, urls })
+    const raw = turn?.images?.length ? turn.images : src ? [src] : []
+    if (!src || !raw.length) return
+    // 永久目录路径 previewImage 会一直转圈，先转临时路径
+    const urls = await toPreviewableAll(raw)
+    const current = urls[raw.indexOf(src)] || urls[0]
+    wx.previewImage({ current, urls })
   },
 
   async onSave(e: WechatMiniprogram.CustomEvent<{ id?: string }>) {
     const id = String(e.detail?.id || '')
     const turn = (this.turns || []).find((item) => item.id === id)
     if (!turn?.images.length) return
+    if (this.savedTurnIds.has(id)) return // 已存过，静默忽略重复点击
     wx.showLoading({ title: '保存中', mask: true })
     try {
       for (const src of turn.images) await archiveWork(src, turn)
       wx.hideLoading()
+      this.savedTurnIds.add(id)
+      ;(this.selectComponent('#chat-conversation') as any)?.markSaved?.(id)
       wx.showToast({ title: '已放入作品集', icon: 'success' })
     } catch (err) {
       wx.hideLoading()

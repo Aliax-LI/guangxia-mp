@@ -1,37 +1,35 @@
-<!--
-  Primary: 当前会话消息流
-  Secondary: 顶栏会话标题、历史抽屉
-  Tertiary: 工具切换、画图参数
-  One primary action: 发送
--->
-<view class="home" style="{{keyboard ? 'padding-bottom:' + keyboard + 'px' : ''}}">
-  <view class="topbar">
-    <view class="topbar-btn" catchtap="onToggleHistory" aria-role="button" aria-label="会话历史">
-      <t-icon name="view-list" size="40rpx" color="#F4F4F6" />
+<view class="home {{keyboard ? 'kb-open' : ''}}" style="height: calc(100vh - {{keyboard}}px);">
+  <!-- 顶栏：会话历史 / 当前会话 / 新建同类型会话 -->
+  <view class="nav">
+    <view class="icon-btn" catchtap="onToggleHistory" aria-role="button" aria-label="会话历史">
+      <t-icon name="view-list" size="38rpx" color="#1c1815" />
     </view>
-    <view class="topbar-center">
-      <text class="topbar-kind">{{tool === 'image' ? '画图' : '对话'}}</text>
-      <text class="topbar-title">{{sessionTitle}}</text>
+    <view class="nav-mid">
+      <text class="nav-title">{{sessionTitle}}</text>
+      <text class="nav-kind">{{tool === 'image' ? '画图' : '对话'}}</text>
     </view>
-    <view class="topbar-btn" catchtap="onNewSameKind" aria-role="button" aria-label="新建会话">
-      <t-icon name="chat-add" size="40rpx" color="#F4F4F6" />
+    <view class="icon-btn" catchtap="onNewSameKind" aria-role="button" aria-label="新建会话">
+      <t-icon name="chat-add" size="38rpx" color="#1c1815" />
     </view>
   </view>
 
-  <view wx:if="{{!turnCount}}" class="stage">
-    <view class="hello-block">
-      <text class="hello">{{tool === 'image' ? '描述画面，我来生成' : '有什么我能帮你的吗？'}}</text>
-      <text class="hello-sub">{{tool === 'image' ? '每个画图会话独立保存' : '每个对话会话独立保存'}}</text>
-    </view>
-    <view wx:if="{{!keyboard}}" class="recs">
-      <text class="recs-k">试试这些</text>
+  <!-- 空态：一句话说明能力 + 可直接点的起始句（一段文字，不是一摞卡片） -->
+  <view wx:if="{{!turnCount}}" class="intro">
+    <text class="intro-title">{{tool === 'image' ? '说画面，我来出图' : '今天想聊点什么？'}}</text>
+    <text class="intro-sub">{{tool === 'image' ? '每次画图单独成一个会话，结果自动进作品集' : '可以发文字，也可以带图一起问'}}</text>
+
+    <view wx:if="{{!keyboard}}" class="starters">
+      <text class="starters-label">{{tool === 'image' ? '试试这些画面' : '试试这样问'}}</text>
       <view
         wx:for="{{tool === 'image' ? imageIdeas : chatIdeas}}"
         wx:key="*this"
-        class="idea"
+        class="starter"
         data-text="{{item}}"
         bindtap="onIdea"
-      >{{item}}</view>
+      >
+        <view class="starter-mark"></view>
+        <text class="starter-text">{{item}}</text>
+      </view>
     </view>
   </view>
 
@@ -46,36 +44,40 @@
     />
   </view>
 
-  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="shade" catchtap="onClosePop"></view>
+  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="scrim" catchtap="onClosePop"></view>
 
+  <!-- 会话抽屉 -->
   <view class="drawer {{historyOpen ? 'open' : ''}}" catchtap="noop">
-    <view class="drawer-head">
+    <view class="drawer-hd">
       <text class="drawer-title">会话</text>
-      <view class="drawer-close" catchtap="onCloseHistory">
-        <t-icon name="close" size="36rpx" color="#F4F4F6" />
+      <view class="icon-btn icon-btn--sm" catchtap="onCloseHistory" aria-role="button" aria-label="关闭">
+        <t-icon name="close" size="36rpx" color="#5c5145" />
       </view>
     </view>
-    <view class="drawer-new">
-      <view class="new-btn" data-kind="chat" catchtap="onNewSessionTap">
-        <t-icon name="chat" size="32rpx" color="#F4F4F6" />
+
+    <view class="drawer-acts">
+      <view class="drawer-new" data-kind="chat" catchtap="onNewSessionTap">
+        <t-icon name="chat" size="32rpx" color="#c9761b" />
         <text>新对话</text>
       </view>
-      <view class="new-btn" data-kind="image" catchtap="onNewSessionTap">
-        <t-icon name="image" size="32rpx" color="#F4F4F6" />
+      <view class="drawer-new" data-kind="image" catchtap="onNewSessionTap">
+        <t-icon name="image" size="32rpx" color="#c9761b" />
         <text>新画图</text>
       </view>
     </view>
+
     <view
-      class="drawer-clear {{turnCount ? '' : 'disabled'}}"
+      class="drawer-clear {{turnCount ? '' : 'off'}}"
       catchtap="onClearCurrentSession"
       aria-role="button"
       aria-label="清空当前会话消息"
     >
-      <t-icon name="clear" size="32rpx" color="{{turnCount ? '#F4F4F6' : '#5C5C65'}}" />
+      <t-icon name="clear" size="30rpx" color="{{turnCount ? '#5c5145' : '#544A3F'}}" />
       <text>清空当前会话</text>
     </view>
+
     <scroll-view class="drawer-list" scroll-y enhanced show-scrollbar="{{false}}">
-      <view class="drawer-list-inner">
+      <view class="drawer-list-in">
         <block wx:if="{{sessionRows.length}}">
           <view
             wx:for="{{sessionRows}}"
@@ -85,110 +87,135 @@
             catchtap="onPickSession"
           >
             <view class="sess-main">
-              <text class="sess-kind">{{item.kindLabel}}</text>
               <text class="sess-title">{{item.title}}</text>
-            </view>
-            <view class="sess-side">
-              <text class="sess-time">{{item.timeLabel}}</text>
-              <view
-                class="sess-del"
-                data-id="{{item.id}}"
-                catchtap="onDeleteSession"
-                aria-role="button"
-                aria-label="删除会话"
-              >
-                <t-icon name="delete" size="36rpx" color="#7A7A83" />
+              <view class="sess-meta">
+                <text class="sess-kind">{{item.kindLabel}}</text>
+                <text class="sess-dot">·</text>
+                <text class="sess-time">{{item.timeLabel}}</text>
               </view>
+            </view>
+            <view
+              class="sess-del"
+              data-id="{{item.id}}"
+              catchtap="onDeleteSession"
+              aria-role="button"
+              aria-label="删除会话"
+            >
+              <t-icon name="delete" size="32rpx" color="#8b7f70" />
             </view>
           </view>
         </block>
         <view wx:else class="drawer-empty">
-          <text>还没有记录，发一条消息开始吧</text>
+          <text>还没有记录</text>
+          <text class="drawer-empty-sub">发一条消息就会出现在这里</text>
         </view>
       </view>
     </scroll-view>
   </view>
 
+  <!-- 输入坞：参数条 / 参数面板 / 输入框 -->
   <view class="dock">
-    <view class="above">
+    <view class="dock-bar">
       <view class="tool">
         <view class="chip" catchtap="onToggleMenu">
           <text>{{tool === 'image' ? '画图' : '对话'}}</text>
-          <t-icon name="{{menuOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#F4F4F6" />
+          <t-icon name="{{menuOpen ? 'chevron-up' : 'chevron-down'}}" size="24rpx" color="#6f6355" />
         </view>
         <view wx:if="{{menuOpen}}" class="menu" catchtap="noop">
-          <view class="menu-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" catchtap="onPickTool">对话</view>
-          <view class="menu-item {{tool === 'image' ? 'on' : ''}}" data-tool="image" catchtap="onPickTool">画图</view>
-        </view>
-      </view>
-      <view wx:if="{{tool === 'image'}}" class="chip" catchtap="onTogglePanel">
-        <text>{{ratioLabel}}</text>
-        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" color="#F4F4F6" />
-      </view>
-      <scroll-view
-        wx:if="{{refImages.length}}"
-        class="ref-strip"
-        scroll-x
-        enhanced
-        show-scrollbar="{{false}}"
-      >
-        <view class="ref-row">
-          <view wx:for="{{refImages}}" wx:key="*this" class="thumb">
-            <image class="thumb-img" src="{{item}}" mode="aspectFill" />
-            <view class="thumb-x" data-index="{{index}}" catchtap="onRemoveRef">
-              <t-icon name="close" size="20rpx" color="#ffffff" />
-            </view>
+          <view class="menu-item {{tool === 'chat' ? 'on' : ''}}" data-tool="chat" catchtap="onPickTool">
+            <t-icon name="chat" size="32rpx" color="{{tool === 'chat' ? '#c9761b' : '#5c5145'}}" />
+            <text>对话</text>
+          </view>
+          <view class="menu-item {{tool === 'image' ? 'on' : ''}}" data-tool="image" catchtap="onPickTool">
+            <t-icon name="image" size="32rpx" color="{{tool === 'image' ? '#c9761b' : '#5c5145'}}" />
+            <text>画图</text>
           </view>
         </view>
-      </scroll-view>
+      </view>
+
+      <view wx:if="{{tool === 'image'}}" class="chip" catchtap="onTogglePanel">
+        <text>{{ratioLabel}}</text>
+        <text class="chip-sep">·</text>
+        <text>{{count}} 张</text>
+        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="24rpx" color="#6f6355" />
+      </view>
+
+      <view class="dock-spacer"></view>
+
+      <text wx:if="{{nearLimit}}" class="count {{overLimit ? 'over' : ''}}">{{draft.length}} / 4000</text>
+
+      <view
+        wx:if="{{keyboard}}"
+        class="kb-hide"
+        catchtap="onHideKeyboard"
+        aria-role="button"
+        aria-label="收起键盘"
+      >
+        <t-icon name="chevron-down" size="26rpx" color="#6f6355" />
+      </view>
+
+      <view wx:if="{{refImages.length}}" class="ref-strip">
+        <view wx:for="{{refImages}}" wx:key="*this" class="ref">
+          <image class="ref-img" src="{{item}}" mode="aspectFill" />
+          <view class="ref-x" data-index="{{index}}" catchtap="onRemoveRef" aria-role="button" aria-label="移除参考图">
+            <t-icon name="close" size="18rpx" color="#1c1815" />
+          </view>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{panelOpen}}" class="panel" catchtap="noop">
-      <text class="k">模型</text>
-      <view class="model">{{imageModel}}</view>
-
-      <text class="k">质量</text>
-      <view class="opts">
-        <view
-          wx:for="{{qualities}}"
-          wx:key="id"
-          class="opt {{quality === item.id ? 'on' : ''}}"
-          data-id="{{item.id}}"
-          data-group="quality"
-          catchtap="onPickOpt"
-        >{{item.label}}</view>
+      <view class="p-row">
+        <text class="p-k">模型</text>
+        <text class="p-v num">{{imageModel}}</text>
       </view>
 
-      <text class="k">数量</text>
-      <view class="opts">
-        <view
-          wx:for="{{counts}}"
-          wx:key="*this"
-          class="opt {{count === item ? 'on' : ''}}"
-          data-id="{{item}}"
-          data-group="count"
-          catchtap="onPickOpt"
-        >{{item}}张</view>
-      </view>
-
-      <text class="k">比例</text>
-      <view class="opts">
+      <text class="p-k p-k--block">比例</text>
+      <view class="pills">
         <view
           wx:for="{{ratios}}"
           wx:key="id"
-          class="opt {{ratioId === item.id ? 'on' : ''}}"
+          class="pill {{ratioId === item.id ? 'pill--on' : ''}}"
           data-id="{{item.id}}"
           data-group="ratio"
           catchtap="onPickOpt"
         >{{item.label}}</view>
       </view>
 
-      <text class="k">分辨率</text>
-      <view class="opts">
+      <text class="p-k p-k--block">张数</text>
+      <view class="pills">
+        <view
+          wx:for="{{counts}}"
+          wx:key="*this"
+          class="pill {{count === item ? 'pill--on' : ''}}"
+          data-id="{{item}}"
+          data-group="count"
+          catchtap="onPickOpt"
+        >{{item}}</view>
+      </view>
+
+      <view class="p-half">
+        <view class="p-col">
+          <text class="p-k p-k--block">质量</text>
+          <view class="pills">
+            <view
+              wx:for="{{qualities}}"
+              wx:key="id"
+              class="pill {{quality === item.id ? 'pill--on' : ''}}"
+              data-id="{{item.id}}"
+              data-group="quality"
+              catchtap="onPickOpt"
+            >{{item.label}}</view>
+          </view>
+        </view>
+      </view>
+
+      <text class="p-k p-k--block">分辨率</text>
+      <view class="pills">
         <view
           wx:for="{{resolutions}}"
           wx:key="id"
-          class="opt {{resolution === item.id ? 'on' : ''}}"
+          class="pill {{resolution === item.id ? 'pill--on' : ''}}"
           data-id="{{item.id}}"
           data-group="resolution"
           catchtap="onPickOpt"
@@ -196,30 +223,46 @@
       </view>
     </view>
 
-      <t-chat-sender
-        value="{{draft}}"
-        placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息，可添加多张图片'}}"
-        adjust-position="{{false}}"
-        auto-rise-with-keyboard="{{false}}"
-        render-presets="{{senderPresets}}"
-        bind:change="onDraft"
-        bind:send="onSend"
-        bind:keyboardheightchange="onKeyboard"
-      >
-        <view slot="footer-prefix" class="bits">
-          <view class="cam" catchtap="onCamera">
-            <t-icon name="camera" size="40rpx" color="#F4F4F6" />
+    <view class="composer">
+      <view class="composer-in">
+        <view class="composer-cam" catchtap="onCamera" aria-role="button" aria-label="拍照或从相册选择">
+          <t-icon name="camera" size="38rpx" color="#5c5145" />
+        </view>
+        <t-chat-sender
+          class="composer-input"
+          value="{{draft}}"
+          confirm-type="send"
+          confirm-hold="{{true}}"
+          placeholder="{{tool === 'image' ? '描述想生成的画面' : '发消息，可带图提问'}}"
+          adjust-position="{{false}}"
+          auto-rise-with-keyboard="{{false}}"
+          render-presets="{{senderPresets}}"
+          bind:change="onDraft"
+          bind:send="onSend"
+          bind:keyboardheightchange="onKeyboard"
+        />
+        <view class="composer-actions">
+          <view
+            class="composer-end plus"
+            catchtap="onAlbum"
+            aria-role="button"
+            aria-label="添加图片"
+          >
+            <t-icon name="add" size="38rpx" color="#5c5145" />
           </view>
-          <view wx:if="{{canSend}}" class="side go" catchtap="onSendTap">
-            <view class="go-icon">
-              <t-icon name="send-filled" size="32rpx" color="#0A0B05" />
-            </view>
-          </view>
-          <view wx:else class="side plus" catchtap="onAlbum">
-            <t-icon name="add" size="40rpx" color="#F4F4F6" />
+          <view
+            wx:if="{{canSend}}"
+            class="composer-end go"
+            catchtap="onSendTap"
+            aria-role="button"
+            aria-label="发送"
+          >
+            <!-- 发送用「向上箭头」：CSS 绘制（WXML 不支持内联 SVG，会被渲染器吃掉） -->
+            <view class="send-arrow" aria-hidden="true"></view>
           </view>
         </view>
-      </t-chat-sender>
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">

@@ -1,5 +1,5 @@
 import { IMAGE_MODEL, SUB2API_BASE_URL } from '../config/index'
-import { getApiKey } from '../utils/storage'
+import { ensureApiKey, humanizeGatewayError, invalidateApiKeyOnGroupError } from './auth'
 import type { Sub2ApiEnvelope } from './http'
 
 export type GenerateInput = {
@@ -37,7 +37,6 @@ function imagePayload(input: GenerateInput): Record<string, string | number> {
     prompt: input.prompt,
     n: clampImageCount(input.n),
     size: input.size || 'auto',
-    response_format: 'url',
   }
   if (input.quality && input.quality !== 'auto') body.quality = input.quality
   return body
@@ -50,7 +49,6 @@ function imageForm(input: GenerateInput): Record<string, string> {
     prompt: String(body.prompt),
     n: String(body.n),
     size: String(body.size),
-    response_format: String(body.response_format),
     ...(body.quality ? { quality: String(body.quality) } : {}),
   }
 }
@@ -63,6 +61,22 @@ function parseGatewayError(data: unknown): string {
   if (d.message) return d.message
   if (d.error?.message) return d.error.message
   return '生图失败'
+}
+
+const SLOW_IMAGE_ORIGIN = 'https://chatgpt2api.343426.xyz'
+const FAST_IMAGE_ORIGIN = 'https://chatgpt2api.264341.xyz'
+
+/** 生图链接改走 CDN，路径和参数不动。 */
+function accelerateImageUrl(url: string): string {
+  if (!url.startsWith(SLOW_IMAGE_ORIGIN)) return url
+  return FAST_IMAGE_ORIGIN + url.slice(SLOW_IMAGE_ORIGIN.length)
+}
+
+/** 去掉 data URL 前缀和空白，writeFile 的 base64 编码只认纯内容。 */
+function normalizeB64(raw: string): string {
+  const comma = raw.indexOf(',')
+  const body = raw.startsWith('data:') && comma >= 0 ? raw.slice(comma + 1) : raw
+  return body.replace(/\s/g, '')
 }
 
 function parseImageResponse(data: unknown): GenerateResult {
@@ -83,8 +97,8 @@ function parseImageResponse(data: unknown): GenerateResult {
   if (d.error?.message) throw new Error(d.error.message)
   const outputs: GeneratedImage[] = []
   for (const item of d.data || []) {
-    if (item.url) outputs.push({ imageUrl: item.url })
-    else if (item.b64_json) outputs.push({ b64: item.b64_json })
+    if (item.url) outputs.push({ imageUrl: accelerateImageUrl(item.url) })
+    else if (item.b64_json) outputs.push({ b64: normalizeB64(item.b64_json) })
   }
   if (!outputs.length) throw new Error('未返回图片')
   return { ...outputs[0], outputs }
@@ -92,6 +106,11 @@ function parseImageResponse(data: unknown): GenerateResult {
 
 export function humanizeGenerateError(raw: string): string {
   if (/未登录/.test(raw)) return '登录后才能生成'
+  // 分组不匹配是最常见的出图失败：换成「要做什么」，并顺手作废本地 Key
+  if (/is not supported by any configured account/i.test(raw) || /in this group/i.test(raw)) {
+    invalidateApiKeyOnGroupError(raw)
+    return humanizeGatewayError(raw)
+  }
   if (/file path invalid/i.test(raw)) return '参考图读不到，请重新选一张'
   if (/url not in domain list/i.test(raw)) return '这张图的域名还没加入小程序下载白名单'
   if (/downloadFile:fail/i.test(raw)) return '参考图下载失败，请换一张本地照片'
@@ -104,9 +123,11 @@ export function humanizeGenerateError(raw: string): string {
 }
 
 /** 文生图（无用户图，R3 纯 prompt 模板） */
-export function generateFromPrompt(input: GenerateInput): Promise<GenerateResult> {
-  const apiKey = getApiKey()
-  if (!apiKey) return Promise.reject(new Error('请先登录'))
+export async function generateFromPrompt(input: GenerateInput): Promise<GenerateResult> {
+  // 每次生成都过一遍分组校验：本地已确认过分组时是纯读缓存，不发请求
+  const apiKey = await ensureApiKey().catch((e: Error) => {
+    throw new Error(e?.message || '请先登录')
+  })
 
   return new Promise((resolve, reject) => {
     wx.request({
@@ -196,9 +217,10 @@ async function resolveUploadPath(imagePath: string): Promise<string> {
 }
 
 /** 图 + prompt（修图 / 需上传的模板） */
-export function generateFromImage(input: GenerateInput): Promise<GenerateResult> {
-  const apiKey = getApiKey()
-  if (!apiKey) return Promise.reject(new Error('请先登录'))
+export async function generateFromImage(input: GenerateInput): Promise<GenerateResult> {
+  const apiKey = await ensureApiKey().catch((e: Error) => {
+    throw new Error(e?.message || '请先登录')
+  })
   const imagePath = input.imagePath
   if (!imagePath) return Promise.reject(new Error('请选择图片'))
 

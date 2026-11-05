@@ -33,7 +33,7 @@ export function persistGenerateResult(result: GeneratedImage): Promise<string> {
       })
     })
   }
-  
+
   return Promise.reject(new Error('无图片结果'))
 }
 

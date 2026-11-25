@@ -6,11 +6,15 @@ import {
   clearApiKey,
   getApiKey,
   getApiKeyGroup,
+  getApiKeyId,
+  getPreferredGroupId,
+  getPreferredGroupName,
   setAccessToken,
   setAccessTokenExpiry,
   setApiKey,
   setApiKeyGroup,
   setApiKeyId,
+  setPreferredGroup,
   setRefreshToken,
   setUserEmail,
 } from '../utils/storage'
@@ -31,6 +35,15 @@ type AuthResponse = {
   user: Sub2User
 }
 
+export type Sub2Group = {
+  id: number
+  name: string
+  platform?: string
+  rate_multiplier?: number
+  status?: string
+  allow_image_generation?: boolean
+}
+
 type ApiKeyGroup = {
   id?: number
   name?: string
@@ -49,16 +62,20 @@ type ApiKeyRow = {
   group?: ApiKeyGroup | null
 }
 
-/** 这条 Key 是否属于目标生图分组：优先比对 group_id，回退嵌套对象的 name */
-function inImageGroup(row: ApiKeyRow): boolean {
-  if (row.group_id != null) return Number(row.group_id) === IMAGE_KEY_GROUP_ID
-  const name = row.group?.name || ''
-  return name === IMAGE_KEY_GROUP_NAME
+function targetGroupId(override?: number): number {
+  return override || getPreferredGroupId() || IMAGE_KEY_GROUP_ID
+}
+
+/** 这条 Key 是否属于目标分组：优先比对 group_id，回退嵌套对象 id/name */
+function inTargetGroup(row: ApiKeyRow, groupId: number): boolean {
+  if (row.group_id != null) return Number(row.group_id) === groupId
+  if (row.group?.id != null) return Number(row.group.id) === groupId
+  return groupId === IMAGE_KEY_GROUP_ID && (row.group?.name || '') === IMAGE_KEY_GROUP_NAME
 }
 
 /** 分组的展示名：嵌套对象优先，回退到配置名 */
 function groupDisplayName(row: ApiKeyRow): string {
-  return row.group?.name || IMAGE_KEY_GROUP_NAME
+  return row.group?.name || getPreferredGroupName() || IMAGE_KEY_GROUP_NAME
 }
 
 type KeyList = {
@@ -132,13 +149,14 @@ function isFullApiKey(key: string): boolean {
  * 分组不对时 `gpt-image-2.5` 会在网关侧直接报 not supported，所以宁可在
  * 这里多一次请求，也不要把错 Key 带进生成流程。
  */
-export async function ensureApiKey(): Promise<string> {
+export async function ensureApiKey(groupIdOverride?: number): Promise<string> {
   const token = getAccessToken()
   if (!token) throw new Error('未登录')
 
+  const groupId = targetGroupId(groupIdOverride)
   const cachedGroup = getApiKeyGroup()
   const existing = getApiKey()
-  if (existing && isFullApiKey(existing) && cachedGroup === String(IMAGE_KEY_GROUP_ID)) {
+  if (existing && isFullApiKey(existing) && cachedGroup === String(groupId)) {
     return existing
   }
 
@@ -148,12 +166,13 @@ export async function ensureApiKey(): Promise<string> {
   })
   const items = list.items || []
   const active = items.find(
-    (k) => k.status === 'active' && isFullApiKey(k.key) && inImageGroup(k),
+    (k) => k.status === 'active' && isFullApiKey(k.key) && inTargetGroup(k, groupId),
   )
   if (active) {
     setApiKey(active.key)
     setApiKeyId(active.id)
-    setApiKeyGroup(String(IMAGE_KEY_GROUP_ID))
+    setApiKeyGroup(String(groupId))
+    if (active.group?.name) setPreferredGroup(groupId, active.group.name)
     return active.key
   }
 
@@ -162,17 +181,59 @@ export async function ensureApiKey(): Promise<string> {
     method: 'POST',
     accessToken: token,
     // 后端接收的是数字 group_id；传名字符串 name 会被忽略，建出无分组 Key
-    data: { name: `miniprogram-${Date.now().toString(36)}`, group_id: IMAGE_KEY_GROUP_ID },
+    data: { name: `miniprogram-${Date.now().toString(36)}`, group_id: groupId },
   })
   if (!created.key || !isFullApiKey(created.key)) {
     throw new Error(
       `创建 API Key 失败。请到网页端创建「${groupDisplayName(created)}」分组的 Key 后粘贴到设置里`,
     )
   }
+  const actualGroupId = Number(created.group_id ?? groupId)
   setApiKey(created.key)
   setApiKeyId(created.id)
-  setApiKeyGroup(String(created.group_id ?? IMAGE_KEY_GROUP_ID))
+  setApiKeyGroup(String(actualGroupId))
+  setPreferredGroup(actualGroupId, created.group?.name || getPreferredGroupName() || undefined)
   return created.key
+}
+
+export async function fetchAvailableGroups(): Promise<Sub2Group[]> {
+  const token = getAccessToken()
+  if (!token) throw new Error('未登录')
+  const list = await requestJson<Sub2Group[]>({
+    url: '/groups/available',
+    accessToken: token,
+  })
+  return (Array.isArray(list) ? list : []).filter((g) => g && g.id && (!g.status || g.status === 'active'))
+}
+
+export function getBoundGroupSnapshot(): { groupId: number; groupName: string } {
+  const groupId = targetGroupId()
+  const cachedName = getPreferredGroupName()
+  const groupName = cachedName || (groupId === IMAGE_KEY_GROUP_ID ? IMAGE_KEY_GROUP_NAME : `分组 #${groupId}`)
+  return { groupId, groupName }
+}
+
+export async function switchBoundGroup(groupId: number, groupName?: string): Promise<string> {
+  const prevId = getPreferredGroupId()
+  const prevName = getPreferredGroupName()
+  const prevKey = getApiKey()
+  const prevKeyId = getApiKeyId()
+  const prevKeyGroup = getApiKeyGroup()
+
+  clearApiKey()
+  try {
+    const key = await ensureApiKey(groupId)
+    setPreferredGroup(groupId, groupName)
+    return key
+  } catch (err) {
+    setPreferredGroup(prevId, prevName)
+    if (prevKey) {
+      setApiKey(prevKey)
+      if (prevKeyId) setApiKeyId(prevKeyId)
+      if (prevKeyGroup) setApiKeyGroup(prevKeyGroup)
+    }
+    throw err
+  }
 }
 
 /**

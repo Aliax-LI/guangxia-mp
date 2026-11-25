@@ -5,6 +5,7 @@ import {
   inferRequiresImage,
   type TemplateDetail,
 } from '../../services/template'
+import { copyText } from '../../utils/clipboard'
 import { setComposerDraft } from '../../utils/compose'
 
 Page({
@@ -113,10 +114,7 @@ Page({
   onCopyPrompt() {
     const prompt = this.data.detail.prompt || ''
     if (!prompt) return
-    wx.setClipboardData({
-      data: prompt,
-      success: () => wx.showToast({ title: '已复制提示词', icon: 'success' }),
-    })
+    copyText(prompt, { successTitle: '已复制提示词' })
   },
 
   onMakeSame() {

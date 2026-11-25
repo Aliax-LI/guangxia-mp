@@ -1,0 +1,109 @@
+<view class="pe-page">
+  <view class="pe-avatar-sec">
+    <view class="pe-avatar-wrap">
+      <image
+        class="pe-avatar"
+        src="{{avatarUrl || defaultAvatarUrl}}"
+        mode="aspectFill"
+      />
+      <button
+        wx:if="{{privacyOk}}"
+        id="profile-edit-avatar-btn"
+        class="pe-avatar-btn"
+        hover-class="none"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar"
+        aria-label="更换头像"
+      />
+      <view
+        wx:else
+        class="pe-avatar-btn"
+        bindtap="onRequestPrivacy"
+        aria-role="button"
+        aria-label="更换头像"
+      />
+    </view>
+    <text class="pe-avatar-tip">点击头像更换微信头像</text>
+  </view>
+
+  <view class="pe-card">
+    <view class="pe-field">
+      <text class="pe-label">昵称</text>
+      <input
+        type="nickname"
+        class="pe-input"
+        value="{{nickname}}"
+        placeholder="请输入或使用微信昵称"
+        placeholder-class="pe-placeholder"
+        maxlength="32"
+        bindinput="onNicknameInput"
+        bindnicknamereview="onNicknameReview"
+      />
+    </view>
+
+    <view class="pe-field pe-field--col">
+      <view class="pe-label-row">
+        <text class="pe-label">个人简介</text>
+        <text class="pe-counter">{{bio.length}} / 120</text>
+      </view>
+      <textarea
+        class="pe-textarea"
+        value="{{bio}}"
+        placeholder="写下一句简介或常用风格偏好…"
+        placeholder-class="pe-placeholder"
+        maxlength="120"
+        auto-height
+        bindinput="onBioInput"
+      />
+    </view>
+
+    <view class="pe-field pe-field--row" bindtap="onCopyAccount">
+      <text class="pe-label">绑定账户</text>
+      <view class="pe-readonly">
+        <text class="pe-readonly-text">{{email || '未绑定'}}</text>
+        <t-icon wx:if="{{email}}" name="copy" size="26rpx" color="#8b7f70" />
+      </view>
+    </view>
+
+    <picker
+      mode="selector"
+      range="{{groupLabels}}"
+      value="{{groupIndex}}"
+      disabled="{{groupsLoading || !groupLabels.length}}"
+      bindchange="onPickGroup"
+    >
+      <view class="pe-field pe-field--row">
+        <text class="pe-label">Sub2API 分组</text>
+        <view class="pe-readonly">
+          <text class="pe-group-name">{{groupsLoading ? '加载中…' : (groupName || '未绑定')}}</text>
+          <t-icon name="chevron-right" size="28rpx" color="#8b7f70" />
+        </view>
+      </view>
+    </picker>
+  </view>
+
+  <text wx:if="{{groupAllowsImage === false}}" class="pe-group-warn">当前所选分组不支持生图，仅可用于文本对话</text>
+
+  <view class="pe-actions">
+    <view class="btn btn--primary pe-save" bindtap="onSave" aria-role="button">保存资料</view>
+    <view class="btn btn--ghost pe-logout" bindtap="onLogout" aria-role="button">退出登录</view>
+  </view>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="profile-edit-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onAgreePrivacy"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

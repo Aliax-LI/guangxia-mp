@@ -1,66 +1,25 @@
 <view class="profile-page">
   <view class="profile-body">
   <view class="user-header" id="profile-wechat-block">
-    <view class="user-header-left">
-    <view class="avatar-shell">
-      <image
-        class="user-avatar"
-        src="{{avatarUrl || defaultAvatarUrl}}"
-        mode="aspectFill"
-      />
-      <button
-        wx:if="{{loggedIn && privacyOk}}"
-        id="profile-avatar-btn"
-        class="avatar-hit"
-        hover-class="none"
-        open-type="chooseAvatar"
-        bindchooseavatar="onChooseWechatAvatar"
-        aria-label="选择微信头像"
-      />
-      <view
-        wx:elif="{{loggedIn}}"
-        class="avatar-hit"
-        bindtap="onEditProfile"
-        aria-role="button"
-        aria-label="编辑资料设置头像"
-      />
-    </view>
-
-    <view class="user-meta">
-      <view class="name-row">
-        <input
-          wx:if="{{loggedIn && privacyOk && nicknameEditing}}"
-          type="nickname"
-          class="user-name-input"
-          value="{{nickname}}"
-          placeholder="点击使用微信昵称"
-          maxlength="32"
-          focus="{{nicknameFocus}}"
-          bindinput="onNicknameInput"
-          bindblur="onNicknameBlur"
-          bindnicknamereview="onNicknameReview"
+    <view class="user-header-left" bindtap="onEditProfile">
+      <view class="avatar-shell">
+        <image
+          class="user-avatar"
+          src="{{avatarUrl || defaultAvatarUrl}}"
+          mode="aspectFill"
         />
-        <text
-          wx:elif="{{loggedIn && privacyOk}}"
-          class="user-name"
-          bindtap="onStartNicknameEdit"
-        >{{nickname || '点击设置微信昵称'}}</text>
-        <text
-          wx:elif="{{loggedIn}}"
-          class="user-name"
-          bindtap="onEditProfile"
-        >{{nickname || '点击编辑资料'}}</text>
-        <text wx:else class="user-name" bindtap="onLogin">点击登录账号</text>
       </view>
-      <view class="id-row" bindtap="onCopyAccount">
-        <text class="id-text">账户：{{accountText}}</text>
-        <t-icon name="copy" size="24rpx" color="#6f6355" class="copy-icon" />
-      </view>
-    </view>
-    </view>
 
-    <view class="header-help-btn" bindtap="onOpenHelp" aria-role="button" aria-label="使用帮助">
-      <t-icon name="help-circle" size="44rpx" color="#1c1815" />
+      <view class="user-meta">
+        <view class="name-row">
+          <text wx:if="{{loggedIn}}" class="user-name">{{nickname || '点击编辑资料'}}</text>
+          <text wx:else class="user-name" catchtap="onLogin">点击登录账号</text>
+        </view>
+        <view class="id-row" catchtap="onCopyAccount">
+          <text class="id-text">账户：{{accountText}}</text>
+          <t-icon name="copy" size="24rpx" color="#6f6355" class="copy-icon" />
+        </view>
+      </view>
     </view>
   </view>
 
@@ -71,7 +30,7 @@
         <view class="account-dot" />
         <text class="account-kicker">ACCOUNT</text>
       </view>
-      <text class="account-tag">Sub2API</text>
+      <text class="account-tag">{{groupName ? 'Sub2API · ' + groupName : 'Sub2API'}}</text>
     </view>
     <view class="stats-group">
       <view class="stat-item">
@@ -96,7 +55,7 @@
   </view>
 
   <!-- 个人签名介绍 -->
-  <view class="bio-row" bindtap="onEditBio">
+  <view class="bio-row" bindtap="onEditProfile">
     <text class="bio-text">{{bio || '你还没有填写个人简介，点击添加…'}}</text>
   </view>
 
@@ -122,50 +81,19 @@
     </view>
   </view>
 
-  <!-- 作品分类 Tab 栏 -->
+  <!-- 作品集标题栏 -->
   <view class="works-tab-bar">
-    <view
-      class="works-tab-item {{activeTab === 'works' ? 'active' : ''}}"
-      data-tab="works"
-      bindtap="onSwitchTab"
-    >
+    <view class="works-tab-item active">
       <view class="tab-title-wrap">
         <text class="tab-title">作品集</text>
         <t-icon name="lock-on" size="22rpx" color="#6f6355" class="lock-icon" />
       </view>
-      <view wx:if="{{activeTab === 'works'}}" class="tab-line" />
-    </view>
-
-    <view
-      class="works-tab-item {{activeTab === 'dynamics' ? 'active' : ''}}"
-      data-tab="dynamics"
-      bindtap="onSwitchTab"
-    >
-      <text class="tab-title">动态</text>
-      <view wx:if="{{activeTab === 'dynamics'}}" class="tab-line" />
-    </view>
-
-    <view
-      class="works-tab-item {{activeTab === 'starred' ? 'active' : ''}}"
-      data-tab="starred"
-      bindtap="onSwitchTab"
-    >
-      <text class="tab-title">收藏</text>
-      <view wx:if="{{activeTab === 'starred'}}" class="tab-line" />
-    </view>
-
-    <view
-      class="works-tab-item {{activeTab === 'liked' ? 'active' : ''}}"
-      data-tab="liked"
-      bindtap="onSwitchTab"
-    >
-      <text class="tab-title">点赞</text>
-      <view wx:if="{{activeTab === 'liked'}}" class="tab-line" />
+      <view class="tab-line" />
     </view>
   </view>
 
   <!-- 九宫格作品集展示 -->
-  <view wx:if="{{activeTab === 'works'}}" class="works-grid">
+  <view wx:if="{{worksList.length}}" class="works-grid">
     <view
       wx:for="{{worksList}}"
       wx:key="id"
@@ -190,9 +118,9 @@
     </view>
   </view>
 
-  <!-- 其他 Tab 暂无内容状态 -->
+  <!-- 空作品集状态 -->
   <view wx:else class="empty-tab-box">
-    <t-empty description="暂无更多动态" />
+    <t-empty description="还没有保存的作品" />
   </view>
 
   <!-- 荧光绿悬浮加号 -->

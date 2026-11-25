@@ -72,14 +72,14 @@ function pushUtf8(carry: number[], chunk: ArrayBuffer | Uint8Array | string): st
 }
 
 function drip(text: string, onDelta: (text: string) => void): Promise<void> {
-  const step = Math.max(1, Math.ceil(text.length / 48))
+  const step = Math.max(2, Math.ceil(text.length / 24))
   return new Promise((resolve) => {
     let i = 0
     const tick = () => {
       i = Math.min(text.length, i + step)
       onDelta(text.slice(0, i))
       if (i >= text.length) resolve()
-      else setTimeout(tick, 40)
+      else setTimeout(tick, 28)
     }
     tick()
   })
@@ -97,7 +97,16 @@ function parseSseDataLine(line: string): unknown | null {
   }
 }
 
-function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (text: string) => void): Promise<string> {
+export type ChatStreamOptions = {
+  onAbortReady?: (abort: () => void) => void
+}
+
+function requestResponses(
+  messages: ChatMessage[],
+  stream: boolean,
+  onDelta?: (text: string) => void,
+  options?: ChatStreamOptions,
+): Promise<string> {
   const apiKey = getApiKey()
   if (!apiKey) return Promise.reject(new Error('未登录'))
 
@@ -108,6 +117,7 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
     let full: string = ''
     let sawChunk = false
     let settled = false
+    let aborted = false
     let failed = ''
     const carry: number[] = []
 
@@ -155,6 +165,13 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
         store: false,
       },
       success(res) {
+        if (aborted) {
+          full = acc.end()
+          if (full && onDelta) onDelta(full)
+          if (full.trim()) finish(() => resolve(full))
+          else finish(() => reject(new Error('已停止生成')))
+          return
+        }
         if (failed) {
           finish(() => reject(new Error(failed)))
           return
@@ -182,7 +199,9 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
           }
           return
         }
+        const prevFull = full
         full = acc.end() // 提交挂起中的短块（网关重发容错的一部分）
+        if (full !== prevFull && onDelta) onDelta(full)
         if (!full.trim()) {
           finish(() => reject(new Error('没有收到回复')))
           return
@@ -190,15 +209,31 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
         finish(() => resolve(full))
       },
       fail(err) {
-        const message = err.errMsg || '对话失败'
+        const message = aborted ? '已停止生成' : err.errMsg || '对话失败'
+        const prevFull = full
         full = acc.end()
+        if (full !== prevFull && onDelta) onDelta(full)
         if (full.trim()) finish(() => resolve(full))
         else finish(() => reject(new Error(message)))
       },
     }) as ChunkTask
 
+    if (options?.onAbortReady) {
+      options.onAbortReady(() => {
+        if (settled || aborted) return
+        aborted = true
+        task.abort?.()
+        const prevFull = full
+        full = acc.end()
+        if (full !== prevFull && onDelta) onDelta(full)
+        if (full.trim()) finish(() => resolve(full))
+        else finish(() => reject(new Error('已停止生成')))
+      })
+    }
+
     if (task.onChunkReceived) {
       task.onChunkReceived((res) => {
+        if (aborted) return
         sawChunk = true
         buffer += pushUtf8(carry, res.data)
         const lines = buffer.split('\n')
@@ -210,6 +245,10 @@ function requestResponses(messages: ChatMessage[], stream: boolean, onDelta?: (t
 }
 
 /** 对话走 Open Responses 流式（`response.output_text.delta`）。 */
-export function chatStream(messages: ChatMessage[], onDelta: (text: string) => void): Promise<string> {
-  return requestResponses(messages, true, onDelta)
+export function chatStream(
+  messages: ChatMessage[],
+  onDelta: (text: string) => void,
+  options?: ChatStreamOptions,
+): Promise<string> {
+  return requestResponses(messages, true, onDelta, options)
 }

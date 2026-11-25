@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "编辑资料",
+  "renderer": "webview",
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
+}

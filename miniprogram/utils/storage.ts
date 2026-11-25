@@ -5,6 +5,8 @@ const API_KEY = 'sub2api_api_key'
 const API_KEY_ID = 'sub2api_api_key_id'
 /** 记住这个 Key 属于哪个 Sub2API 分组，用来判断能不能出图 */
 const API_KEY_GROUP = 'sub2api_api_key_group'
+const PREFERRED_GROUP_ID = 'sub2api_preferred_group_id'
+const PREFERRED_GROUP_NAME = 'sub2api_preferred_group_name'
 const USER_EMAIL = 'sub2api_user_email'
 const MANIFEST_VERSION = 'manifest_version'
 
@@ -97,6 +99,21 @@ export function setApiKeyGroup(group: string) {
   else wx.removeStorageSync(API_KEY_GROUP)
 }
 
+export function getPreferredGroupId(): number {
+  const n = Number(wx.getStorageSync(PREFERRED_GROUP_ID) || 0)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
+export function getPreferredGroupName(): string {
+  return wx.getStorageSync(PREFERRED_GROUP_NAME) || ''
+}
+
+export function setPreferredGroup(id: number, name?: string) {
+  if (id > 0) wx.setStorageSync(PREFERRED_GROUP_ID, id)
+  else wx.removeStorageSync(PREFERRED_GROUP_ID)
+  if (name) wx.setStorageSync(PREFERRED_GROUP_NAME, name)
+}
+
 export function getUserEmail(): string {
   return wx.getStorageSync(USER_EMAIL) || ''
 }
@@ -112,6 +129,8 @@ export function clearAuth() {
   wx.removeStorageSync(API_KEY)
   wx.removeStorageSync(API_KEY_ID)
   wx.removeStorageSync(API_KEY_GROUP)
+  wx.removeStorageSync(PREFERRED_GROUP_ID)
+  wx.removeStorageSync(PREFERRED_GROUP_NAME)
   wx.removeStorageSync(USER_EMAIL)
 }
 

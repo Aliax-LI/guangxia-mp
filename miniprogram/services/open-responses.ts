@@ -132,7 +132,8 @@ export function createStreamTextAccumulator() {
     feed(piece: string): string {
       if (!piece) return full
       pending += piece
-      if (pending.length < 12) return full
+      // 首段文本（full 尚短时）立即提交，避免首字被 12 字窗口扣住导致「正在思考」过久
+      if (full.length >= 12 && pending.length < 12) return full
       return flushWith('')
     },
     /** 流结束时调用：把挂起的短块提交掉 */

@@ -24,22 +24,6 @@
   gap: 28rpx;
 }
 
-.header-help-btn {
-  flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #f3ede2;
-  border: 1rpx solid rgba(28, 24, 21, 0.08);
-}
-
-.header-help-btn:active {
-  background: #e4dbcb;
-}
-
 .avatar-shell {
   position: relative;
   width: 140rpx;

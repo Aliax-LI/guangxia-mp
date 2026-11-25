@@ -169,7 +169,156 @@
   </view>
 
   <!-- 悬浮主操作 -->
-  <view class="fab" bindtap="onFabClick" aria-role="button" aria-label="用这张做图">
+  <view class="fab" catchtap="onFabClick" aria-role="button" aria-label="AI 创作">
     <t-icon name="add" size="48rpx" color="#fffdf9" />
+  </view>
+
+  <!-- 豆包式 AI 创作悬浮卡片 -->
+  <view wx:if="{{composerOpen}}" class="cc-mask" catchtap="closeComposer" catchtouchmove="noop">
+    <view
+      class="cc-sheet"
+      style="{{keyboard ? 'bottom:' + keyboard + 'px;padding-bottom:20rpx;' : ''}}"
+      catchtap="noop"
+      aria-role="dialog"
+      aria-label="图片创作"
+    >
+      <view class="cc-head">
+        <view class="cc-mode-group">
+          <view class="cc-mode-pill on">图片创作</view>
+        </view>
+        <view class="cc-close" catchtap="closeComposer" aria-role="button" aria-label="关闭">
+          <t-icon name="close" size="30rpx" color="#6f6355" />
+        </view>
+      </view>
+
+      <!-- 参考图槽位 -->
+      <view class="cc-ref-row">
+        <view wx:if="{{refImages.length}}" class="cc-ref-preview">
+          <image class="cc-ref-img" src="{{refImages[0]}}" mode="aspectFill" catchtap="onPickRefImage" />
+          <view class="cc-ref-del" catchtap="onRemoveRefImage" aria-role="button" aria-label="移除参考图">
+            <t-icon name="close" size="20rpx" color="#fffdf9" />
+          </view>
+        </view>
+        <view wx:else class="cc-ref-add" catchtap="onPickRefImage" aria-role="button" aria-label="添加参考图">
+          <t-icon name="add" size="36rpx" color="#c9761b" />
+          <text class="cc-ref-txt">参考图</text>
+        </view>
+      </view>
+
+      <!-- 点击参数胶囊时原地展开的一行选项条 -->
+      <scroll-view wx:if="{{activeParam}}" class="cc-sub-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="cc-sub-track">
+          <block wx:if="{{activeParam === 'ratio'}}">
+            <view
+              wx:for="{{ratios}}"
+              wx:key="id"
+              class="cc-sub-pill {{ratioId === item.id ? 'on' : ''}}"
+              data-group="ratio"
+              data-id="{{item.id}}"
+              catchtap="onPickComposerOpt"
+            >{{item.label}}</view>
+          </block>
+          <block wx:elif="{{activeParam === 'count'}}">
+            <view
+              wx:for="{{counts}}"
+              wx:key="*this"
+              class="cc-sub-pill {{count === item ? 'on' : ''}}"
+              data-group="count"
+              data-id="{{item}}"
+              catchtap="onPickComposerOpt"
+            >{{item}} 张</view>
+          </block>
+          <block wx:elif="{{activeParam === 'quality'}}">
+            <view
+              wx:for="{{qualities}}"
+              wx:key="id"
+              class="cc-sub-pill {{quality === item.id ? 'on' : ''}}"
+              data-group="quality"
+              data-id="{{item.id}}"
+              catchtap="onPickComposerOpt"
+            >{{item.shortLabel || item.label}}</view>
+          </block>
+          <block wx:elif="{{activeParam === 'model'}}">
+            <view
+              wx:for="{{imageModelLabels}}"
+              wx:key="*this"
+              class="cc-sub-pill {{imageModelIndex === index ? 'on' : ''}}"
+              data-group="model"
+              data-id="{{index}}"
+              catchtap="onPickComposerOpt"
+            >{{item}}</view>
+          </block>
+        </view>
+      </scroll-view>
+
+      <!-- 一行式紧凑参数胶囊 -->
+      <scroll-view class="cc-params-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="cc-params-track">
+          <view class="cc-param {{activeParam === 'model' ? 'open' : ''}}" data-param="model" catchtap="onToggleParam">
+            <text class="cc-param-k">模型</text>
+            <text class="cc-param-v">{{imageModelShort}}</text>
+            <t-icon name="{{activeParam === 'model' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="cc-param {{activeParam === 'ratio' ? 'open' : ''}} {{ratioId !== 'auto' ? 'active' : ''}}" data-param="ratio" catchtap="onToggleParam">
+            <text class="cc-param-k">比例</text>
+            <text class="cc-param-v">{{ratioShort}}</text>
+            <t-icon name="{{activeParam === 'ratio' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="cc-param {{activeParam === 'count' ? 'open' : ''}} {{count > 1 ? 'active' : ''}}" data-param="count" catchtap="onToggleParam">
+            <text class="cc-param-v">{{count}} 张</text>
+            <t-icon name="{{activeParam === 'count' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="cc-param {{activeParam === 'quality' ? 'open' : ''}} {{quality !== 'auto' ? 'active' : ''}}" data-param="quality" catchtap="onToggleParam">
+            <text class="cc-param-k">画质</text>
+            <text class="cc-param-v">{{qualityShort}}</text>
+            <t-icon name="{{activeParam === 'quality' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 输入框与发送按钮 -->
+      <view class="cc-input-row">
+        <textarea
+          class="cc-textarea"
+          value="{{draft}}"
+          placeholder="描述你想要创作的内容…"
+          placeholder-class="cc-placeholder"
+          auto-height
+          maxlength="4000"
+          adjust-position="{{false}}"
+          show-confirm-bar="{{false}}"
+          confirm-type="send"
+          bindinput="onComposerDraft"
+          bindconfirm="onSubmitComposer"
+          bindkeyboardheightchange="onComposerKeyboard"
+        />
+        <view
+          class="cc-send {{canSend ? 'on' : ''}}"
+          catchtap="onSubmitComposer"
+          aria-role="button"
+          aria-label="开始生成"
+        >
+          <view class="cc-send-arrow" aria-hidden="true"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showPrivacyPanel}}" class="privacy-mask" catchtouchmove="true">
+    <view class="privacy-card">
+      <text class="privacy-title">用户隐私保护提示</text>
+      <text class="privacy-desc">{{privacyDesc}}</text>
+      <text class="privacy-link" bindtap="onOpenPrivacyContract">查看隐私保护指引</text>
+      <view class="privacy-actions">
+        <button
+          id="tpl-agree-btn"
+          class="privacy-agree-btn"
+          open-type="agreePrivacyAuthorization"
+          bindagreeprivacyauthorization="onPrivacyAgree"
+        >
+          同意并继续
+        </button>
+      </view>
+    </view>
   </view>
 </view>

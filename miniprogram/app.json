@@ -3,6 +3,7 @@
     "pages/edit/index",
     "pages/templates/index",
     "pages/profile/index",
+    "pages/profile-edit/index",
     "pages/login/index",
     "pages/editor-edit/index",
     "pages/editor-template/index",

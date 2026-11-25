@@ -1,5 +1,6 @@
 import type { ChatTurn } from '../../utils/compose'
 import { turnInputImages } from '../../utils/compose'
+import { copyText } from '../../utils/clipboard'
 import { toPreviewableAll } from '../../utils/preview-media'
 import {
   choicePrompt,
@@ -8,8 +9,6 @@ import {
   stripGenUiForMarkdown,
   type ReplySegment,
 } from '../../utils/gen-ui'
-
-type Content = { type: string; data: unknown }
 
 /** 渲染用字段；不展开整份 ChatTurn，避免 reply 等在 setData 里重复多份。 */
 type Row = {
@@ -21,7 +20,7 @@ type Row = {
   inputImages: string[]
   images: string[]
   errorLabel: string
-  assistantContent: Content[]
+  markdown: string
   assistantStatus: 'pending' | 'streaming' | 'error' | 'complete'
   showImages: boolean
   /** 是否已存入作品集：保存成功后置位，按钮转为已存态 */
@@ -43,16 +42,13 @@ type Row = {
 
 const parseCache = new Map<
   string,
-  { reply: string; segments: ReplySegment[]; assistantContent: Content[]; liveText: boolean }
+  { reply: string; segments: ReplySegment[]; markdown: string; liveText: boolean }
 >()
 
 const startedAt: Record<string, number> = {}
 /** 已保存的 turn id：页面级状态，组件重挂载也不丢 */
 const savedTurns = new Set<string>()
 const picks: Record<string, { value: string; detail: string }> = {}
-let clock: ReturnType<typeof setInterval> | 0 = 0
-let paintTimer: ReturnType<typeof setTimeout> | 0 = 0
-let scrollBottomTimer: ReturnType<typeof setTimeout> | 0 = 0
 
 function formatElapsed(milliseconds: number): string {
   const seconds = Math.floor(Math.max(0, milliseconds) / 1000)
@@ -79,14 +75,17 @@ function resolveTextView(turn: ChatTurn, reply: string) {
     return cached
   }
   const segments = turn.kind === 'text' && reply ? parseReply(reply) || [] : []
-  let assistantContent: Content[] = []
+  let markdown = ''
   if (turn.status !== 'error' && turn.kind !== 'image' && reply && !segments.length) {
-    const md = turn.kind === 'text' ? stripGenUiForMarkdown(reply) : reply
-    assistantContent = [{ type: 'markdown', data: md }]
+    markdown = turn.kind === 'text' ? stripGenUiForMarkdown(reply) : reply
   }
   const liveText = turn.kind === 'text' && turn.status === 'generating' && !!reply && !segments.length
-  const view = { reply: turn.reply, segments, assistantContent, liveText }
+  const view = { reply: turn.reply, segments, markdown, liveText }
   parseCache.set(turn.id, view)
+  if (parseCache.size > 80) {
+    const first = parseCache.keys().next().value
+    if (first !== undefined) parseCache.delete(first)
+  }
   return view
 }
 
@@ -117,14 +116,8 @@ function toRow(turn: ChatTurn, now: number): Row {
   }
   const pick = picks[turn.id]
 
-  let assistantContent: Content[] = []
-  if (turn.status === 'error') {
-    assistantContent = []
-  } else if (generating || segments.length) {
-    assistantContent = []
-  } else if (textView?.assistantContent.length) {
-    assistantContent = textView.assistantContent
-  }
+  const markdown =
+    turn.status === 'error' || generating || segments.length ? '' : textView?.markdown || ''
 
   const count = Math.max(1, Math.min(4, turn.count || 1))
   const places = generating ? Array.from({ length: count }, (_, i) => i) : []
@@ -148,7 +141,7 @@ function toRow(turn: ChatTurn, now: number): Row {
     inputImages,
     images: turn.images || [],
     errorLabel,
-    assistantContent,
+    markdown,
     assistantStatus:
       turn.status === 'error' ? 'error' : generating ? 'complete' : assistantStatus,
     showImages: turn.kind === 'image' && turn.status === 'done' && (turn.images || []).length > 0,
@@ -170,8 +163,8 @@ function toRow(turn: ChatTurn, now: number): Row {
 }
 
 function rowRenderKey(row: Row): string {
-  const md = row.assistantContent[0]?.data
-  const mdLen = typeof md === 'string' ? md.length : 0
+  const md = row.markdown
+  const mdTail = md ? `${md.length}:${md.slice(-12)}` : '0'
   const segLen = row.segments.reduce((n, s) => {
     if (s.kind === 'md') return n + s.text.length
     if (s.kind === 'copy') return n + s.text.length
@@ -192,33 +185,53 @@ function rowRenderKey(row: Row): string {
     row.pick,
     row.detail,
     row.errorLabel,
-    mdLen,
+    mdTail,
     segLen,
     row.segments.length,
   ].join('|')
 }
 
-type ConvSelf = WechatMiniprogram.Component.TrivialInstance & { _turnList?: ChatTurn[]; _viewportHeight?: number }
+type ConvSelf = WechatMiniprogram.Component.TrivialInstance & {
+  _turnList?: ChatTurn[]
+  _viewportHeight?: number
+  _lastScrollTop?: number
+  _programmaticScrollUntil?: number
+  _clock?: ReturnType<typeof setInterval> | 0
+  _paintQueued?: boolean
+  _scrollTimer?: ReturnType<typeof setTimeout> | 0
+  _readyTimer?: ReturnType<typeof setTimeout> | 0
+}
 
 Component({
   data: {
     rows: [] as Row[],
+    ready: false,
     motion: true,
     scrollIntoView: '',
+    scrollAnimated: false,
     following: true,
+    copyFallbackText: '',
   },
 
   lifetimes: {
+    attached() {
+      const self = this as ConvSelf
+      self._readyTimer = setTimeout(() => {
+        if (!this.data.ready) this.setData({ ready: true })
+      }, 150)
+    },
     detached() {
       this.stopClock()
-      if (paintTimer) {
-        clearTimeout(paintTimer)
-        paintTimer = 0
+      const self = this as ConvSelf
+      if (self._readyTimer) {
+        clearTimeout(self._readyTimer)
+        self._readyTimer = 0
       }
-      if (scrollBottomTimer) {
-        clearTimeout(scrollBottomTimer)
-        scrollBottomTimer = 0
+      if (self._scrollTimer) {
+        clearTimeout(self._scrollTimer)
+        self._scrollTimer = 0
       }
+      self._paintQueued = false
     },
   },
 
@@ -242,22 +255,34 @@ Component({
       const previous = this.currentTurns()
       const appended = previous[previous.length - 1]?.id !== turns[turns.length - 1]?.id
       ;(this as ConvSelf)._turnList = Array.isArray(turns) ? turns : []
-      if (appended) this.setData({ following: true })
-      if (!turns.length) this.setData({ rows: [], scrollIntoView: '' })
-      this.schedulePaint(this.currentTurns())
+      if (appended && !this.data.following) this.setData({ following: true })
+      if (!turns.length) {
+        this.setData({ rows: [], ready: true, scrollIntoView: '' })
+        this.stopClock()
+        return
+      }
+      this.schedulePaint()
     },
 
-    scrollToBottom() {
-      this.setData({ following: true })
+    onTapLatest() {
+      this.scrollToBottom(true)
+    },
+
+    scrollToBottom(animated = false) {
+      const self = this as ConvSelf
+      self._programmaticScrollUntil = Date.now() + (animated ? 400 : 180)
+      if (!this.data.following) this.setData({ following: true })
       const rows = (this.data.rows || []) as Row[]
-      const last = rows[rows.length - 1]
-      if (!last) {
+      if (!rows.length) {
         this.setData({ scrollIntoView: '' })
         return
       }
       const anchor = 'thread-end'
+      if (this.data.scrollAnimated !== animated) {
+        this.setData({ scrollAnimated: animated })
+      }
       if (this.data.scrollIntoView === anchor) {
-        // 同一锚点重设会强制视图跳动；先清再在下一帧恢复，等价于"贴底刷新"
+        // 同一锚点重设：流式期间关闭动画，避免每帧重启动画导致跳动
         this.setData({ scrollIntoView: '' })
         wx.nextTick(() => this.setData({ scrollIntoView: anchor }))
       } else {
@@ -267,30 +292,51 @@ Component({
 
     scheduleScrollToBottom() {
       if (!this.data.following) return
-      if (scrollBottomTimer) return
-      scrollBottomTimer = setTimeout(() => {
-        scrollBottomTimer = 0
-        this.scrollToBottom()
-      }, 80)
+      const self = this as ConvSelf
+      if (self._scrollTimer) return
+      self._scrollTimer = setTimeout(() => {
+        self._scrollTimer = 0
+        if (this.data.following) this.scrollToBottom(false)
+      }, 32)
     },
 
     onThreadTouch() {
-      if (scrollBottomTimer) clearTimeout(scrollBottomTimer)
-      scrollBottomTimer = 0
-      this.setData({ following: false, scrollIntoView: '' })
+      const self = this as ConvSelf
+      if (self._scrollTimer) {
+        clearTimeout(self._scrollTimer)
+        self._scrollTimer = 0
+      }
+      self._programmaticScrollUntil = 0
     },
 
     onThreadScroll(e: WechatMiniprogram.CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
+      const self = this as ConvSelf
+      const scrollTop = e.detail.scrollTop
+      const prevTop = self._lastScrollTop ?? scrollTop
+      self._lastScrollTop = scrollTop
+      const scrolledUp = scrollTop < prevTop - 8
+
       const update = (height: number) => {
-        const following = e.detail.scrollHeight - e.detail.scrollTop - height < 64
-        if (following !== this.data.following) this.setData({ following })
+        const nearBottom = e.detail.scrollHeight - scrollTop - height < 64
+        if (nearBottom) {
+          if (!this.data.following) this.setData({ following: true })
+          return
+        }
+        // 自动滚底期间的布局滞后不取消跟随，只有用户主动上滑才退出跟随
+        const inAutoScroll = (self._programmaticScrollUntil || 0) > Date.now()
+        if ((!inAutoScroll || scrolledUp) && this.data.following) {
+          this.setData({ following: false, scrollIntoView: '' })
+        }
       }
-      const height = (this as ConvSelf)._viewportHeight
-      if (height) update(height)
+      const height = self._viewportHeight
+      if (height) {
+        update(height)
+        return
+      }
       this.createSelectorQuery().select('.thread-scroll').boundingClientRect((rect) => {
         const box = rect as WechatMiniprogram.BoundingClientRectCallbackResult
         if (box?.height) {
-          ;(this as ConvSelf)._viewportHeight = box.height
+          self._viewportHeight = box.height
           update(box.height)
         }
       }).exec()
@@ -304,13 +350,14 @@ Component({
       this.triggerEvent('editimage', { id: e.currentTarget.dataset.id })
     },
 
-    schedulePaint(turns: ChatTurn[], reason: 'append' | 'interaction' = 'append') {
-      const list = Array.isArray(turns) ? turns : []
-      if (paintTimer) clearTimeout(paintTimer)
-      paintTimer = setTimeout(() => {
-        paintTimer = 0
-        this.paint(list, reason)
-      }, 80)
+    schedulePaint(reason: 'append' | 'interaction' = 'append') {
+      const self = this as ConvSelf
+      if (self._paintQueued) return
+      self._paintQueued = true
+      wx.nextTick(() => {
+        self._paintQueued = false
+        this.paint(this.currentTurns(), reason)
+      })
     },
 
     paint(turns: ChatTurn[], reason: 'append' | 'interaction' = 'append') {
@@ -320,7 +367,10 @@ Component({
       const prevRows = (this.data.rows || []) as Row[]
 
       let changed = false
-      if (!prevRows.length || prevRows.length !== nextRows.length) {
+      if (!this.data.ready) {
+        this.setData({ rows: nextRows, ready: true })
+        changed = true
+      } else if (!prevRows.length || prevRows.length !== nextRows.length) {
         this.setData({ rows: nextRows })
         changed = true
       } else {
@@ -341,7 +391,7 @@ Component({
       const grew = nextRows.length !== prevRows.length || nextRows.some((row, i) => {
         const prev = prevRows[i]
         return !prev || row.showImages !== prev.showImages || row.status !== prev.status ||
-          (row.kind === 'text' && (row.assistantContent !== prev.assistantContent || row.segments !== prev.segments))
+          (row.kind === 'text' && (row.markdown !== prev.markdown || row.segments !== prev.segments))
       })
       if (changed && grew && nextRows.length && reason === 'append') this.scheduleScrollToBottom()
 
@@ -350,16 +400,18 @@ Component({
     },
 
     startClock() {
-      if (clock) return
-      clock = setInterval(() => {
+      const self = this as ConvSelf
+      if (self._clock) return
+      self._clock = setInterval(() => {
         this.paint(this.currentTurns())
       }, 1000)
     },
 
     stopClock() {
-      if (!clock) return
-      clearInterval(clock)
-      clock = 0
+      const self = this as ConvSelf
+      if (!self._clock) return
+      clearInterval(self._clock)
+      self._clock = 0
     },
     onCreate() {
       this.triggerEvent('create')
@@ -369,18 +421,28 @@ Component({
       this.triggerEvent('retry', { id: e.currentTarget.dataset.id })
     },
 
+    openCopyFallback(text: string) {
+      this.setData({ copyFallbackText: text })
+    },
+
+    onCloseCopyFallback() {
+      this.setData({ copyFallbackText: '' })
+    },
+
+    noop() {},
+
     onCopyReply(e: WechatMiniprogram.BaseEvent) {
       const turn = this.currentTurns().find((item) => item.id === e.currentTarget.dataset.id)
       if (!turn || turn.kind !== 'text' || !turn.reply) return
       const data = stripGenUiForMarkdown(normalizeReply(turn.reply)).trim()
       if (!data) return
-      wx.setClipboardData({ data, fail: () => wx.showToast({ title: '复制失败，请再试一次', icon: 'none' }) })
+      copyText(data, { onPrivacyFallback: (text) => this.openCopyFallback(text) })
     },
 
     onCopyImageLink(e: WechatMiniprogram.BaseEvent) {
       const row = (this.data.rows as Row[]).find((item) => item.id === e.currentTarget.dataset.id)
       if (!row?.copyImageUrl) return
-      wx.setClipboardData({ data: row.copyImageUrl, fail: () => wx.showToast({ title: '复制失败，请再试一次', icon: 'none' }) })
+      copyText(row.copyImageUrl, { onPrivacyFallback: (text) => this.openCopyFallback(text) })
     },
 
     onPreview(e: WechatMiniprogram.BaseEvent) {
@@ -448,9 +510,9 @@ Component({
       const row = rows.find((item) => item.id === id)
       const seg = row?.segments[si]
       if (!seg || seg.kind !== 'copy' || !seg.text) return
-      wx.setClipboardData({
-        data: seg.text,
-        success: () => wx.showToast({ title: '已复制', icon: 'success' }),
+      copyText(seg.text, {
+        successTitle: '已复制',
+        onPrivacyFallback: (text) => this.openCopyFallback(text),
       })
     },
   },

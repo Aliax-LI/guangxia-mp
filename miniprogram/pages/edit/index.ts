@@ -33,38 +33,22 @@ import {
   type SessionKind,
 } from '../../utils/chat-sessions'
 import {
+  IMAGE_COUNTS,
+  IMAGE_QUALITIES,
+  IMAGE_RATIOS,
+  pickedImageSize,
+  shortModelLabel,
+} from '../../utils/image-options'
+import {
   onPagePrivacyAgree,
   openPrivacyContractPage,
   refreshPagePrivacy,
 } from '../../utils/privacy-page'
 
-type Opt = { id: string; label: string; size?: string }
-
-/** 仅展示网关真实支持的尺寸，避免选中的画幅与请求不一致。 */
-const RATIOS: Opt[] = [
-  { id: 'auto', label: '自动', size: 'auto' },
-  { id: '1:1', label: '方形 1:1', size: '1024x1024' },
-  { id: '2:3', label: '竖版 2:3', size: '1024x1536' },
-  { id: '3:2', label: '横版 3:2', size: '1536x1024' },
-]
-
-const QUALITIES: Opt[] = [
-  { id: 'auto', label: '自动推荐' },
-  { id: 'low', label: '快速' },
-  { id: 'medium', label: '标准' },
-  { id: 'high', label: '精细' },
-]
-
-const RESOLUTIONS: Opt[] = [
+const RESOLUTIONS = [
   { id: 'auto', label: '自动' },
   { id: '1k', label: '1K' },
 ]
-
-function pickedSize(ratioId: string, resolution: string): { size: string; label: string } {
-  const ratio = RATIOS.find((item) => item.id === ratioId) || RATIOS[0]
-  if (resolution === '1k' && ratio.id === 'auto') return { size: '1024x1024', label: ratio.label }
-  return { size: ratio.size || 'auto', label: ratio.label }
-}
 
 function localImage(src: string): Promise<string> {
   if (!/^https?:\/\//i.test(src) || /^https?:\/\/(tmp|usr)\//i.test(src)) {
@@ -123,6 +107,7 @@ Page({
   pickSource: 'album' as 'album' | 'camera',
   /** 已存入作品集的 turn id：防重复提交，并与组件内 saved 态联动 */
   savedTurnIds: new Set<string>(),
+  activeChatAbort: null as (() => void) | null,
   modelsLoaded: false,
   modelsLoading: false,
   data: {
@@ -136,18 +121,23 @@ Page({
     tool: 'chat' as 'chat' | 'image',
     menuOpen: false,
     panelOpen: false,
+    activeParam: '' as '' | 'model' | 'ratio' | 'count' | 'quality',
     imageModel: IMAGE_MODEL,
+    imageModelShort: shortModelLabel(IMAGE_MODEL),
     imageModels: [IMAGE_MODEL],
     imageModelLabels: [`${IMAGE_MODEL}（默认）`],
     imageModelIndex: 0,
     modelOpen: false,
-    ratios: RATIOS,
-    qualities: QUALITIES,
+    ratios: IMAGE_RATIOS,
+    qualities: IMAGE_QUALITIES,
     resolutions: RESOLUTIONS,
-    counts: [1, 2, 3, 4],
+    counts: [...IMAGE_COUNTS],
     ratioId: 'auto',
     ratioLabel: '自动',
+    ratioShort: '自动',
     quality: 'auto',
+    qualityLabel: '',
+    qualityShort: '自动',
     resolution: 'auto',
     count: 1,
     refImages: [] as string[],
@@ -300,7 +290,8 @@ Page({
     }
     if (consumeOpenComposer()) {
       this.ensureToolSession('image')
-      this.setData({ panelOpen: true, menuOpen: false })
+      this.setData({ panelOpen: false, menuOpen: false, historyOpen: false })
+      this.syncTabBarVisibility()
     }
     const draft = consumeComposerDraft()
     if (!draft) return
@@ -308,11 +299,13 @@ Page({
     this.setData({
       draft: draft.prompt,
       canSend: !!draft.prompt.trim(),
-      panelOpen: true,
+      panelOpen: false,
       menuOpen: false,
+      historyOpen: false,
       templateId: draft.templateId,
       templateTitle: draft.templateTitle,
     })
+    this.syncTabBarVisibility()
   },
 
   noop() {},
@@ -405,14 +398,22 @@ Page({
   },
 
   onClosePop() {
-    this.setData({ menuOpen: false, panelOpen: false, historyOpen: false, modelOpen: false })
+    this.setData({ menuOpen: false, panelOpen: false, historyOpen: false, modelOpen: false, activeParam: '' })
     this.syncTabBarVisibility()
   },
 
   onToggleMenu() {
     this.onHideKeyboard()
-    this.setData({ menuOpen: !this.data.menuOpen, panelOpen: false })
+    this.setData({ menuOpen: !this.data.menuOpen, panelOpen: false, activeParam: '' })
     this.syncTabBarVisibility()
+  },
+
+  onToggleParam(e: WechatMiniprogram.BaseEvent) {
+    this.onHideKeyboard()
+    const key = String(e.currentTarget.dataset.param || '') as '' | 'model' | 'ratio' | 'count' | 'quality'
+    const next = this.data.activeParam === key ? '' : key
+    this.setData({ activeParam: next, menuOpen: false, panelOpen: false })
+    if (next === 'model') void this.loadImageModels()
   },
 
   onTogglePanel() {
@@ -425,9 +426,8 @@ Page({
   onOpenImage() {
     this.onHideKeyboard()
     this.ensureToolSession('image')
-    this.setData({ panelOpen: true, menuOpen: false })
+    this.setData({ panelOpen: false, menuOpen: false, historyOpen: false, inputFocus: true })
     this.syncTabBarVisibility()
-    void this.loadImageModels()
   },
 
   onIdea(e: WechatMiniprogram.BaseEvent) {
@@ -477,6 +477,11 @@ Page({
     this.onHideKeyboard()
   },
 
+  onUnload() {
+    this.activeChatAbort?.()
+    this.activeChatAbort = null
+  },
+
   onResize(e: { size: { windowHeight: number } }) {
     this.setData({ viewportHeight: e.size.windowHeight })
   },
@@ -486,11 +491,25 @@ Page({
   },
 
   onResetOptions() {
-    this.setData({ ratioId: 'auto', ratioLabel: '自动', quality: 'auto', count: 1, resolution: 'auto', imageModel: IMAGE_MODEL, imageModelIndex: 0 })
+    this.setData({
+      ratioId: 'auto',
+      ratioLabel: '自动',
+      ratioShort: '自动',
+      quality: 'auto',
+      qualityLabel: '',
+      qualityShort: '自动',
+      count: 1,
+      resolution: 'auto',
+      imageModel: IMAGE_MODEL,
+      imageModelShort: shortModelLabel(IMAGE_MODEL),
+      imageModelIndex: Math.max(0, this.data.imageModels.indexOf(IMAGE_MODEL)),
+      activeParam: '',
+    })
+    wx.showToast({ title: '已恢复默认参数', icon: 'none' })
   },
 
   syncTabBarVisibility() {
-    this.getTabBar?.()?.setData({ keyboardHidden: !!(this.data.keyboard || this.data.panelOpen || this.data.historyOpen || this.data.menuOpen) })
+    this.getTabBar?.()?.setData({ keyboardHidden: !!(this.data.keyboard || this.data.panelOpen || this.data.historyOpen) })
   },
 
   async loadImageModels() {
@@ -499,7 +518,12 @@ Page({
     try {
       const imageModels = await listImageModels()
       this.modelsLoaded = true
-      this.setData({ imageModels, imageModelLabels: imageModels.map((id) => id === IMAGE_MODEL ? `${id}（默认）` : id), imageModelIndex: Math.max(0, imageModels.indexOf(this.data.imageModel)) })
+      this.setData({
+        imageModels,
+        imageModelLabels: imageModels.map((id) => (id === IMAGE_MODEL ? `${id}（默认）` : id)),
+        imageModelIndex: Math.max(0, imageModels.indexOf(this.data.imageModel)),
+        imageModelShort: shortModelLabel(this.data.imageModel),
+      })
     } catch {
       wx.showToast({ title: '模型列表暂不可用，保留默认模型', icon: 'none' })
     } finally {
@@ -515,7 +539,15 @@ Page({
   onPickModel(e: WechatMiniprogram.BaseEvent) {
     const imageModelIndex = Number(e.currentTarget.dataset.index)
     const imageModel = this.data.imageModels[imageModelIndex]
-    if (imageModel) this.setData({ imageModel, imageModelIndex, modelOpen: false })
+    if (imageModel) {
+      this.setData({
+        imageModel,
+        imageModelShort: shortModelLabel(imageModel),
+        imageModelIndex,
+        modelOpen: false,
+        activeParam: '',
+      })
+    }
   },
 
   async onEditImage(e: WechatMiniprogram.CustomEvent<{ id?: string }>) {
@@ -537,29 +569,44 @@ Page({
     this.ensureToolSession(tool)
     this.setData({
       menuOpen: false,
+      activeParam: '',
       panelOpen: tool === 'image' ? this.data.panelOpen : false,
     })
+    this.syncTabBarVisibility()
   },
 
   onPickOpt(e: WechatMiniprogram.BaseEvent) {
     const group = String(e.currentTarget.dataset.group || '')
     const id = String(e.currentTarget.dataset.id || '')
-    if (group === 'quality' && QUALITIES.some((item) => item.id === id)) {
-      this.setData({ quality: id })
+    if (group === 'quality') {
+      const picked = IMAGE_QUALITIES.find((item) => item.id === id)
+      if (!picked) return
+      this.setData({
+        quality: id,
+        qualityLabel: id === 'auto' ? '' : picked.label,
+        qualityShort: picked.shortLabel || picked.label,
+        activeParam: '',
+      })
       return
     }
     if (group === 'count') {
       const count = Number(id)
-      if (count >= 1 && count <= 4) this.setData({ count })
+      if (count >= 1 && count <= 4) this.setData({ count, activeParam: '' })
       return
     }
     if (group === 'resolution' && RESOLUTIONS.some((item) => item.id === id)) {
-      this.setData({ resolution: id })
+      this.setData({ resolution: id, activeParam: '' })
       return
     }
-    if (group === 'ratio' && RATIOS.some((item) => item.id === id)) {
-      const ratio = RATIOS.find((item) => item.id === id) || RATIOS[0]
-      this.setData({ ratioId: id, ratioLabel: ratio.label })
+    if (group === 'ratio') {
+      const ratio = IMAGE_RATIOS.find((item) => item.id === id)
+      if (!ratio) return
+      this.setData({
+        ratioId: id,
+        ratioLabel: ratio.label,
+        ratioShort: ratio.shortLabel || ratio.label,
+        activeParam: '',
+      })
     }
   },
 
@@ -637,7 +684,7 @@ Page({
   },
 
   imageJob(prompt: string, imagePaths: string[]): ComposeJob {
-    const sized = pickedSize(this.data.ratioId, this.data.resolution)
+    const sized = pickedImageSize(this.data.ratioId, this.data.resolution)
     const synced = syncInputImages(imagePaths)
     return Object.assign({}, synced, {
       prompt,
@@ -660,6 +707,11 @@ Page({
       return
     }
     this.pushText(prompt)
+  },
+
+  onStopStream() {
+    this.activeChatAbort?.()
+    this.activeChatAbort = null
   },
 
   onSendTap() {
@@ -813,13 +865,22 @@ Page({
         }
         let reply = ''
         try {
-          reply = await chatStream(messages, (text) => {
-            latest = text
-            if (timer) return
-            timer = setTimeout(paint, 80)
-          })
+          reply = await chatStream(
+            messages,
+            (text) => {
+              latest = text
+              if (timer) return
+              timer = setTimeout(paint, 50)
+            },
+            {
+              onAbortReady: (abort) => {
+                this.activeChatAbort = abort
+              },
+            },
+          )
         } finally {
           if (timer) clearTimeout(timer)
+          this.activeChatAbort = null
         }
         patch({ status: 'done', reply: reply || latest, error: '' })
         return

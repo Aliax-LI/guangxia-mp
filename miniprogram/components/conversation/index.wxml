@@ -10,7 +10,7 @@
   enhanced
   show-scrollbar="{{false}}"
   scroll-into-view="{{scrollIntoView}}"
-  scroll-with-animation
+  scroll-with-animation="{{scrollAnimated}}"
   enable-back-to-top
   bindscroll="onThreadScroll"
   bindtouchstart="onThreadTouch"
@@ -52,14 +52,13 @@
       </block>
 
       <block
-        wx:if="{{item.status !== 'error' && (item.thinking || item.generating || item.showImages || item.segments.length || item.liveText || item.assistantContent.length || item.status === 'generating')}}"
+        wx:if="{{item.status !== 'error' && (item.thinking || item.generating || item.showImages || item.segments.length || item.liveText || item.markdown || item.status === 'generating')}}"
       >
         <t-chat-message
           role="assistant"
           placement="left"
           variant="base"
           status="{{item.assistantStatus}}"
-          content="{{item.assistantContent}}"
           animation="dots"
           data-id="{{item.id}}"
           bindlongpress="onCopyReply"
@@ -108,6 +107,9 @@
             </view>
           </block>
         </view>
+        <view wx:elif="{{item.markdown}}" slot="content" class="rich">
+          <t-chat-markdown content="{{item.markdown}}" />
+        </view>
         <view wx:elif="{{item.generating || item.showImages}}" slot="content" class="generation-content">
         <view wx:if="{{item.generating}}" class="generation-status"><view class="status-dot"></view><text class="generation-label">{{item.stage}}</text></view>
         <view wx:if="{{item.generating}}" class="wait-surface" style="--wait-padding: {{item.waitPadding}}%;">
@@ -146,7 +148,7 @@
         <view wx:if="{{item.liveText}}" slot="actionbar" class="ink">
           <view class="ink-bar {{motion ? 'on' : ''}}"></view>
         </view>
-        <view wx:if="{{item.kind === 'text' && item.status === 'done' && (item.assistantContent.length || item.segments.length)}}" slot="actionbar" class="actions">
+        <view wx:if="{{item.kind === 'text' && item.status === 'done' && (item.markdown || item.segments.length)}}" slot="actionbar" class="actions">
           <view class="chip-act" data-id="{{item.id}}" bindtap="onCopyReply" aria-role="button" aria-label="复制回复">复制回复</view>
         </view>
         <!-- 成片后的动作：轻量文字按钮。实心琥珀只留给页面级主操作（如「做同款」），
@@ -177,16 +179,43 @@
   <view id="thread-end" style="height: 1px;"></view>
 </scroll-view>
 
-<view wx:if="{{rows.length && !following}}" class="latest" bindtap="scrollToBottom" aria-role="button">回到最新消息 ↓</view>
+<view wx:if="{{rows.length && !following}}" class="latest" bindtap="onTapLatest" aria-role="button">回到最新消息 ↓</view>
 
-<view wx:if="{{!rows.length}}" class="empty">
-  <view class="empty-mark">
-    <t-icon name="chat-bubble-smile" size="52rpx" color="#c9761b" />
+<view wx:if="{{ready && !rows.length}}" class="empty">
+  <view class="empty-stage">
+    <view class="empty-glow {{motion ? 'on' : ''}}" aria-hidden="true"></view>
+    <view class="empty-mark">
+      <view class="finder-corner tl" aria-hidden="true"></view>
+      <view class="finder-corner tr" aria-hidden="true"></view>
+      <view class="finder-corner bl" aria-hidden="true"></view>
+      <view class="finder-corner br" aria-hidden="true"></view>
+      <t-icon name="chat-bubble-smile" size="48rpx" color="#c9761b" />
+    </view>
   </view>
-  <text class="empty-title">直接说，或先做一张图</text>
-  <text class="empty-sub">对话用来改文案、找灵感；画图会记住你这次上传的参考图</text>
-  <view class="empty-act" bindtap="onCreate">
+  <text class="empty-title empty-rise r1">直接说，或先做一张图</text>
+  <text class="empty-sub empty-rise r2">对话用来改文案、找灵感；画图会记住你这次上传的参考图</text>
+  <view class="empty-pills empty-rise r3">
+    <text class="empty-pill">文字润色</text>
+    <text class="empty-pill">带图提问</text>
+    <text class="empty-pill">以图生图</text>
+  </view>
+  <view class="empty-act empty-rise r4" bindtap="onCreate">
     <text>开始画图</text>
     <t-icon name="chevron-right" size="28rpx" color="#fffdf9" />
+  </view>
+</view>
+
+<view wx:if="{{copyFallbackText}}" class="copy-mask" catchtap="onCloseCopyFallback" catchtouchmove="noop">
+  <view class="copy-sheet" catchtap="noop" aria-role="dialog" aria-label="长按复制内容">
+    <view class="copy-sheet-hd">
+      <text class="copy-sheet-title">长按下方文字即可复制</text>
+      <view class="copy-sheet-close" catchtap="onCloseCopyFallback" aria-role="button" aria-label="关闭">
+        <t-icon name="close" size="34rpx" color="#5c5145" />
+      </view>
+    </view>
+    <text class="copy-sheet-tip">隐私指引暂未开放一键写入剪切板，可长按选中文字自由复制</text>
+    <scroll-view class="copy-sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <text class="copy-sheet-text" selectable="{{true}}" user-select="{{true}}">{{copyFallbackText}}</text>
+    </scroll-view>
   </view>
 </view>

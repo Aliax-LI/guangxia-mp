@@ -15,20 +15,38 @@
 
   <!-- 空态：一句话说明能力 + 可直接点的起始句（一段文字，不是一摞卡片） -->
   <view wx:if="{{!turnCount}}" class="intro">
-    <text class="intro-title">{{tool === 'image' ? '说画面，我来出图' : '今天想聊点什么？'}}</text>
-    <text class="intro-sub">{{tool === 'image' ? '上传参考图，或用一句话描述；出图后可以继续修改' : '可以发文字，也可以带图一起问'}}</text>
+    <view class="intro-hero">
+      <view class="intro-emblem {{tool === 'image' ? 'is-image' : ''}}">
+        <view class="intro-halo" aria-hidden="true"></view>
+        <view class="intro-card">
+          <view class="intro-corner tl" aria-hidden="true"></view>
+          <view class="intro-corner tr" aria-hidden="true"></view>
+          <view class="intro-corner bl" aria-hidden="true"></view>
+          <view class="intro-corner br" aria-hidden="true"></view>
+          <t-icon name="{{tool === 'image' ? 'image' : 'chat-bubble-smile'}}" size="44rpx" color="#c9761b" />
+        </view>
+      </view>
+      <text class="intro-title">{{tool === 'image' ? '说画面，我来出图' : '今天想聊点什么？'}}</text>
+      <text class="intro-sub">{{tool === 'image' ? '上传参考图，或用一句话描述；出图后可以继续修改' : '可以发文字，也可以带图一起问'}}</text>
+      <view class="intro-caps">
+        <text class="intro-cap">{{tool === 'image' ? '一句话成片' : '文案润色'}}</text>
+        <text class="intro-cap">{{tool === 'image' ? '参考图精修' : '带图提问'}}</text>
+        <text class="intro-cap">{{tool === 'image' ? '多画幅切换' : '灵感拆解'}}</text>
+      </view>
+    </view>
 
     <view wx:if="{{!keyboard}}" class="starters">
       <text class="starters-label">{{tool === 'image' ? '试试这些画面' : '试试这样问'}}</text>
       <view
         wx:for="{{tool === 'image' ? imageIdeas : chatIdeas}}"
         wx:key="*this"
-        class="starter"
+        class="starter s-{{index}}"
         data-text="{{item}}"
         bindtap="onIdea"
       >
         <view class="starter-mark"></view>
         <text class="starter-text">{{item}}</text>
+        <t-icon name="chevron-right" size="28rpx" color="#8b7f70" />
       </view>
     </view>
   </view>
@@ -45,7 +63,12 @@
     />
   </view>
 
-  <view wx:if="{{menuOpen || panelOpen || historyOpen}}" class="scrim" catchtap="onClosePop" catchtouchmove="noop"></view>
+  <view
+    wx:if="{{menuOpen || activeParam || panelOpen || historyOpen}}"
+    class="scrim {{(menuOpen || activeParam) && !panelOpen && !historyOpen ? 'scrim--clear' : ''}}"
+    catchtap="onClosePop"
+    catchtouchmove="noop"
+  ></view>
 
   <!-- 会话抽屉 -->
   <view class="drawer {{historyOpen ? 'open' : ''}}" catchtap="noop">
@@ -115,7 +138,51 @@
   </view>
 
   <!-- 输入坞：参数条 / 参数面板 / 输入框 -->
-  <view class="dock">
+  <view class="dock {{menuOpen || activeParam ? 'menu-open' : ''}}">
+    <!-- 豆包式原地参数选项条 -->
+    <scroll-view wx:if="{{tool === 'image' && activeParam}}" scroll-x enhanced show-scrollbar="{{false}}" class="param-pop" catchtap="noop">
+      <view class="param-pop-in">
+        <block wx:if="{{activeParam === 'ratio'}}">
+          <view
+            wx:for="{{ratios}}"
+            wx:key="id"
+            class="param-pop-item {{ratioId === item.id ? 'on' : ''}}"
+            data-group="ratio"
+            data-id="{{item.id}}"
+            catchtap="onPickOpt"
+          >{{item.label}}</view>
+        </block>
+        <block wx:elif="{{activeParam === 'count'}}">
+          <view
+            wx:for="{{counts}}"
+            wx:key="*this"
+            class="param-pop-item {{count === item ? 'on' : ''}}"
+            data-group="count"
+            data-id="{{item}}"
+            catchtap="onPickOpt"
+          >{{item}} 张</view>
+        </block>
+        <block wx:elif="{{activeParam === 'quality'}}">
+          <view
+            wx:for="{{qualities}}"
+            wx:key="id"
+            class="param-pop-item {{quality === item.id ? 'on' : ''}}"
+            data-group="quality"
+            data-id="{{item.id}}"
+            catchtap="onPickOpt"
+          >{{item.shortLabel || item.label}}</view>
+        </block>
+        <block wx:elif="{{activeParam === 'model'}}">
+          <view
+            wx:for="{{imageModelLabels}}"
+            wx:key="*this"
+            class="param-pop-item {{imageModelIndex === index ? 'on' : ''}}"
+            data-index="{{index}}"
+            catchtap="onPickModel"
+          >{{item}}</view>
+        </block>
+      </view>
+    </scroll-view>
     <view class="dock-bar">
       <view class="tool">
         <view class="chip" catchtap="onToggleMenu">
@@ -134,14 +201,31 @@
         </view>
       </view>
 
-      <view wx:if="{{tool === 'image'}}" class="chip" catchtap="onTogglePanel">
-        <text>{{ratioLabel}}</text>
-        <text class="chip-sep">·</text>
-        <text>{{count}} 张</text>
-        <t-icon name="{{panelOpen ? 'chevron-up' : 'chevron-down'}}" size="24rpx" color="#6f6355" />
-      </view>
+      <scroll-view wx:if="{{tool === 'image'}}" scroll-x enhanced show-scrollbar="{{false}}" class="dock-params">
+        <view class="dock-params-in">
+          <view class="chip param-chip {{activeParam === 'model' ? 'open' : ''}}" data-param="model" catchtap="onToggleParam">
+            <text class="param-k">模型</text>
+            <text class="param-v">{{imageModelShort}}</text>
+            <t-icon name="{{activeParam === 'model' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="chip param-chip {{activeParam === 'ratio' ? 'open' : ''}} {{ratioId !== 'auto' ? 'active' : ''}}" data-param="ratio" catchtap="onToggleParam">
+            <text class="param-k">比例</text>
+            <text class="param-v">{{ratioShort}}</text>
+            <t-icon name="{{activeParam === 'ratio' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="chip param-chip {{activeParam === 'count' ? 'open' : ''}} {{count > 1 ? 'active' : ''}}" data-param="count" catchtap="onToggleParam">
+            <text class="param-v">{{count}} 张</text>
+            <t-icon name="{{activeParam === 'count' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+          <view class="chip param-chip {{activeParam === 'quality' ? 'open' : ''}} {{quality !== 'auto' ? 'active' : ''}}" data-param="quality" catchtap="onToggleParam">
+            <text class="param-k">画质</text>
+            <text class="param-v">{{qualityShort}}</text>
+            <t-icon name="{{activeParam === 'quality' ? 'chevron-up' : 'chevron-down'}}" size="22rpx" color="#6f6355" />
+          </view>
+        </view>
+      </scroll-view>
 
-      <view class="dock-spacer"></view>
+      <view wx:if="{{tool !== 'image'}}" class="dock-spacer"></view>
 
       <text wx:if="{{nearLimit}}" class="count {{overLimit ? 'over' : ''}}">{{draft.length}} / 4000</text>
 
@@ -204,7 +288,16 @@
             <t-icon name="add" size="38rpx" color="#5c5145" />
           </view>
           <view
-            wx:if="{{canSend}}"
+            wx:if="{{tool === 'chat' && busy}}"
+            class="composer-end stop"
+            catchtap="onStopStream"
+            aria-role="button"
+            aria-label="停止生成"
+          >
+            <view class="stop-square" aria-hidden="true"></view>
+          </view>
+          <view
+            wx:elif="{{canSend}}"
             class="composer-end go {{busy ? 'busy' : ''}}" aria-disabled="{{busy}}"
             catchtap="onSendTap"
             aria-role="button"
@@ -219,36 +312,58 @@
   </view>
 
   <view wx:if="{{panelOpen}}" class="panel" catchtap="noop" aria-role="dialog" aria-label="画图设置">
+    <view class="panel-handle" aria-hidden="true"></view>
     <view class="panel-heading">
-      <text class="panel-title">画图设置</text>
-      <view class="panel-close" catchtap="onClosePop" aria-role="button" aria-label="关闭设置"><t-icon name="close" size="36rpx" /></view>
+      <view class="panel-head-text">
+        <text class="panel-title">画图设置</text>
+        <text class="panel-summary">{{ratioLabel}} · {{count}} 张 · {{qualityLabel || '自动画质'}}</text>
+      </view>
+      <view class="panel-close" catchtap="onClosePop" aria-role="button" aria-label="关闭设置"><t-icon name="close" size="36rpx" color="#5c5145" /></view>
     </view>
     <scroll-view class="panel-body" scroll-y enhanced show-scrollbar="{{false}}">
-      <view class="p-row model-picker" catchtap="onToggleModels" aria-role="button" aria-label="选择模型" aria-expanded="{{modelOpen}}">
-        <text class="p-k">模型</text><view class="model-value"><text>{{imageModel}}</text><t-icon name="{{modelOpen ? 'chevron-up' : 'chevron-down'}}" size="26rpx" /></view>
-      </view>
-      <view wx:if="{{modelOpen}}" class="model-options">
-        <view wx:for="{{imageModelLabels}}" wx:key="*this" class="model-option {{imageModelIndex === index ? 'selected' : ''}}" data-index="{{index}}" catchtap="onPickModel" aria-role="button" aria-pressed="{{imageModelIndex === index}}">
-          <text>{{item}}</text><t-icon wx:if="{{imageModelIndex === index}}" name="check" size="30rpx" color="#a85f11" />
-        </view>
-      </view>
-      <text class="p-k p-k--block">画幅</text>
+      <view class="panel-sec">
+        <text class="p-k p-k--block">画幅比例</text>
       <view class="pills ratio-options">
         <view wx:for="{{ratios}}" wx:key="id" class="pill ratio-tile {{ratioId === item.id ? 'pill--on' : ''}}" data-id="{{item.id}}" data-group="ratio" catchtap="onPickOpt" aria-role="button" aria-label="{{item.label}}" aria-pressed="{{ratioId === item.id}}">
           <view class="ratio-preview"><view class="ratio-shape {{item.id === 'auto' ? 'ratio-auto' : item.id === '1:1' ? 'ratio-square' : item.id === '2:3' ? 'ratio-portrait' : 'ratio-landscape'}}"></view></view>
           <text class="ratio-name">{{item.id === 'auto' ? '自动' : item.id === '1:1' ? '方形' : item.id === '2:3' ? '竖版' : '横版'}}</text>
-          <text wx:if="{{item.id !== 'auto'}}" class="ratio-size">{{item.id}}</text>
+          <text class="ratio-size">{{item.id === 'auto' ? '自适应' : item.id}}</text>
         </view>
       </view>
+      </view>
+      <view class="panel-sec">
       <text class="p-k p-k--block">生成张数</text>
       <view class="pills count-options">
         <view wx:for="{{counts}}" wx:key="*this" class="pill {{count === item ? 'pill--on' : ''}}" data-id="{{item}}" data-group="count" catchtap="onPickOpt" aria-role="button" aria-pressed="{{count === item}}">{{item}} 张</view>
       </view>
-      <view class="advanced-toggle" catchtap="onToggleAdvanced" aria-role="button" aria-expanded="{{advancedOpen}}"><text>更多设置</text><t-icon name="{{advancedOpen ? 'chevron-up' : 'chevron-down'}}" size="28rpx" /></view>
-      <view wx:if="{{advancedOpen}}">
+      </view>
+      <view class="panel-sec">
         <text class="p-k p-k--block">画面质量</text>
         <view class="pills quality-options">
           <view wx:for="{{qualities}}" wx:key="id" class="pill {{quality === item.id ? 'pill--on' : ''}}" data-id="{{item.id}}" data-group="quality" catchtap="onPickOpt" aria-role="button" aria-pressed="{{quality === item.id}}">{{item.id === 'auto' ? '自动' : item.label}}</view>
+        </view>
+      </view>
+      <view class="panel-sec">
+        <view class="model-row" catchtap="onToggleModels" aria-role="button" aria-label="选择模型" aria-expanded="{{modelOpen}}">
+          <text class="p-k">模型</text>
+          <view class="model-row-val">
+            <text class="model-row-name">{{imageModel}}</text>
+            <t-icon name="{{modelOpen ? 'chevron-up' : 'chevron-down'}}" size="26rpx" color="#6f6355" />
+          </view>
+        </view>
+        <view wx:if="{{modelOpen}}" class="model-list">
+          <view
+            wx:for="{{imageModelLabels}}"
+            wx:key="*this"
+            class="model-opt {{imageModelIndex === index ? 'on' : ''}}"
+            data-index="{{index}}"
+            catchtap="onPickModel"
+            aria-role="button"
+            aria-pressed="{{imageModelIndex === index}}"
+          >
+            <text>{{item}}</text>
+            <t-icon wx:if="{{imageModelIndex === index}}" name="check" size="28rpx" color="#a85f11" />
+          </view>
         </view>
       </view>
     </scroll-view>

@@ -58,5 +58,7 @@ export const IMAGE_MODEL = 'gpt-image-2.5'
  */
 export const IMAGE_KEY_GROUP_ID = 12
 export const IMAGE_KEY_GROUP_NAME = '限时特价'
+/** 小程序默认专用的 Sub2API Key 名称 */
+export const APP_API_KEY_NAME = '光匣'
 
 export const LIST_PAGE_SIZE = 20

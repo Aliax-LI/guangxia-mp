@@ -72,7 +72,7 @@ function pushUtf8(carry: number[], chunk: ArrayBuffer | Uint8Array | string): st
 }
 
 function drip(text: string, onDelta: (text: string) => void): Promise<void> {
-  const step = Math.max(2, Math.ceil(text.length / 24))
+/*  */  const step = Math.max(2, Math.ceil(text.length / 24))
   return new Promise((resolve) => {
     let i = 0
     const tick = () => {

@@ -3,6 +3,7 @@ import {
   getBoundGroupSnapshot,
   isLoggedIn,
   logout,
+  refreshBoundGroup,
   switchBoundGroup,
   type Sub2Group,
 } from '../../services/auth'
@@ -40,6 +41,7 @@ Page({
     initialGroupId: 0,
     groupId: 0,
     groupName: '',
+    keyName: '',
     groupAllowsImage: true,
   },
 
@@ -59,15 +61,19 @@ Page({
       initialGroupId: bound.groupId,
       groupId: bound.groupId,
       groupName: bound.groupName,
+      keyName: bound.keyName,
     })
-    void this.loadGroups(bound.groupId)
+    void this.loadGroups()
   },
 
-  async loadGroups(currentGroupId: number) {
+  async loadGroups() {
     this.setData({ groupsLoading: true })
     try {
-      const groups = await fetchAvailableGroups()
-      const idx = Math.max(0, groups.findIndex((g) => g.id === currentGroupId))
+      const [bound, groups] = await Promise.all([
+        refreshBoundGroup(),
+        fetchAvailableGroups(),
+      ])
+      const idx = Math.max(0, groups.findIndex((g) => g.id === bound.groupId))
       const selected = groups[idx]
       const groupLabels = groups.map((g) => {
         const rate = g.rate_multiplier != null ? ` · ${g.rate_multiplier}x` : ''
@@ -78,8 +84,10 @@ Page({
         groups,
         groupLabels,
         groupIndex: idx,
-        groupId: selected?.id || currentGroupId,
-        groupName: selected?.name || this.data.groupName,
+        initialGroupId: bound.groupId,
+        groupId: selected?.id || bound.groupId,
+        groupName: selected?.name || bound.groupName,
+        keyName: bound.keyName,
         groupAllowsImage: selected ? selected.allow_image_generation !== false : true,
       })
     } catch {

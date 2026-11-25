@@ -3,6 +3,7 @@ const REFRESH_TOKEN = 'sub2api_refresh_token'
 const TOKEN_EXPIRES_AT = 'sub2api_token_expires_at'
 const API_KEY = 'sub2api_api_key'
 const API_KEY_ID = 'sub2api_api_key_id'
+const API_KEY_NAME = 'sub2api_api_key_name'
 /** 记住这个 Key 属于哪个 Sub2API 分组，用来判断能不能出图 */
 const API_KEY_GROUP = 'sub2api_api_key_group'
 const PREFERRED_GROUP_ID = 'sub2api_preferred_group_id'
@@ -84,6 +85,15 @@ export function setApiKeyId(id: number) {
   wx.setStorageSync(API_KEY_ID, id)
 }
 
+export function getApiKeyName(): string {
+  return wx.getStorageSync(API_KEY_NAME) || ''
+}
+
+export function setApiKeyName(name: string) {
+  if (name) wx.setStorageSync(API_KEY_NAME, name)
+  else wx.removeStorageSync(API_KEY_NAME)
+}
+
 export function getApiKeyGroup(): string {
   return wx.getStorageSync(API_KEY_GROUP) || ''
 }
@@ -91,6 +101,7 @@ export function getApiKeyGroup(): string {
 export function clearApiKey() {
   wx.removeStorageSync(API_KEY)
   wx.removeStorageSync(API_KEY_ID)
+  wx.removeStorageSync(API_KEY_NAME)
   wx.removeStorageSync(API_KEY_GROUP)
 }
 
@@ -128,6 +139,7 @@ export function clearAuth() {
   wx.removeStorageSync(TOKEN_EXPIRES_AT)
   wx.removeStorageSync(API_KEY)
   wx.removeStorageSync(API_KEY_ID)
+  wx.removeStorageSync(API_KEY_NAME)
   wx.removeStorageSync(API_KEY_GROUP)
   wx.removeStorageSync(PREFERRED_GROUP_ID)
   wx.removeStorageSync(PREFERRED_GROUP_NAME)

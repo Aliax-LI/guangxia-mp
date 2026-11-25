@@ -73,7 +73,10 @@
       bindchange="onPickGroup"
     >
       <view class="pe-field pe-field--row">
-        <text class="pe-label">Sub2API 分组</text>
+        <view class="pe-label-stack">
+          <text class="pe-label">Sub2API 分组</text>
+          <text class="pe-sub-label">密钥：{{keyName || '光匣'}}</text>
+        </view>
         <view class="pe-readonly">
           <text class="pe-group-name">{{groupsLoading ? '加载中…' : (groupName || '未绑定')}}</text>
           <t-icon name="chevron-right" size="28rpx" color="#8b7f70" />

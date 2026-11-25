@@ -88,12 +88,14 @@ Page({
 
     try {
       await ensureApiKey()
+      const boundAfter = getBoundGroupSnapshot()
       const self = await fetchUserSelf()
       this.setData({
         email: self.email || email,
         nickname: profile.nickname || self.username || email.split('@')[0],
         balanceDisplay: formatPointsFromUsd(self.balance ?? 0),
         accountText: self.email || email,
+        groupName: boundAfter.groupName,
       })
 
       const usage = await fetchUsageSummary()

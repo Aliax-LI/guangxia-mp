@@ -1,5 +1,5 @@
 import { requestJson } from './http'
-import { IMAGE_KEY_GROUP_ID, IMAGE_KEY_GROUP_NAME } from '../config/index'
+import { APP_API_KEY_NAME, IMAGE_KEY_GROUP_ID, IMAGE_KEY_GROUP_NAME } from '../config/index'
 import {
   clearAuth,
   getAccessToken,
@@ -7,6 +7,7 @@ import {
   getApiKey,
   getApiKeyGroup,
   getApiKeyId,
+  getApiKeyName,
   getPreferredGroupId,
   getPreferredGroupName,
   setAccessToken,
@@ -14,6 +15,7 @@ import {
   setApiKey,
   setApiKeyGroup,
   setApiKeyId,
+  setApiKeyName,
   setPreferredGroup,
   setRefreshToken,
   setUserEmail,
@@ -66,16 +68,18 @@ function targetGroupId(override?: number): number {
   return override || getPreferredGroupId() || IMAGE_KEY_GROUP_ID
 }
 
-/** 这条 Key 是否属于目标分组：优先比对 group_id，回退嵌套对象 id/name */
-function inTargetGroup(row: ApiKeyRow, groupId: number): boolean {
-  if (row.group_id != null) return Number(row.group_id) === groupId
-  if (row.group?.id != null) return Number(row.group.id) === groupId
-  return groupId === IMAGE_KEY_GROUP_ID && (row.group?.name || '') === IMAGE_KEY_GROUP_NAME
-}
-
 /** 分组的展示名：嵌套对象优先，回退到配置名 */
 function groupDisplayName(row: ApiKeyRow): string {
   return row.group?.name || getPreferredGroupName() || IMAGE_KEY_GROUP_NAME
+}
+
+function syncKeyCache(row: ApiKeyRow) {
+  const gid = Number(row.group_id ?? row.group?.id ?? targetGroupId())
+  setApiKey(row.key)
+  setApiKeyId(row.id)
+  setApiKeyName(row.name || APP_API_KEY_NAME)
+  setApiKeyGroup(String(gid))
+  setPreferredGroup(gid, row.group?.name || (gid === IMAGE_KEY_GROUP_ID ? IMAGE_KEY_GROUP_NAME : undefined))
 }
 
 type KeyList = {
@@ -138,25 +142,21 @@ function isFullApiKey(key: string): boolean {
 }
 
 /**
- * 取一个能出图的 API Key。
+ * 确保「光匣」专用 API Key 就绪并返回。
  *
  * 规则：
- * 1. 本地已存且分组正确 → 直接用；
- * 2. 本地存的是错分组的旧 Key → 丢弃，重新挑（老用户迁移）；
- * 3. 列表里有同分组且启用的 Key → 用它；
- * 4. 都没有 → 带 group 新建一个。
- *
- * 分组不对时 `gpt-image-2.5` 会在网关侧直接报 not supported，所以宁可在
- * 这里多一次请求，也不要把错 Key 带进生成流程。
+ * 1. 本地已缓存且名称为「光匣」→ 直接使用；
+ * 2. 查询 `/keys` 列表寻找名为「光匣」的激活 Key → 命中则同步其真实服务端分组到本地；
+ * 3. 若账号下还没有「光匣」Key → 按当前目标分组（默认限时特价）初始化创建。
  */
-export async function ensureApiKey(groupIdOverride?: number): Promise<string> {
+export async function ensureApiKey(forceRefresh = false): Promise<string> {
   const token = getAccessToken()
   if (!token) throw new Error('未登录')
 
-  const groupId = targetGroupId(groupIdOverride)
-  const cachedGroup = getApiKeyGroup()
   const existing = getApiKey()
-  if (existing && isFullApiKey(existing) && cachedGroup === String(groupId)) {
+  const existingId = getApiKeyId()
+  const existingName = getApiKeyName()
+  if (!forceRefresh && existing && isFullApiKey(existing) && existingId > 0 && existingName === APP_API_KEY_NAME) {
     return existing
   }
 
@@ -165,34 +165,28 @@ export async function ensureApiKey(groupIdOverride?: number): Promise<string> {
     accessToken: token,
   })
   const items = list.items || []
-  const active = items.find(
-    (k) => k.status === 'active' && isFullApiKey(k.key) && inTargetGroup(k, groupId),
+  const dedicated = items.find(
+    (k) => k.name === APP_API_KEY_NAME && k.status === 'active' && isFullApiKey(k.key),
   )
-  if (active) {
-    setApiKey(active.key)
-    setApiKeyId(active.id)
-    setApiKeyGroup(String(groupId))
-    if (active.group?.name) setPreferredGroup(groupId, active.group.name)
-    return active.key
+  if (dedicated) {
+    syncKeyCache(dedicated)
+    return dedicated.key
   }
 
+  const groupId = targetGroupId()
   const created = await requestJson<ApiKeyRow>({
     url: '/keys',
     method: 'POST',
     accessToken: token,
     // 后端接收的是数字 group_id；传名字符串 name 会被忽略，建出无分组 Key
-    data: { name: `miniprogram-${Date.now().toString(36)}`, group_id: groupId },
+    data: { name: APP_API_KEY_NAME, group_id: groupId },
   })
   if (!created.key || !isFullApiKey(created.key)) {
     throw new Error(
-      `创建 API Key 失败。请到网页端创建「${groupDisplayName(created)}」分组的 Key 后粘贴到设置里`,
+      `创建「${APP_API_KEY_NAME}」API Key 失败。请到网页端创建名为「${APP_API_KEY_NAME}」的 Key（${groupDisplayName(created)}分组）后重试`,
     )
   }
-  const actualGroupId = Number(created.group_id ?? groupId)
-  setApiKey(created.key)
-  setApiKeyId(created.id)
-  setApiKeyGroup(String(actualGroupId))
-  setPreferredGroup(actualGroupId, created.group?.name || getPreferredGroupName() || undefined)
+  syncKeyCache(created)
   return created.key
 }
 
@@ -206,34 +200,43 @@ export async function fetchAvailableGroups(): Promise<Sub2Group[]> {
   return (Array.isArray(list) ? list : []).filter((g) => g && g.id && (!g.status || g.status === 'active'))
 }
 
-export function getBoundGroupSnapshot(): { groupId: number; groupName: string } {
+export function getBoundGroupSnapshot(): { groupId: number; groupName: string; keyName: string } {
   const groupId = targetGroupId()
   const cachedName = getPreferredGroupName()
   const groupName = cachedName || (groupId === IMAGE_KEY_GROUP_ID ? IMAGE_KEY_GROUP_NAME : `分组 #${groupId}`)
-  return { groupId, groupName }
+  return { groupId, groupName, keyName: getApiKeyName() || APP_API_KEY_NAME }
 }
 
-export async function switchBoundGroup(groupId: number, groupName?: string): Promise<string> {
-  const prevId = getPreferredGroupId()
-  const prevName = getPreferredGroupName()
-  const prevKey = getApiKey()
-  const prevKeyId = getApiKeyId()
-  const prevKeyGroup = getApiKeyGroup()
+/** 从服务端拉取/初始化「光匣」Key，并返回其真实的当前绑定分组 */
+export async function refreshBoundGroup(): Promise<{ groupId: number; groupName: string; keyName: string }> {
+  await ensureApiKey(true)
+  return getBoundGroupSnapshot()
+}
 
-  clearApiKey()
-  try {
-    const key = await ensureApiKey(groupId)
-    setPreferredGroup(groupId, groupName)
-    return key
-  } catch (err) {
-    setPreferredGroup(prevId, prevName)
-    if (prevKey) {
-      setApiKey(prevKey)
-      if (prevKeyId) setApiKeyId(prevKeyId)
-      if (prevKeyGroup) setApiKeyGroup(prevKeyGroup)
-    }
-    throw err
+/** 切换「光匣」Key 绑定的 Sub2API 分组（直接更新该 Key 的 group_id，不新建多余 Key） */
+export async function switchBoundGroup(groupId: number, groupName?: string): Promise<string> {
+  const token = getAccessToken()
+  if (!token) throw new Error('未登录')
+
+  await ensureApiKey()
+  const keyId = getApiKeyId()
+  if (!keyId) throw new Error(`未找到「${APP_API_KEY_NAME}」API Key`)
+
+  const updated = await requestJson<ApiKeyRow>({
+    url: `/keys/${keyId}`,
+    method: 'PUT',
+    accessToken: token,
+    data: { name: APP_API_KEY_NAME, group_id: groupId },
+  })
+  if (!updated?.key) {
+    throw new Error('更新绑定分组失败')
   }
+  syncKeyCache({
+    ...updated,
+    group_id: updated.group_id ?? groupId,
+    group: updated.group || (groupName ? { id: groupId, name: groupName } : undefined),
+  })
+  return updated.key
 }
 
 /**
@@ -246,7 +249,7 @@ export async function switchBoundGroup(groupId: number, groupName?: string): Pro
 export function humanizeGatewayError(raw: string): string {
   const text = String(raw || '')
   if (/is not supported by any configured account/i.test(text) || /in this group/i.test(text)) {
-    return `当前 API Key 不在「${IMAGE_KEY_GROUP_NAME}」分组，出图渠道不可用。已为你重置 Key，请重试；仍失败请到网页端确认分组`
+    return `当前「${APP_API_KEY_NAME}」Key 所绑定的分组不支持该生图模型，请到「我的 → 编辑资料 → Sub2API 分组」切换支持生图的分组（如「${IMAGE_KEY_GROUP_NAME}」）后重试`
   }
   if (/insufficient|balance|quota|额度|余额/i.test(text)) {
     return '积分或额度不足，请到「我的 · 积分明细」确认后再试'

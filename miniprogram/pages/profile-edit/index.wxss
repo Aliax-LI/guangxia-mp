@@ -92,6 +92,17 @@
   color: var(--text-mid);
 }
 
+.pe-label-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.pe-sub-label {
+  font-size: 21rpx;
+  color: var(--text-low);
+}
+
 .pe-counter {
   font-size: 21rpx;
   color: var(--text-low);
